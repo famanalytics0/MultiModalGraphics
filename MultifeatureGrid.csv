@@ -1,0 +1,41 @@
+signaling,Activation_z_score,timePoint,tissue,p,number_of_genes
+pathway1,-1.37,  acute  stress,tissue1,,
+pathway2,-0.34,  acute  stress,tissue1,,
+pathway3,-2.227,  acute  stress,tissue1,,
+pathway4,-1.642,  acute  stress,tissue1,,
+pathway1,-2.15,  acute  stress,tissue2,,
+pathway2,1.352,  acute  stress,tissue2,,
+pathway3,0.215,  acute  stress,tissue2,,
+pathway4,0.013,  acute  stress,tissue2,,
+pathway1,1.37,  acute recovery,tissue1,,
+pathway2,-2.193,  acute recovery,tissue1,,
+pathway3,-0.738,  acute recovery,tissue1,,
+pathway4,1.433,  acute recovery,tissue1,,
+pathway1,1.37,  acute recovery,tissue2,,
+pathway2,1.268,  acute recovery,tissue2,,
+pathway3,-0.563,  acute recovery,tissue2,,
+pathway4,0.562,  acute recovery,tissue2,,
+pathway1,0.033, chronic  stress,tissue1,,
+pathway2,-1.974, chronic  stress,tissue1,,
+pathway3,-1.041, chronic  stress,tissue1,,
+pathway4,0.247, chronic  stress,tissue1,,
+pathway1,1.37, chronic  stress,tissue2,,
+pathway2,-0.359, chronic  stress,tissue2,,
+pathway3,-0.6, chronic  stress,tissue2,,
+pathway4,-0.285, chronic  stress,tissue2,,
+pathway1,1.37, chronic recovery,tissue1,,
+pathway2,-0.905, chronic recovery,tissue1,,
+pathway3,-1.516, chronic recovery,tissue1,,
+pathway4,-1.606, chronic recovery,tissue1,,
+pathway1,0.813, chronic recovery,tissue2,,
+pathway2,0.897, chronic recovery,tissue2,,
+pathway3,0.766, chronic recovery,tissue2,,
+pathway4,0.937, chronic recovery,tissue2,,
+pathway1,,DEG,genes,4.49E-42,40
+pathway1,,DEG,genes,1.15E-42,40
+pathway2,,DEG,genes,1.64E-20,26
+pathway2,,DEG,genes,1.42E-21,27
+pathway3,,DEG,genes,6.03E-21,23
+pathway3,,DEG,genes,1.73E-22,24
+pathway4,,DEG,genes,7.95E-30,40
+pathway4,,DEG,genes,9.14E-30,40
