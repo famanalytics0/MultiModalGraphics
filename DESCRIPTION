@@ -18,4 +18,5 @@ Imports:
     methods,
     plyr,
     RColorBrewer,
-    dplyr
+    dplyr,
+    magrittr

@@ -1,5 +1,6 @@
 setwd(".")
 library(MilkR)
+library(magrittr)
 
 # Load or source the ClearScatterplot.R file
 #source("R/ClearScatterplot.R")
@@ -8,12 +9,12 @@ library(MilkR)
 #data_filepath <- "scattered_data.csv"
 #data_filepath <- "scatter_plot_data.csv"
 filepath <- "ClearScatterplot.csv"
-#data_filepath <- "mPTSD blood heart spleen brain regions DEGs for scattor plot_good_v2.csv"
-#data <- read.csv(filepath)
-data <- get_clear_scatterplot_df()
-
-scattered_plot <- new("ClearScatterplot", data = data,
-                      significanceColumn = "p", expressionColumnName = "log2fc",
+#filepath <- "../MilkR/mPTSD blood heart spleen brain regions DEGs for scattor plot_good_v2.csv"
+data <- read.csv(filepath)
+#data <- get_clear_scatterplot_df()
+#data
+scattered_plot <- new("ClearScatterplot", metadata_filepath = filepath,  pValueColumn = "p",
+                      qValueColumn = "q", expressionColumnName = "log2fc",
                       highLog2fc = 0.585, lowLog2fc = -0.585, negLog10pValue =  1.301)
 
 # Call methods on the object
