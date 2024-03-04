@@ -2,7 +2,7 @@
 % Please edit documentation in R/ClearScatterplot.R
 \name{createPlot,ClearScatterplot-method}
 \alias{createPlot,ClearScatterplot-method}
-\title{Create and Assign a Plot to a ClearScatterplot Object}
+\title{Create Plot Method for ClearScatterplot}
 \usage{
 \S4method{createPlot}{ClearScatterplot}(
   object,
@@ -12,46 +12,29 @@
   highLog2fc = 0.585,
   lowLog2fc = -0.585,
   expressionDirection = "regulation",
-  timeVariable = "reg_time_org",
-  xAxis = "organ",
-  yAxis = "timePoint",
-  changeMagnitude = "log2fc"
+  timeVariable = "reg_time_org"
 )
 }
 \arguments{
-\item{object}{A \code{ClearScatterplot} object for which the plot will be created.}
+\item{object}{A ClearScatterplot object.}
 
-\item{color1}{Character string specifying the color for high significance points. Default is "cornflowerblue".}
+\item{color1}{Color for one category of data points.}
 
-\item{color2}{Character string specifying the color for points that do not meet the high or low significance thresholds. Default is "grey".}
+\item{color2}{Color for another category of data points.}
 
-\item{color3}{Character string specifying the color for low significance points. Default is "indianred".}
+\item{color3}{Color for a third category of data points.}
 
-\item{highLog2fc}{Numeric threshold for considering an expression value significantly high. Default is 0.585.}
+\item{highLog2fc}{Threshold for high log2 fold change values.}
 
-\item{lowLog2fc}{Numeric threshold for considering an expression value significantly low. Default is -0.585.}
+\item{lowLog2fc}{Threshold for low log2 fold change values.}
 
-\item{expressionDirection}{Character string indicating the direction of regulation to be highlighted. Possible values are "up", "down", or "regulation" for both. Default is "regulation".}
+\item{expressionDirection}{Direction of gene expression.}
 
-\item{timeVariable}{Character string specifying the column in the data that represents the time variable. This parameter can be used to facet the plot by time points. Default is "reg_time_org".}
-
-\item{xAxis}{Character string specifying the column name to be used as the x-axis variable. Default is "organ".}
-
-\item{yAxis}{Character string specifying the column name to be used as the y-axis variable. Default is "timePoint".}
-
-\item{changeMagnitude}{Character string specifying the column name to be used for the magnitude of change. This parameter allows dynamic specification of the x-axis variable in the plot. Default is "log2fc".}
+\item{timeVariable}{The variable representing time.}
 }
 \value{
-The \code{ClearScatterplot} object with its \code{plot} slot updated to include the newly created plot.
+The ClearScatterplot object with the plot updated.
 }
 \description{
-Generates a scatter plot based on the stored data and aesthetic parameters provided. This plot is then assigned to the \code{plot} slot of the \code{ClearScatterplot} object.
-}
-\examples{
-\dontrun{
-  data_path <- system.file("extdata", "example_data.csv", package = "YourPackage")
-  csPlot <- new("ClearScatterplot", data_filepath = data_path)
-  csPlot <- createPlot(csPlot)
-  # Now, csPlot contains a ggplot object in its plot slot that can be displayed using show(csPlot)
-}
+Creates a plot based on the ClearScatterplot object data.
 }
