@@ -11,8 +11,11 @@
   color3 = "indianred",
   highLog2fc = 0.585,
   lowLog2fc = -0.585,
+  negLog10pValue = 1.301,
   expressionDirection = "regulation",
-  timeVariable = "reg_time_org"
+  timeVariable = "reg_time_org",
+  xAxis = xAxis,
+  yAxis = yAxis
 )
 }
 \arguments{
