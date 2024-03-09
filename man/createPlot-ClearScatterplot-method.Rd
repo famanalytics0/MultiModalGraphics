@@ -13,6 +13,7 @@
   lowLog2fc = -0.585,
   negLog10pValue = 1.301,
   expressionDirection = "regulation",
+  negativeLogPValue = "negLog10p",
   timeVariable = "reg_time_org",
   xAxis = xAxis,
   yAxis = yAxis
@@ -32,6 +33,8 @@
 \item{lowLog2fc}{Threshold for low log2 fold change values.}
 
 \item{expressionDirection}{Direction of gene expression.}
+
+\item{negativeLogPValue}{The name of the column containing the negative log pValues}
 
 \item{timeVariable}{The variable representing time.}
 }

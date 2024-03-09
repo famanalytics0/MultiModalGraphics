@@ -6,25 +6,22 @@
 \usage{
 ClearScatterplot(
   data,
-  pValueColumn = "p",
-  expressionColumnName = "log2fc",
+  logFoldChange = "log2fc",
+  negativeLogPValue = "negLog10p",
   highLog2fc = 0.585,
   lowLog2fc = -0.585,
   negLog10pValue = 1.301,
   timePointColumn = "timePoint",
   timePointLevels = NULL,
-  colorHigh = "cornflowerblue",
-  colorNeutral = "grey",
-  colorLow = "indianred",
   ...
 )
 }
 \arguments{
 \item{data}{A data frame containing the plot data.}
 
-\item{pValueColumn}{The name of the column containing p-values.}
+\item{logFoldChange}{The name of the column containing expression values.}
 
-\item{expressionColumnName}{The name of the column containing expression values.}
+\item{negativeLogPValue}{The name of the column containing the negative log pValues}
 
 \item{highLog2fc}{Threshold for high log2 fold change values.}
 
@@ -35,12 +32,6 @@ ClearScatterplot(
 \item{timePointColumn}{The name of the column containing time point information.}
 
 \item{timePointLevels}{The levels for the time point column, if any.}
-
-\item{colorHigh}{The color for high values.}
-
-\item{colorNeutral}{The color for neutral values.}
-
-\item{colorLow}{The color for low values.}
 }
 \value{
 An object of class ClearScatterplot.
