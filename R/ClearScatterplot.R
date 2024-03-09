@@ -17,34 +17,31 @@ setGeneric("ClearScatterplot", function(data, ...) {
 #'
 #' Creates an instance of the ClearScatterplot class.
 #' @param data A data frame containing the plot data.
-#' @param pValueColumn The name of the column containing p-values.
-#' @param expressionColumnName The name of the column containing expression values.
+#' @param logFoldChange The name of the column containing expression values.
+#' @param negativeLogPValue The name of the column containing the negative log pValues
 #' @param highLog2fc Threshold for high log2 fold change values.
 #' @param lowLog2fc Threshold for low log2 fold change values.
 #' @param negLog10pValue Threshold for -log10 p-value.
 #' @param timePointColumn The name of the column containing time point information.
 #' @param timePointLevels The levels for the time point column, if any.
-#' @param colorHigh The color for high values.
-#' @param colorNeutral The color for neutral values.
-#' @param colorLow The color for low values.
 #' @return An object of class ClearScatterplot.
 #' @export
 #' @examples
 #' data <- data.frame(timePoint = c("T0", "T1"), p = runif(10), log2fc = runif(10, -2, 2))
 #' scatterplot <- ClearScatterplot(data = data, pValueColumn = "p", expressionColumnName = "log2fc")
-ClearScatterplot <- function(data, pValueColumn = "p", expressionColumnName = "log2fc",
+ClearScatterplot <- function(data, logFoldChange = "log2fc",
+                             negativeLogPValue = "negLog10p",
                              highLog2fc = 0.585, lowLog2fc = -0.585, negLog10pValue = 1.301,
                              timePointColumn = "timePoint", timePointLevels = NULL,
-                             colorHigh = "cornflowerblue", colorNeutral = "grey", colorLow = "indianred", ...) {
+                             ...) {
   if (!is.data.frame(data)) {
     stop("Data must be a data frame.")
   }
 
   # Data preprocessing
-  data$negLog10p <- -log10(data[[pValueColumn]])
   data$color_flag <- ifelse(
-    data[[expressionColumnName]] > highLog2fc & data$negLog10p > negLog10pValue, 1,
-    ifelse(data[[expressionColumnName]] < lowLog2fc & data$negLog10p > negLog10pValue, -1, 0)
+    data[[logFoldChange]] > highLog2fc & data[[negativeLogPValue]] > negLog10pValue, 1,
+    ifelse(data[[logFoldChange]] < lowLog2fc & data[[negativeLogPValue]] > negLog10pValue, -1, 0)
   )
 
   # Factorize the timePoint column based on specified levels if provided
@@ -54,10 +51,6 @@ ClearScatterplot <- function(data, pValueColumn = "p", expressionColumnName = "l
 
   # Create the object
   obj <- new("ClearScatterplot", data = data)
-  # , pValueColumn = pValueColumn, expressionColumnName = expressionColumnName,
-  #            highLog2fc = highLog2fc, lowLog2fc = lowLog2fc, negLog10pValue = negLog10pValue,
-  #            timePointColumn = timePointColumn, timePointLevels = timePointLevels,
-  #            colorHigh = colorHigh, colorNeutral = colorNeutral, colorLow = colorLow)
 
   return(obj)
 }
@@ -76,6 +69,7 @@ setGeneric("createPlot", function(object, ...) standardGeneric("createPlot"))
 #' @param highLog2fc Threshold for high log2 fold change values.
 #' @param lowLog2fc Threshold for low log2 fold change values.
 #' @param expressionDirection Direction of gene expression.
+#' @param negativeLogPValue The name of the column containing the negative log pValues
 #' @param timeVariable The variable representing time.
 #' @return The ClearScatterplot object with the plot updated.
 #' @export
@@ -83,13 +77,15 @@ setMethod("createPlot",
           signature(object = "ClearScatterplot"),
           function(object, color1 = "cornflowerblue", color2 = "grey", color3="indianred",
                    highLog2fc = 0.585, lowLog2fc = -0.585, negLog10pValue = 1.301,
-                   expressionDirection = "regulation", timeVariable="reg_time_org",
+                   expressionDirection = "regulation", negativeLogPValue="negLog10p",
+                   timeVariable="reg_time_org",
                    xAxis = xAxis, yAxis = yAxis) {
             # Create a plot based on the data and specified aesthetic parameters
             if (is.null(object@plot)) {
               object@plot <- create_plot(object@data, color1 = color1, color2 = color2, color3=color3,
                                          highLog2fc = highLog2fc, lowLog2fc = lowLog2fc,
                                          expressionDirection = expressionDirection,
+                                         negativeLogPValue = negativeLogPValue,
                                          timeVariable = timeVariable, xAxis = xAxis,
                                          yAxis = yAxis)
             }
@@ -97,19 +93,17 @@ setMethod("createPlot",
           }
 )
 
-
-
 # Function to create the actual plot based on processed data and aesthetic choices
 create_plot <- function(data, color1 = "cornflowerblue", color2 = "grey", color3="indianred",
                         highLog2fc = 0.585, lowLog2fc = -0.585, expressionDirection = "regulation",
+                        negativeLogPValue = "negLog10p", logFoldChange = "log2fc",
                         timeVariable="reg_time_org", xAxis = "organ", yAxis = "timePoint") {
 
-  View(data)
   colorFlag = "color_flag"
   facetFormula = paste0(xAxis, "~", yAxis)
 
   gp_obj <- ggplot(data = data, ggplot2::aes(
-    x = .data[["log2fc"]], y = .data[["negLog10p"]], color = as.factor(.data[[colorFlag]])
+    x = .data[[logFoldChange]], y = .data[[negativeLogPValue]], color = as.factor(.data[[colorFlag]])
   )) +
     ggplot2::geom_point(alpha = 0.5, size = 1.75) +
     ggplot2::theme(legend.position = "none") + ggplot2::geom_jitter() +
