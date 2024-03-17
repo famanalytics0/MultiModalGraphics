@@ -1,12 +1,24 @@
 Package: MultiModalGraphics
-Title: What the Package Does (One Line, Title Case)
-Version: 0.0.0.9000
+Title: MultiModalGraphics: An R Package for Graphical Integration of Multimodal Datasets
+Version: 1.0.0.0
 Authors@R: 
     person("First", "Last", , "first.last@example.com", role = c("aut", "cre"),
            comment = c(ORCID = "YOUR-ORCID-ID"))
-Description: What the package does (one paragraph).
-License: `use_mit_license()`, `use_gpl3_license()` or friends to pick a
-    license
+Description: The MultimodalGraphics R package provides rich functionalities for combining different data types 
+            into an integrative visual representation. This package facilitates the creation of intuitive visualization 
+            that merge multiple streams of data into a single coherent graphic. 
+            Features of MultimodalGraphics include: (i) flexible support for inclusion of statistical outputs 
+            such as error margins, standard deviations, p-values or any other statistical modelling outputs; 
+            (ii) the ability to add any symbol, text, image, special character or any object at any site of the drawing canvas; 
+            (iii) user-customization of the graphical grids for more advanced visualization of complex information; 
+            (iv) interactive selection on different graphical presentations to obtain subset of rows and columns 
+            if the visualizations are rendered on an interactive device (e.g. shiny, X11) and 
+            (v) the ability to add more customized graphics after main graphics objects are created. 
+            MultimodalGraphics is designed to be modularized, and its flexibility and extensibility enables 
+            a comprehensible presentation of multimodal and multidimensional datasets.
+            We demonstrate the utility of MultimodalGraphics to easily reveal patterns and correlations 
+            among multiple sources of information with three different sets of actual multimodal datasets.
+License: `use_mit_license()`
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.1
@@ -14,9 +26,4 @@ Imports:
     ComplexHeatmap,
     dplyr,
     ggplot2,
-    grDevices,
-    methods,
-    plyr,
-    RColorBrewer,
-    dplyr,
-    magrittr
+    RColorBrewer
