@@ -118,12 +118,12 @@ create_plot <- function(data, color1 = "cornflowerblue", color2 = "grey", color3
       axis.text.y = ggplot2::element_text(size = 12)
     )
 
-  gp_obj2 = gp_obj + ggplot2::theme(
+  gp_obj2 <- gp_obj + ggplot2::theme(
     axis.text = ggplot2::element_text(size = 12),axis.title.x = ggplot2::element_text(size = 12,
                                                                                       face = "bold"),title = ggplot2::element_text(size = 12, face = "bold"),
     strip.text.x = ggplot2::element_text(size = 12, face = "bold",colour = "black", angle = 0)
   )
-  gp_obj3 = gp_obj2 + ggplot2::theme(
+  gp_obj3 <- gp_obj2 + ggplot2::theme(
     axis.text = ggplot2::element_text(size = 12),axis.title.y = ggplot2::element_text(size = 12,
                                                                                       face = "bold"),title = ggplot2::element_text(size = 12, face = "bold"),
     strip.text.y = ggplot2::element_text( size = 12, face = "bold", colour = "black", angle = 90)
