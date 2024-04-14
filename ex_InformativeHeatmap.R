@@ -1,5 +1,5 @@
 library(ComplexHeatmap)
-library(MilkR)
+library(MultiModalGraphics)
 
 informative_heatmap = read.csv("InformativeHeatmap.csv", row.names = 1)
 informative_heatmap_matrix = as.matrix(informative_heatmap)

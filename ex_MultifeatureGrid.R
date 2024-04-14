@@ -1,3 +1,4 @@
+library(MultiModalGraphics)
 # Example usage:
 # Create a MultifeatureGrid object
 

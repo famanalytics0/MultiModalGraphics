@@ -1,5 +1,5 @@
 library(MultiModalGraphics)
-library(magrittr)
+library(dplyr)
 
 plotdata <- get_clear_scatterplot_df()
 
