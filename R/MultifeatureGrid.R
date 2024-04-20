@@ -138,32 +138,32 @@ setMethod("plot_heatmap", signature(object = "MultifeatureGrid"),
             data$neglog10p <- -log10(data[[pValueColumn]])
 
             # Define color palette
-            color <- grDevices::colorRampPalette(rev(RColorBrewer::brewer.pal(n = 7, name = color_palette)))(100)
+            color <- grDevices::colorRampPalette(rev(RColorBrewer::brewer.pal(n <- 7, name <- color_palette)))(100)
 
             # Create the base ggplot object
-            base_plot <- ggplot2::ggplot(data, ggplot2::aes(y = signaling, x = tissue)) +
+            base_plot <- ggplot2::ggplot(data, ggplot2::aes(y <- signaling, x = tissue)) +
               ggplot2::geom_tile(ggplot2::aes(fill = Activation_z_score), colour = borderColor) +
               ggplot2::scale_fill_gradientn(colours = color, breaks = breaks, labels = scales::comma_format()) +
               ggplot2::geom_point(ggplot2::aes(colour = neglog10p, size = .data[[columnForNumber]])) +
               ggplot2::scale_color_gradient(low = lowColor, high = highColor) +
               ggplot2::scale_size(range = c(1, 10)) +
               ggplot2::labs(
-                x = x_label,
-                y = y_label,
-                title = title,
-                fill = zscore_label,
-                colour = logpval_label,
-                size = numitems_label
+                x <- x_label,
+                y <- y_label,
+                title <- title,
+                fill <- zscore_label,
+                colour <- logpval_label,
+                size <- numitems_label
               ) +
-              ggplot2::facet_grid(rows = . ~ data[[independantVariable]], scales = "free_x", space = "free") +
+              ggplot2::facet_grid(rows <- . ~ data[[independantVariable]], scales = "free_x", space = "free") +
               ggplot2::theme_bw() +
               ggplot2::theme(
-                axis.text.x = ggplot2::element_text(angle = 90, hjust = 1),
-                panel.border = ggplot2::element_rect(fill = NA, colour = "grey80", linewidth = 0.6),
-                axis.text = ggplot2::element_text(size = 14, face = "bold"),
-                axis.title = ggplot2::element_text(size = 18, face = "bold"),
-                title = ggplot2::element_text(size = 18),
-                strip.text.x = ggplot2::element_text(size = 14, face = "bold", colour = "black", angle = 0)
+                axis.text.x <- ggplot2::element_text(angle <- 90, hjust <- 1),
+                panel.border <- ggplot2::element_rect(fill <- NA, colour <- "grey80", linewidth = 0.6),
+                axis.text <- ggplot2::element_text(size <- 14, face <- "bold"),
+                axis.title <- ggplot2::element_text(size <- 18, face <- "bold"),
+                title <- ggplot2::element_text(size <- 18),
+                strip.text.x <- ggplot2::element_text(size <- 14, face <- "bold", colour <- "black", angle <- 0)
               )
 
             # Display the plot

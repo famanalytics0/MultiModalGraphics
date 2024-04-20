@@ -1,9 +1,15 @@
 Package: MultiModalGraphics
 Title: MultiModalGraphics: An R Package for Graphical Integration of Multimodal Datasets
-Version: 1.0.0.0
+Version: 0.99.0
 Authors@R: 
-    person("First", "Last", , "first.last@example.com", role = c("aut", "cre"),
-           comment = c(ORCID = "YOUR-ORCID-ID"))
+    person("Seid", "Muhie", , "yimersm@gmail.com", role = c("aut", "cre"),
+           comment = c(ORCID = "0000-0003-3409-049X"))
+Authors: Foziya Ahmed Mohammed <foziya.ahmed@aastu.edu.et>, 
+          Malick Fall <malick.fall@gmail.com>, 
+          Kula Kekeba Tune <kula.kakeba@aastu.edu.et>, 
+          Rasha Hammamieh <rasha.hammamieh1.civ@health.mil>, 
+          Marti Jett <amaranth.mj@gmail.com>, 
+          Seid Muhie <yimersm@gmail.com>
 Description: The MultimodalGraphics R package provides rich functionalities for combining different data types 
             into an integrative visual representation. This package facilitates the creation of intuitive visualization 
             that merge multiple streams of data into a single coherent graphic. 
@@ -18,7 +24,7 @@ Description: The MultimodalGraphics R package provides rich functionalities for 
             a comprehensible presentation of multimodal and multidimensional datasets.
             We demonstrate the utility of MultimodalGraphics to easily reveal patterns and correlations 
             among multiple sources of information with three different sets of actual multimodal datasets.
-License: `use_mit_license()`
+License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.1
@@ -27,3 +33,10 @@ Imports:
     dplyr,
     ggplot2,
     RColorBrewer
+Suggests:
+    testthat,
+    knitr,
+    rmarkdown
+biocViews: Visualization, DataIntegration, VisualIntegration, Software, ReproducibleResearch 
+URL: https://github.com/username/package
+BugReports: https://github.com/username/package/issues
