@@ -67,3 +67,7 @@ draw(getHeatmapObject(htmp_plus))
 ## Conclusion
 
 This vignette provided a simple example of how to use the `MultiModalGraphics` package to create a detailed heatmap for data analysis. For more advanced features and customization, refer to the `ComplexHeatmap` documentation.
+
+## Session info
+```{r, echo=FALSE}
+sessionInfo()

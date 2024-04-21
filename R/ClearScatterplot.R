@@ -7,7 +7,6 @@
 #' @docType class
 #' @importFrom ggplot2 aes geom_point geom_text geom_jitter facet_grid
 #'   theme scale_fill_hue scale_color_manual labs element_text element_rect
-#' @import methods
 #' @export ClearScatterplot
 #' @exportMethod ClearScatterplot
 #' @exportMethod createPlot
@@ -26,21 +25,27 @@ setGeneric("ClearScatterplot", function(data, ...) {
 #' Creates an instance of the ClearScatterplot class.
 #' @param data A data frame containing the plot data.
 #' @param logFoldChange The name of the column containing expression values.
-#' @param negativeLogPValue The name of the column containing the negative log pValues
+#' @param negativeLogPValue The column containing the negative log pValues
 #' @param highLog2fc Threshold for high log2 fold change values.
 #' @param lowLog2fc Threshold for low log2 fold change values.
 #' @param negLog10pValue Threshold for -log10 p-value.
-#' @param timePointColumn The name of the column containing time point information.
+#' @param timePointColumn The name of the column containing time point info.
 #' @param timePointLevels The levels for the time point column, if any.
 #' @return An object of class ClearScatterplot.
 #' @export
 #' @examples
-#' data <- data.frame(timePoint = c("T0", "T1"), p = runif(10), log2fc = runif(10, -2, 2))
-#' scatterplot <- ClearScatterplot(data = data, pValueColumn = "p", expressionColumnName = "log2fc")
-ClearScatterplot <- function(data, logFoldChange = "log2fc",
+#' data <- data.frame(timePoint = c("T0", "T1"), p = runif(10),
+#' log2fc = runif(10, -2, 2))
+#' scatterplot <- ClearScatterplot(data = data, pValueColumn = "p",
+#' expressionColumnName = "log2fc")
+ClearScatterplot <- function(data,
+                             logFoldChange = "log2fc",
                              negativeLogPValue = "negLog10p",
-                             highLog2fc = 0.585, lowLog2fc = -0.585, negLog10pValue = 1.301,
-                             timePointColumn = "timePoint", timePointLevels = NULL,
+                             highLog2fc = 0.585,
+                             lowLog2fc = -0.585,
+                             negLog10pValue = 1.301,
+                             timePointColumn = "timePoint",
+                             timePointLevels = NULL,
                              ...) {
   if (!is.data.frame(data)) {
     stop("Data must be a data frame.")
@@ -48,13 +53,18 @@ ClearScatterplot <- function(data, logFoldChange = "log2fc",
 
   # Data preprocessing
   data$color_flag <- ifelse(
-    data[[logFoldChange]] > highLog2fc & data[[negativeLogPValue]] > negLog10pValue, 1,
-    ifelse(data[[logFoldChange]] < lowLog2fc & data[[negativeLogPValue]] > negLog10pValue, -1, 0)
+    data[[logFoldChange]] > highLog2fc &
+      data[[negativeLogPValue]] > negLog10pValue,
+    1,
+    ifelse(data[[logFoldChange]] < lowLog2fc &
+             data[[negativeLogPValue]] > negLog10pValue,-1, 0)
   )
 
   # Factorize the timePoint column based on specified levels if provided
-  if (!is.null(timePointLevels) && !is.null(data[[timePointColumn]])) {
-    data[[timePointColumn]] <- factor(data[[timePointColumn]], levels = timePointLevels)
+  if (!is.null(timePointLevels) &&
+      !is.null(data[[timePointColumn]])) {
+    data[[timePointColumn]] <-
+      factor(data[[timePointColumn]], levels = timePointLevels)
   }
 
   # Create the object
@@ -83,35 +93,60 @@ setGeneric("createPlot", function(object, ...) standardGeneric("createPlot"))
 #' @export
 setMethod("createPlot",
           signature(object = "ClearScatterplot"),
-          function(object, color1 = "cornflowerblue", color2 = "grey", color3="indianred",
-                   highLog2fc = 0.585, lowLog2fc = -0.585, negLog10pValue = 1.301,
-                   expressionDirection = "regulation", negativeLogPValue="negLog10p",
-                   timeVariable="reg_time_org",
-                   xAxis = xAxis, yAxis = yAxis) {
+          function(object,
+                   color1 = "cornflowerblue",
+                   color2 = "grey",
+                   color3 = "indianred",
+                   highLog2fc = 0.585,
+                   lowLog2fc = -0.585,
+                   negLog10pValue = 1.301,
+                   expressionDirection = "regulation",
+                   negativeLogPValue = "negLog10p",
+                   timeVariable = "reg_time_org",
+                   xAxis = xAxis,
+                   yAxis = yAxis) {
             # Create a plot based on the data and specified aesthetic parameters
             if (is.null(object@plot)) {
-              object@plot <- create_plot(object@data, color1 = color1, color2 = color2, color3=color3,
-                                         highLog2fc = highLog2fc, lowLog2fc = lowLog2fc,
-                                         expressionDirection = expressionDirection,
-                                         negativeLogPValue = negativeLogPValue,
-                                         timeVariable = timeVariable, xAxis = xAxis,
-                                         yAxis = yAxis)
+              object@plot <-
+                create_plot(
+                  object@data,
+                  color1 = color1,
+                  color2 = color2,
+                  color3 = color3,
+                  highLog2fc = highLog2fc,
+                  lowLog2fc = lowLog2fc,
+                  expressionDirection = expressionDirection,
+                  negativeLogPValue = negativeLogPValue,
+                  timeVariable = timeVariable,
+                  xAxis = xAxis,
+                  yAxis = yAxis
+                )
             }
             return(object) # Return the object with its plot
-          }
-)
+          })
 
 # Function to create the actual plot based on processed data and aesthetic choices
-create_plot <- function(data, color1 = "cornflowerblue", color2 = "grey", color3="indianred",
-                        highLog2fc = 0.585, lowLog2fc = -0.585, expressionDirection = "regulation",
-                        negativeLogPValue = "negLog10p", logFoldChange = "log2fc",
-                        timeVariable="reg_time_org", xAxis = "organ", yAxis = "timePoint") {
+create_plot <-
+  function(data,
+           color1 = "cornflowerblue",
+           color2 = "grey",
+           color3 = "indianred",
+           highLog2fc = 0.585,
+           lowLog2fc = -0.585,
+           expressionDirection = "regulation",
+           negativeLogPValue = "negLog10p",
+           logFoldChange = "log2fc",
+           timeVariable = "reg_time_org",
+           xAxis = "organ",
+           yAxis = "timePoint") {
 
   colorFlag = "color_flag"
   facetFormula = paste0(xAxis, "~", yAxis)
 
   gp_obj <- ggplot(data = data, ggplot2::aes(
-    x = .data[[logFoldChange]], y = .data[[negativeLogPValue]], color = as.factor(.data[[colorFlag]])
+    x = .data[[logFoldChange]],
+    y = .data[[negativeLogPValue]],
+    color = as.factor(.data[[colorFlag]])
   )) +
     ggplot2::geom_point(alpha = 0.5, size = 1.75) +
     ggplot2::theme(legend.position = "none") + ggplot2::geom_jitter() +
@@ -127,14 +162,28 @@ create_plot <- function(data, color1 = "cornflowerblue", color2 = "grey", color3
     )
 
   gp_obj2 <- gp_obj + ggplot2::theme(
-    axis.text = ggplot2::element_text(size = 12),axis.title.x = ggplot2::element_text(size = 12,
-                                                                                      face = "bold"),title = ggplot2::element_text(size = 12, face = "bold"),
-    strip.text.x = ggplot2::element_text(size = 12, face = "bold",colour = "black", angle = 0)
+    axis.text = ggplot2::element_text(size = 12),
+    axis.title.x = ggplot2::element_text(size = 12,
+                                         face = "bold"),
+    title = ggplot2::element_text(size = 12, face = "bold"),
+    strip.text.x = ggplot2::element_text(
+      size = 12,
+      face = "bold",
+      colour = "black",
+      angle = 0
+    )
   )
   gp_obj3 <- gp_obj2 + ggplot2::theme(
-    axis.text = ggplot2::element_text(size = 12),axis.title.y = ggplot2::element_text(size = 12,
-                                                                                      face = "bold"),title = ggplot2::element_text(size = 12, face = "bold"),
-    strip.text.y = ggplot2::element_text( size = 12, face = "bold", colour = "black", angle = 90)
+    axis.text = ggplot2::element_text(size = 12),
+    axis.title.y = ggplot2::element_text(size = 12,
+                                         face = "bold"),
+    title = ggplot2::element_text(size = 12, face = "bold"),
+    strip.text.y = ggplot2::element_text(
+      size = 12,
+      face = "bold",
+      colour = "black",
+      angle = 90
+    )
   )
   p <- gp_obj3 + ggplot2::theme(legend.position = "right")
 
@@ -143,10 +192,17 @@ create_plot <- function(data, color1 = "cornflowerblue", color2 = "grey", color3
       fill = "white", color = color2, linewidth = 1
     ))
 
-  p2 <- p1 + ggplot2::theme(axis.title.x = ggplot2::element_text(size = 12, face = "bold")) +
+  p2 <-
+    p1 + ggplot2::theme(axis.title.x = ggplot2::element_text(size = 12, face = "bold")) +
     ggplot2::theme(axis.title.x = ggplot2::element_text(size = 12, face = "bold")) +
-    ggplot2::scale_color_manual(name = "log2 (fold change)", values = c(color1, color2, color3),
-                                labels = c(paste("<", lowLog2fc), paste(lowLog2fc,"to", highLog2fc), paste(">", highLog2fc))
+    ggplot2::scale_color_manual(
+      name = "log2 (fold change)",
+      values = c(color1, color2, color3),
+      labels = c(
+        paste("<", lowLog2fc),
+        paste(lowLog2fc, "to", highLog2fc),
+        paste(">", highLog2fc)
+      )
     ) + ggplot2::scale_fill_hue()
 
   metadata2 <- data[data[[colorFlag]] == 1, ]
@@ -160,17 +216,27 @@ create_plot <- function(data, color1 = "cornflowerblue", color2 = "grey", color3
     dplyr::group_by(.data[[xAxis]], .data[[yAxis]]) %>%
     dplyr::summarize(n1 = paste(length(.data[[timeVariable]])), .groups = 'drop')
 
-  p3 <- p2 + ggplot2::geom_text(data = meta.cor1, ggplot2::aes(x = 4, y = 9, label = n1),
-                                colour = color3, inherit.aes = FALSE, parse = TRUE
-  )
+  p3 <-
+    p2 + ggplot2::geom_text(
+      data = meta.cor1,
+      ggplot2::aes(x = 4, y = 9, label = n1),
+      colour = color3,
+      inherit.aes = FALSE,
+      parse = TRUE
+    )
 
   meta.cor2 <- metadata6 %>%
     dplyr::group_by(.data[[xAxis]], .data[[yAxis]]) %>%
     dplyr::summarize(n2 = paste(length(.data[[timeVariable]])), .groups = 'drop')
 
-  p4 <- p3 + ggplot2::geom_text(data = meta.cor2, ggplot2::aes(x = -4, y = 9, label = n2),
-                                colour = color1, inherit.aes = FALSE, parse = FALSE
-  )
+  p4 <-
+    p3 + ggplot2::geom_text(
+      data = meta.cor2,
+      ggplot2::aes(x = -4, y = 9, label = n2),
+      colour = color1,
+      inherit.aes = FALSE,
+      parse = FALSE
+    )
 
   # Return the created plot
   return(p4 + ggplot2::theme(legend.position = "bottom"))
@@ -182,7 +248,8 @@ create_plot <- function(data, color1 = "cornflowerblue", color2 = "grey", color3
 #' This method displays the scatterplot stored in the ClearScatterplot object.
 #' It invokes the `print` method on the `plot` object, which must be a ggplot object.
 #' @param object A ClearScatterplot object.
-#' @return Prints the ggplot object stored in the plot slot of the ClearScatterplot.
+#' @return Prints the ggplot object stored in the plot slot of the
+#' ClearScatterplot.
 #'         The function itself returns invisible `NULL` to avoid additional console output.
 #' @export
 setMethod("show",
@@ -191,8 +258,9 @@ setMethod("show",
             if (is.null(object@plot)) {
               object <- createPlot(object)  # Update the plot only if it's null
             }
-            print(object@plot)  # Display the plot
-            invisible(object)  # Optionally return the object invisibly for further chaining if needed
-          }
-)
+            # Display the plot
+            print(object@plot)
+            # Optionally return the object invisibly for further chaining if needed
+            invisible(object)
+          })
 

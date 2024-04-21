@@ -46,3 +46,7 @@ Finally, display the plot. This will call the 'show' method to render the plot.
 ```{r display-plot}
 scattered_plot  # Display the plot
 ```
+
+## Session info
+```{r, echo=FALSE}
+sessionInfo()

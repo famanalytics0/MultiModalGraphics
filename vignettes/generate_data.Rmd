@@ -43,3 +43,7 @@ The `get_multifeature_grid_df()` function returns a predefined dataframe that is
 multifeature_grid_df <- get_multifeature_grid_df()
 print(multifeature_grid_df)
 ```
+
+## Session info
+```{r, echo=FALSE}
+sessionInfo()

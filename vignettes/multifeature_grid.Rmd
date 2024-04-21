@@ -46,3 +46,7 @@ plot_heatmap(mg, independantVariable = "tissue")
 ```
 
 This plot provides a visual summary of the signaling activity and the statistical significance across different tissues, utilizing a color gradient to represent activation z-scores and the size of points to indicate the number of genes involved.
+
+## Session info
+```{r, echo=FALSE}
+sessionInfo()
