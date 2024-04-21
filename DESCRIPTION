@@ -34,10 +34,10 @@ Imports:
     ggplot2,
     RColorBrewer
 Suggests:
-    testthat,
     knitr,
+    testthat,
     rmarkdown
-biocViews: Visualization, DataIntegration, VisualIntegration, Software, ReproducibleResearch 
+biocViews: Software, Visualization
 URL: https://github.com/username/package
 BugReports: https://github.com/username/package/issues
 VignetteBuilder: knitr
