@@ -87,13 +87,12 @@ data <- data.frame(
 )
 mg <- MultifeatureGrid(data)
 plot_heatmap(mg)
-\donttest{
-  data <- data.frame(
-    significance = runif(100),
-    z_score = rnorm(100),
-    num_genes = sample(1:100, 100, replace = TRUE)
-  )
-  mg <- MultifeatureGrid(data)
-  # Further usage of mg...
+\run{
+  library(MultiModalGraphics)
+ Example usage:
+ Create a MultifeatureGrid object
+ data <- get_multifeature_grid_df()
+ mg <- MultifeatureGrid(data)
+ plot_heatmap(mg,  independantVariable = "tissue")
 }
 }

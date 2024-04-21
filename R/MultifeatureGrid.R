@@ -27,7 +27,6 @@
 #'   number_of_genes = sample(1:100, 8)
 #' )
 #' mg <- MultifeatureGrid(data)
-#' plot_heatmap(mg)
 setClass(
   "MultifeatureGrid",
   slots = list(
@@ -69,14 +68,13 @@ setClass(
 #'   parameters.
 #' @export
 #' @examples
-#' \donttest{
-#'   data <- data.frame(
-#'     significance = runif(100),
-#'     z_score = rnorm(100),
-#'     num_genes = sample(1:100, 100, replace = TRUE)
-#'   )
-#'   mg <- MultifeatureGrid(data)
-#'   # Further usage of mg...
+#' \run{
+#'   library(MultiModalGraphics)
+#'  Example usage:
+#'  Create a MultifeatureGrid object
+#'  data <- get_multifeature_grid_df()
+#'  mg <- MultifeatureGrid(data)
+#'  plot_heatmap(mg,  independantVariable = "tissue")
 #' }
 MultifeatureGrid <-
   function(data,
