@@ -10,7 +10,8 @@
 \item{object}{A ClearScatterplot object.}
 }
 \value{
-Prints the ggplot object stored in the plot slot of the ClearScatterplot.
+Prints the ggplot object stored in the plot slot of the
+ClearScatterplot.
 The function itself returns invisible \code{NULL} to avoid additional console output.
 }
 \description{

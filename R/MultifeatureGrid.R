@@ -69,7 +69,7 @@ setClass(
 #'   parameters.
 #' @export
 #' @examples
-#' \dontrun{
+#' \donttest{
 #'   data <- data.frame(
 #'     significance = runif(100),
 #'     z_score = rnorm(100),
@@ -78,19 +78,34 @@ setClass(
 #'   mg <- MultifeatureGrid(data)
 #'   # Further usage of mg...
 #' }
-MultifeatureGrid <- function(data, title = "Heatmap", x_label = "X Label",
-                             y_label = "Y Label", logpval_label = "-log10(p-value)",
-                             zscore_label= "Activation z-score",
-                             numitems_label ="Number of Genes",
-                             color_palette = "RdYlBu", breaks = seq(-1, 1, 0.5)) {
-  # Initializes a MultifeatureGrid object with provided or default parameters
-  new("MultifeatureGrid", data = data, title = title, x_label = x_label, y_label = y_label,
-      logpval_label = logpval_label, zscore_label = zscore_label,
-      numitems_label = numitems_label, color_palette = color_palette, breaks = breaks)
-}
+MultifeatureGrid <-
+  function(data,
+           title = "Heatmap",
+           x_label = "X Label",
+           y_label = "Y Label",
+           logpval_label = "-log10(p-value)",
+           zscore_label = "Activation z-score",
+           numitems_label = "Number of Genes",
+           color_palette = "RdYlBu",
+           breaks = seq(-1, 1, 0.5)) {
+    # Initializes a MultifeatureGrid object with provided or default parameters
+    new(
+      "MultifeatureGrid",
+      data = data,
+      title = title,
+      x_label = x_label,
+      y_label = y_label,
+      logpval_label = logpval_label,
+      zscore_label = zscore_label,
+      numitems_label = numitems_label,
+      color_palette = color_palette,
+      breaks = breaks
+    )
+  }
 
 # Method for plotting the heatmap for MultifeatureGrid objects
-setGeneric("plot_heatmap", function(object, ...) standardGeneric("plot_heatmap"))
+setGeneric("plot_heatmap", function(object, ...)
+  standardGeneric("plot_heatmap"))
 
 #' Plot Heatmap for MultifeatureGrid Objects
 #'
@@ -129,8 +144,12 @@ setGeneric("plot_heatmap", function(object, ...) standardGeneric("plot_heatmap")
 #' mg <- MultifeatureGrid(data)
 #' plot_heatmap(mg)
 setMethod("plot_heatmap", signature(object = "MultifeatureGrid"),
-          function(object, pValueColumn = "p", lowColor = "yellow", highColor = "red",
-                   borderColor="grey60", columnForNumber = "number_of_genes",
+          function(object,
+                   pValueColumn = "p",
+                   lowColor = "yellow",
+                   highColor = "red",
+                   borderColor = "grey60",
+                   columnForNumber = "number_of_genes",
                    independantVariable = "timePoint") {
             # Extracts parameters from the object
             data <- object@data
@@ -147,13 +166,22 @@ setMethod("plot_heatmap", signature(object = "MultifeatureGrid"),
             data$neglog10p <- -log10(data[[pValueColumn]])
 
             # Define color palette
-            color <- grDevices::colorRampPalette(rev(RColorBrewer::brewer.pal(n <- 7, name <- color_palette)))(100)
+            color <-
+              grDevices::colorRampPalette(rev(RColorBrewer::brewer.pal(n <-
+                                            7, name <- color_palette)))(100)
 
             # Create the base ggplot object
-            base_plot <- ggplot2::ggplot(data, ggplot2::aes(y <- signaling, x = tissue)) +
-              ggplot2::geom_tile(ggplot2::aes(fill = Activation_z_score), colour = borderColor) +
-              ggplot2::scale_fill_gradientn(colours = color, breaks = breaks, labels = scales::comma_format()) +
-              ggplot2::geom_point(ggplot2::aes(colour = neglog10p, size = .data[[columnForNumber]])) +
+            base_plot <-
+              ggplot2::ggplot(data, ggplot2::aes(y <- signaling, x = tissue)) +
+              ggplot2::geom_tile(ggplot2::aes(fill = Activation_z_score),
+                                 colour = borderColor) +
+              ggplot2::scale_fill_gradientn(
+                colours = color,
+                breaks = breaks,
+                labels = scales::comma_format()
+              ) +
+              ggplot2::geom_point(ggplot2::aes(colour = neglog10p,
+                                    size = .data[[columnForNumber]])) +
               ggplot2::scale_color_gradient(low = lowColor, high = highColor) +
               ggplot2::scale_size(range = c(1, 10)) +
               ggplot2::labs(
@@ -164,15 +192,22 @@ setMethod("plot_heatmap", signature(object = "MultifeatureGrid"),
                 colour <- logpval_label,
                 size <- numitems_label
               ) +
-              ggplot2::facet_grid(rows <- . ~ data[[independantVariable]], scales = "free_x", space = "free") +
+              ggplot2::facet_grid(rows <- . ~ data[[independantVariable]],
+                                  scales = "free_x", space = "free") +
               ggplot2::theme_bw() +
               ggplot2::theme(
                 axis.text.x <- ggplot2::element_text(angle <- 90, hjust <- 1),
-                panel.border <- ggplot2::element_rect(fill <- NA, colour <- "grey80", linewidth = 0.6),
-                axis.text <- ggplot2::element_text(size <- 14, face <- "bold"),
-                axis.title <- ggplot2::element_text(size <- 18, face <- "bold"),
+                panel.border <-
+                  ggplot2::element_rect(fill <-
+                                    NA, colour <- "grey80", linewidth = 0.6),
+                axis.text <-
+                  ggplot2::element_text(size <- 14, face <- "bold"),
+                axis.title <-
+                  ggplot2::element_text(size <- 18, face <- "bold"),
                 title <- ggplot2::element_text(size <- 18),
-                strip.text.x <- ggplot2::element_text(size <- 14, face <- "bold", colour <- "black", angle <- 0)
+                strip.text.x <-
+                  ggplot2::element_text(size <-
+                          14, face <- "bold", colour <- "black", angle <- 0)
               )
 
             # Display the plot

@@ -49,7 +49,7 @@ setGeneric("InformativeHeatmap", function(data, ...) {
 #' @return An object of class `InformativeHeatmap` with the heatmap initialized
 #'   and customized according to the provided parameters.
 #' @examples
-#' \dontrun{
+#' \donttest{
 #'   data <- matrix(rnorm(100), ncol = 10)
 #'   heatmap <- InformativeHeatmap(data, pch_val = 20, unit_val = 2,
 #'                                 significant_color = "red",
@@ -139,7 +139,7 @@ setGeneric("updateLayerFun", function(x, layer_fun) {
 #'   This function should be compatible with the layering system of `ComplexHeatmap`.
 #' @return Returns an updated `InformativeHeatmap` object with the new layer function applied.
 #' @examples
-#' \dontrun{
+#' \donttest{
 #'   # Assume `ih` is an existing InformativeHeatmap object
 #'   # Define a new layer function
 #'   new_layer_fun <- function(j, i, x, y, w, h, fill) {
@@ -198,7 +198,7 @@ setGeneric("getHeatmapObject", function(x) {
 #' @return A Heatmap object from the `ComplexHeatmap` package.
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
 #'   # Assume `ih` is an existing InformativeHeatmap object
 #'   heatmap_obj <- getHeatmapObject(ih)
 #'   # Now `heatmap_obj` can be used directly with ComplexHeatmap functions

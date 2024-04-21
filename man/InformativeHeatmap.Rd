@@ -64,7 +64,7 @@ for heatmap customization, including visual customization based on significance 
 }}
 
 \examples{
-\dontrun{
+\donttest{
   data <- matrix(rnorm(100), ncol = 10)
   heatmap <- InformativeHeatmap(data, pch_val = 20, unit_val = 2,
                                 significant_color = "red",

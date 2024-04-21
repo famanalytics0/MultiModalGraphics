@@ -16,7 +16,10 @@ library(dplyr)
 
 ## Introduction
 
-This vignette demonstrates how to use the `ClearScatterplot` class to create enhanced scatterplots. The `ClearScatterplot` class provides functionalities for creating scatterplots with enhanced visualization features like coloring based on significance levels and plotting against different variables.
+This vignette demonstrates how to use the `ClearScatterplot` class to create 
+enhanced scatterplots. The `ClearScatterplot` class provides functionalities 
+for creating scatterplots with enhanced visualization features like coloring 
+based on significance levels and plotting against different variables.
 
 ## Example: Creating a Scatterplot
 
@@ -25,20 +28,33 @@ First, load the necessary data and create an instance of `ClearScatterplot`.
 ```{r load-data}
 plotdata <- get_clear_scatterplot_df()
 
-scatterplotObject <- ClearScatterplot(data = plotdata,
-                        logFoldChange = "log2fc",
-                        timePointColumn = "timePoint",
-                        timePointLevels = c("T10R1", "T5R1")
-                        )
+scatterplotObject <- ClearScatterplot(
+  data = plotdata,
+  logFoldChange = "log2fc",
+  timePointColumn = "timePoint",
+  timePointLevels = c("T10R1", "T5R1")
+)
 ```
 
-Next, create the scatterplot using the `createPlot` method, specifying various parameters such as color and thresholds.
+Next, create the scatterplot using the `createPlot` method, specifying various 
+parameters such as color and thresholds.
 
 ```{r create-plot}
-scattered_plot <- createPlot(scatterplotObject, color1 = "cornflowerblue", color2 = "grey", color3="indianred",
-                             highLog2fc = 0.585, lowLog2fc = -0.585, negLog10pValue = 1.301,
-                             expressionDirection = "regulation", negativeLogPValue="negLog10p",
-                             timeVariable="reg_time_org", xAxis = "organ", yAxis = "timePoint")
+scattered_plot <-
+  createPlot(
+    scatterplotObject,
+    color1 = "cornflowerblue",
+    color2 = "grey",
+    color3 = "indianred",
+    highLog2fc = 0.585,
+    lowLog2fc = -0.585,
+    negLog10pValue = 1.301,
+    expressionDirection = "regulation",
+    negativeLogPValue = "negLog10p",
+    timeVariable = "reg_time_org",
+    xAxis = "organ",
+    yAxis = "timePoint"
+  )
 ```
 
 Finally, display the plot. This will call the 'show' method to render the plot.

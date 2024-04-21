@@ -21,7 +21,7 @@ It requires the \code{ComplexHeatmap} package to recreate the heatmap with the n
 If \code{ComplexHeatmap} is not installed, it will stop and prompt the user to install \code{ComplexHeatmap}.
 }
 \examples{
-\dontrun{
+\donttest{
   # Assume `ih` is an existing InformativeHeatmap object
   # Define a new layer function
   new_layer_fun <- function(j, i, x, y, w, h, fill) {

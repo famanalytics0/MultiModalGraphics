@@ -16,11 +16,14 @@ library(MultiModalGraphics)
 
 # Informative Heatmap
 
-This vignette demonstrates how to create and visualize an informative heatmap using the `MultiModalGraphics` package which utilizes the `ComplexHeatmap` package for enhanced visualizations.
+This vignette demonstrates how to create and visualize an informative heatmap 
+using the `MultiModalGraphics` package which utilizes the `ComplexHeatmap` 
+package for enhanced visualizations.
 
 ## Basic Usage
 
-Below is an example of how to create an informative heatmap with data representing genes, their value groups, and significance levels.
+Below is an example of how to create an informative heatmap with data 
+representing genes, their value groups, and significance levels.
 
 ### Data Preparation
 
@@ -35,7 +38,8 @@ p_val <- informative_heatmap_matrix[, 4:6]
 
 ### Creating Heatmap
 
-Create an `InformativeHeatmap` object with custom settings for visual representation.
+Create an `InformativeHeatmap` object with custom settings for visual 
+representation.
 
 ```{r create-heatmap}
 htmp_plus <- InformativeHeatmap(group_val,
@@ -58,7 +62,8 @@ htmp_plus <- InformativeHeatmap(group_val,
 
 ### Drawing Heatmap
 
-Finally, draw the heatmap using the ComplexHeatmap function to visualize the data.
+Finally, draw the heatmap using the ComplexHeatmap function to visualize the 
+data.
 
 ```{r draw-heatmap}
 draw(getHeatmapObject(htmp_plus))
@@ -66,7 +71,9 @@ draw(getHeatmapObject(htmp_plus))
 
 ## Conclusion
 
-This vignette provided a simple example of how to use the `MultiModalGraphics` package to create a detailed heatmap for data analysis. For more advanced features and customization, refer to the `ComplexHeatmap` documentation.
+This vignette provided a simple example of how to use the `MultiModalGraphics` 
+package to create a detailed heatmap for data analysis. For more advanced 
+features and customization, refer to the `ComplexHeatmap` documentation.
 
 ## Session info
 ```{r, echo=FALSE}

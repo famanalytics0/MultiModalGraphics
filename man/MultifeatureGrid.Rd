@@ -87,7 +87,7 @@ data <- data.frame(
 )
 mg <- MultifeatureGrid(data)
 plot_heatmap(mg)
-\dontrun{
+\donttest{
   data <- data.frame(
     significance = runif(100),
     z_score = rnorm(100),
