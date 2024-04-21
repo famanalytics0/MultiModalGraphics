@@ -61,9 +61,9 @@ setGeneric("InformativeHeatmap", function(data, ...) {
 #' @export
 
 setMethod("InformativeHeatmap", "ANY", function(data, pch_val = 16, unit_val = 1,
-              signicant_color="black", trending_color="yellow", significant_pvalue=0.05,
+              significant_color="black", trending_color="yellow", significant_pvalue=0.05,
               trending_pvalue=0.1,  ...) {
-  if (!requireNamespace("ComplexHeatmap", quietly = TRUE)) {
+  if (!requireNamespace("ComplexHeatmap", quietly <- TRUE)) {
     stop("ComplexHeatmap is required for creating an InformativeHeatmap object. ",
          "Please install it using BiocManager::install('ComplexHeatmap').")
   }
@@ -84,9 +84,9 @@ setMethod("InformativeHeatmap", "ANY", function(data, pch_val = 16, unit_val = 1
           ind <- ind_mat[ir, ic]  # previous column
           v <- significance_level[i[ind], j[ind]]
           grid.points(x[ind], y[ind],
-                      pch = pch_val, gp = gpar(col = ifelse(v < significant_pvalue, signicant_color,
+                      pch <- pch_val, gp = gpar(col = ifelse(v < significant_pvalue, significant_color,
                                                        ifelse(v>=significant_pvalue && v<trending_pvalue, trending_color, NA))),
-                      size = unit(unit_val, "mm"))
+                      size <- unit(unit_val, "mm"))
         }
       }
     }
@@ -134,7 +134,7 @@ setGeneric("updateLayerFun", function(x, layer_fun) {
 #' }
 #' @export
 setMethod("updateLayerFun", "InformativeHeatmap", function(x, layer_fun) {
-  if (!requireNamespace("ComplexHeatmap", quietly = TRUE)) {
+  if (!requireNamespace("ComplexHeatmap", quietly <- TRUE)) {
     stop("ComplexHeatmap is required to update the layer function in an InformativeHeatmap object. ",
          "Please install it using BiocManager::install('ComplexHeatmap').")
   }
