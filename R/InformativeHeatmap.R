@@ -186,12 +186,14 @@ setGeneric("getHeatmapObject", function(x) {
 
 #' Retrieve the Heatmap Object from an InformativeHeatmap
 #'
-#' This method extracts the underlying Heatmap object stored within an `InformativeHeatmap` object.
-#' It allows direct access to the `Heatmap` object for further manipulation or inspection using
-#' `ComplexHeatmap` package functionalities. Note that the `ComplexHeatmap` package is required
+#' This method extracts the underlying Heatmap object stored within an
+#' `InformativeHeatmap` object. It allows direct access to the `Heatmap` object
+#'  for further manipulation or inspection using `ComplexHeatmap` package
+#'  functionalities. Note that the `ComplexHeatmap` package is required
 #' to fully utilize the returned Heatmap object.
 #'
-#' @param x An `InformativeHeatmap` object from which the Heatmap object is to be retrieved.
+#' @param x An `InformativeHeatmap` object from which the Heatmap object is to
+#' be retrieved.
 #'
 #' @return A Heatmap object from the `ComplexHeatmap` package.
 #'
@@ -206,7 +208,8 @@ setGeneric("getHeatmapObject", function(x) {
 setMethod("getHeatmapObject", "InformativeHeatmap", function(x) {
   if (!requireNamespace("ComplexHeatmap", quietly = TRUE)) {
     stop(
-      "ComplexHeatmap is required to retrieve the Heatmap object from an InformativeHeatmap object. ",
+      "ComplexHeatmap is required to retrieve the Heatmap object from an
+      InformativeHeatmap object. ",
       "Please install it using BiocManager::install('ComplexHeatmap')."
     )
   }
