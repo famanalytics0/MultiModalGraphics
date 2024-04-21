@@ -8,7 +8,6 @@
 #' @name InformativeHeatmap
 #' @docType class
 #' @importFrom ComplexHeatmap Heatmap
-#' @import methods
 #' @export InformativeHeatmap
 #' @exportMethod InformativeHeatmap
 #' @exportMethod updateLayerFun
@@ -60,32 +59,50 @@ setGeneric("InformativeHeatmap", function(data, ...) {
 #' }
 #' @export
 
-setMethod("InformativeHeatmap", "ANY", function(data, pch_val = 16, unit_val = 1,
-              significant_color="black", trending_color="yellow", significant_pvalue=0.05,
-              trending_pvalue=0.1,  ...) {
+setMethod("InformativeHeatmap", "ANY", function(data,
+                                                pch_val = 16,
+                                                unit_val = 1,
+                                                significant_color = "black",
+                                                trending_color = "yellow",
+                                                significant_pvalue = 0.05,
+                                                trending_pvalue = 0.1,
+                                                ...) {
   if (!requireNamespace("ComplexHeatmap", quietly <- TRUE)) {
-    stop("ComplexHeatmap is required for creating an InformativeHeatmap object. ",
-         "Please install it using BiocManager::install('ComplexHeatmap').")
+    stop(
+      "ComplexHeatmap is required for creating an InformativeHeatmap object. ",
+      "Please install it using BiocManager::install('ComplexHeatmap')."
+    )
   }
   # Capture all additional arguments passed to the function
   params_list <- list(...)
 
-  # Initialize variable for potential custom layer function based on small_map_pv
+  # Initialize var for potential custom layer function based on small_map_pv
   custom_layer_fun <- NULL
 
   # Now include layer_fun directly in the params, if not already provided
   if (!is.null(params_list$significance_level)) {
-    significance_level <- params_list$significance_level  # Store the small_map_pv data
+    # Store the small_map_pv data
+    significance_level <- params_list$significance_level
 
     custom_layer_fun <- function(j, i, x, y, w, h, fill) {
       ind_mat <- restore_matrix(j, i, x, y)
-      for(ir in seq_len(nrow(ind_mat))) {
-        for(ic in seq_len(ncol(ind_mat))) {
+      for (ir in seq_len(nrow(ind_mat))) {
+        for (ic in seq_len(ncol(ind_mat))) {
           ind <- ind_mat[ir, ic]  # previous column
           v <- significance_level[i[ind], j[ind]]
-          grid.points(x[ind], y[ind],
-                      pch <- pch_val, gp = gpar(col = ifelse(v < significant_pvalue, significant_color,
-                                                       ifelse(v>=significant_pvalue && v<trending_pvalue, trending_color, NA))),
+          grid.points(x[ind],
+                      y[ind],
+                      pch <-
+                        pch_val,
+                      gp = gpar(col = ifelse(
+                        v < significant_pvalue,
+                        significant_color,
+                        ifelse(
+                          v >= significant_pvalue && v < trending_pvalue,
+                          trending_color,
+                          NA
+                        )
+                      )),
                       size <- unit(unit_val, "mm"))
         }
       }
@@ -135,8 +152,10 @@ setGeneric("updateLayerFun", function(x, layer_fun) {
 #' @export
 setMethod("updateLayerFun", "InformativeHeatmap", function(x, layer_fun) {
   if (!requireNamespace("ComplexHeatmap", quietly <- TRUE)) {
-    stop("ComplexHeatmap is required to update the layer function in an InformativeHeatmap object. ",
-         "Please install it using BiocManager::install('ComplexHeatmap').")
+    stop(
+      "ComplexHeatmap is required to update the layer function in an InformativeHeatmap object. ",
+      "Please install it using BiocManager::install('ComplexHeatmap')."
+    )
   }
   # Retrieve the stored parameters
   params <- x@params
@@ -146,7 +165,7 @@ setMethod("updateLayerFun", "InformativeHeatmap", function(x, layer_fun) {
 
   # Ensure the matrix data is passed as the first argument to Heatmap
   # and the rest of the parameters are correctly structured for do.call
-  args <- c(list(x@heatmap@matrix), params)  # Ensure this constructs a proper argument list
+  args <- c(list(x@heatmap@matrix), params)
 
   # Recreate the heatmap with the updated parameters
   new_heatmap <- do.call(ComplexHeatmap::Heatmap, args)
@@ -186,8 +205,10 @@ setGeneric("getHeatmapObject", function(x) {
 #' @export
 setMethod("getHeatmapObject", "InformativeHeatmap", function(x) {
   if (!requireNamespace("ComplexHeatmap", quietly = TRUE)) {
-    stop("ComplexHeatmap is required to retrieve the Heatmap object from an InformativeHeatmap object. ",
-         "Please install it using BiocManager::install('ComplexHeatmap').")
+    stop(
+      "ComplexHeatmap is required to retrieve the Heatmap object from an InformativeHeatmap object. ",
+      "Please install it using BiocManager::install('ComplexHeatmap')."
+    )
   }
   return(x@heatmap)
 })
