@@ -1,9 +1,17 @@
-#' ClearScatterplot Class
+#' ClearScatterplot: A Class for Enhanced Scatterplot
 #'
 #' A class for creating and managing scatterplot objects with enhanced visualization features.
 #' @slot data A data frame containing the data to be plotted.
 #' @slot plot An object storing the ggplot representation of the data.
-#' @export
+#' @name ClearScatterplot
+#' @docType class
+#' @importFrom ggplot2 aes geom_point geom_text geom_jitter facet_grid
+#'   theme scale_fill_hue scale_color_manual labs element_text element_rect
+#' @import methods
+#' @export ClearScatterplot
+#' @exportMethod ClearScatterplot
+#' @exportMethod createPlot
+#' @exportMethod show
 setClass("ClearScatterplot",
          slots = c(
            data = "data.frame",  # Slot for storing the data frame
@@ -169,11 +177,22 @@ create_plot <- function(data, color1 = "cornflowerblue", color2 = "grey", color3
 }
 
 
-
+#' Display Method for ClearScatterplot
+#'
+#' This method displays the scatterplot stored in the ClearScatterplot object.
+#' It invokes the `print` method on the `plot` object, which must be a ggplot object.
+#' @param object A ClearScatterplot object.
+#' @return Prints the ggplot object stored in the plot slot of the ClearScatterplot.
+#'         The function itself returns invisible `NULL` to avoid additional console output.
+#' @export
 setMethod("show",
           signature(object = "ClearScatterplot"),
           function(object) {
-            object <- createPlot(object)
-            print(object@plot)
+            if (is.null(object@plot)) {
+              object <- createPlot(object)  # Update the plot only if it's null
+            }
+            print(object@plot)  # Display the plot
+            invisible(object)  # Optionally return the object invisibly for further chaining if needed
           }
 )
+
