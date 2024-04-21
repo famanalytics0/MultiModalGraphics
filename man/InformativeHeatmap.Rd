@@ -10,7 +10,7 @@
   data,
   pch_val = 16,
   unit_val = 1,
-  signicant_color = "black",
+  significant_color = "black",
   trending_color = "yellow",
   significant_pvalue = 0.05,
   trending_pvalue = 0.1,
@@ -26,6 +26,9 @@ Default is 16.}
 \item{unit_val}{Size of the points in the heatmap. Specified in 'mm'.
 Default is 1.}
 
+\item{significant_color}{Color to be used for points representing significant values.
+Default is "black".}
+
 \item{trending_color}{Color to be used for points representing trending values
 (significant but less so than those meeting the \code{significant_pvalue} criterion).
 Default is "yellow".}
@@ -39,9 +42,6 @@ Points with p-values above \code{significant_pvalue} and below this threshold
 will be colored with \code{trending_color}. Default is 0.1.}
 
 \item{...}{Additional parameters passed to \code{ComplexHeatmap::Heatmap}.}
-
-\item{significant_color}{Color to be used for points representing significant values.
-Default is "black".}
 }
 \value{
 An object of class \code{InformativeHeatmap} with the heatmap initialized
