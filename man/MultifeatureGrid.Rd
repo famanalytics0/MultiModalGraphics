@@ -86,13 +86,8 @@ data <- data.frame(
   number_of_genes = sample(1:100, 8)
 )
 mg <- MultifeatureGrid(data)
-plot_heatmap(mg)
-\run{
-  library(MultiModalGraphics)
- Example usage:
- Create a MultifeatureGrid object
+ library(MultiModalGraphics)
  data <- get_multifeature_grid_df()
  mg <- MultifeatureGrid(data)
  plot_heatmap(mg,  independantVariable = "tissue")
-}
 }
