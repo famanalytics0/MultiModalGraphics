@@ -1,0 +1,24 @@
+NEWS for the MultimodalGraphics package
+
+Changes in version 0.99.0 (2024-04-20)
+--------------------------------------
+
+* Submitted to Bioconductor.
+
+* Added new classes `InformativeHeatmap`, `MultifeatureGrid`, and `ClearScatterplot` for advanced data visualization techniques.
+
+* Included functions for intuitive visualization of multimodal datasets, allowing users to identify patterns, correlations, and anomalies across diverse data sources.
+
+* Implemented object-oriented programming with S4 classes for robust, extensible, and modular design.
+
+* Integrated with ggplot2 for customizable scatter plots and ComplexHeatmap for advanced heatmap representations.
+
+* Provided a suite of annotation options including mathematical symbols, significant values, and statistical modelling outputs.
+
+* Enabled user customization of graphical grids for complex information visualization.
+
+* Facilitated interactive selection and subset extraction when visualizations are rendered on interactive devices like Shiny or X11.
+
+* Accommodated large multimodal datasets while maintaining clarity and interpretability.
+
+* Made the source code and example datasets available on GitHub and documentation available through the Bioconductor project.
