@@ -1,10 +1,17 @@
-#' MultifeatureGrid Class for 2D Heatmap Visualization
+#' MultifeatureGrid: A Class for 2D Heatmap Visualization
 #'
-#' This class represents a 2D heatmap with customizable configurations for plotting
-#' biological data, integrating features like significance levels and z-scores.
+#' This class facilitates the creation of 2D heatmaps for visualizing biological data,
+#' integrating significant levels and z-scores with customizable heatmap configurations.
 #'
-#' @slot data Data frame containing heatmap data.
-#' @slot title Character vector specifying the heatmap title.
+#' @slot data A data frame containing heatmap data.
+#' @slot title The title of the heatmap.
+#' @slot x_label Label for the X-axis.
+#' @slot y_label Label for the Y-axis.
+#' @slot logpval_label Label for the legend of log10(p-value).
+#' @slot zscore_label Label for the legend of z-scores.
+#' @slot numitems_label Label for the legend describing the number of items (e.g., genes).
+#' @slot color_palette The name of the RColorBrewer color palette to be used.
+#' @slot breaks Numeric vector of breakpoints for color mapping.
 #' @name MultifeatureGrid
 #' @docType class
 #' @importFrom ggplot2 ggplot geom_tile scale_fill_gradientn geom_point scale_color_gradient scale_size labs facet_grid theme_bw theme element_text element_rect
@@ -12,11 +19,13 @@
 #' @export MultifeatureGrid
 #' @export plot_heatmap
 #' @examples
-#' data <- data.frame(tissue = factor(rep(c("Tissue1", "Tissue2"), each = 4)),
-#'                    signaling = factor(rep(c("Pathway1", "Pathway2", "Pathway3", "Pathway4"), 2)),
-#'                    Activation_z_score = runif(8, -2, 2),
-#'                    p = runif(8, 0, 0.05),
-#'                    number_of_genes = sample(1:100, 8))
+#' data <- data.frame(
+#'   tissue = factor(rep(c("Tissue1", "Tissue2"), each = 4)),
+#'   signaling = factor(rep(c("Pathway1", "Pathway2", "Pathway3", "Pathway4"), 2)),
+#'   Activation_z_score = runif(8, -2, 2),
+#'   p = runif(8, 0, 0.05),
+#'   number_of_genes = sample(1:100, 8)
+#' )
 #' mg <- MultifeatureGrid(data)
 #' plot_heatmap(mg)
 setClass(

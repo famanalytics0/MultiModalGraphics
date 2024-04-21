@@ -3,7 +3,7 @@
 \docType{class}
 \name{MultifeatureGrid}
 \alias{MultifeatureGrid}
-\title{MultifeatureGrid Class for 2D Heatmap Visualization}
+\title{MultifeatureGrid: A Class for 2D Heatmap Visualization}
 \usage{
 MultifeatureGrid(
   data,
@@ -48,8 +48,8 @@ An object of class \code{MultifeatureGrid} initialized with the specified
 parameters.
 }
 \description{
-This class represents a 2D heatmap with customizable configurations for plotting
-biological data, integrating features like significance levels and z-scores.
+This class facilitates the creation of 2D heatmaps for visualizing biological data,
+integrating significant levels and z-scores with customizable heatmap configurations.
 
 This function initializes a \code{MultifeatureGrid} object with data and configuration
 for creating a multi-feature grid heatmap. It allows customization of the heatmap's
@@ -58,17 +58,33 @@ title, axis labels, color palette, and more.
 \section{Slots}{
 
 \describe{
-\item{\code{data}}{Data frame containing heatmap data.}
+\item{\code{data}}{A data frame containing heatmap data.}
 
-\item{\code{title}}{Character vector specifying the heatmap title.}
+\item{\code{title}}{The title of the heatmap.}
+
+\item{\code{x_label}}{Label for the X-axis.}
+
+\item{\code{y_label}}{Label for the Y-axis.}
+
+\item{\code{logpval_label}}{Label for the legend of log10(p-value).}
+
+\item{\code{zscore_label}}{Label for the legend of z-scores.}
+
+\item{\code{numitems_label}}{Label for the legend describing the number of items (e.g., genes).}
+
+\item{\code{color_palette}}{The name of the RColorBrewer color palette to be used.}
+
+\item{\code{breaks}}{Numeric vector of breakpoints for color mapping.}
 }}
 
 \examples{
-data <- data.frame(tissue = factor(rep(c("Tissue1", "Tissue2"), each = 4)),
-                   signaling = factor(rep(c("Pathway1", "Pathway2", "Pathway3", "Pathway4"), 2)),
-                   Activation_z_score = runif(8, -2, 2),
-                   p = runif(8, 0, 0.05),
-                   number_of_genes = sample(1:100, 8))
+data <- data.frame(
+  tissue = factor(rep(c("Tissue1", "Tissue2"), each = 4)),
+  signaling = factor(rep(c("Pathway1", "Pathway2", "Pathway3", "Pathway4"), 2)),
+  Activation_z_score = runif(8, -2, 2),
+  p = runif(8, 0, 0.05),
+  number_of_genes = sample(1:100, 8)
+)
 mg <- MultifeatureGrid(data)
 plot_heatmap(mg)
 \dontrun{
