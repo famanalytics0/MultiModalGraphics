@@ -1,0 +1,45 @@
+
+---
+title: "Function Documentation"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Function Documentation}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Introduction
+
+This vignette demonstrates how to use the `get_informative_heatmap_df()`, `get_clear_scatterplot_df()`, and `get_multifeature_grid_df()` functions from the MultiModalGraphics package.
+
+## Informative Heatmap Data
+
+The `get_informative_heatmap_df()` function provides a sample dataframe suitable for creating informative heatmaps. The dataframe includes values for three groups and their associated p-values, with row names indicating gene identifiers.
+
+```{r informative-heatmap-example}
+library(MultiModalGraphics)
+informative_heatmap_df <- get_informative_heatmap_df()
+print(informative_heatmap_df)
+```
+
+## Clear Scatterplot Data
+
+The `get_clear_scatterplot_df()` function provides a sample dataframe that represents data suitable for creating a clear scatterplot. This includes log2 fold change values, p-values, and regulation direction for a set of genes across different tissues and time points.
+
+```{r clear-scatterplot-example}
+clear_scatterplot_df <- get_clear_scatterplot_df()
+print(clear_scatterplot_df)
+```
+
+## Multifeature Grid Data
+
+The `get_multifeature_grid_df()` function returns a predefined dataframe that is ideal for creating multifeature grid visualizations. This dataframe includes signaling pathways, activation z-scores, and associated p-values for different tissues and time points.
+
+```{r multifeature-grid-example}
+multifeature_grid_df <- get_multifeature_grid_df()
+print(multifeature_grid_df)
+```
