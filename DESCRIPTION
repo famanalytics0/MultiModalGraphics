@@ -40,3 +40,4 @@ Suggests:
 biocViews: Visualization, DataIntegration, VisualIntegration, Software, ReproducibleResearch 
 URL: https://github.com/username/package
 BugReports: https://github.com/username/package/issues
+VignetteBuilder: knitr
