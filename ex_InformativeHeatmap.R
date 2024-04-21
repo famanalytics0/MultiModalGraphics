@@ -1,7 +1,8 @@
 library(ComplexHeatmap)
 library(MultiModalGraphics)
 
-informative_heatmap = read.csv("InformativeHeatmap.csv", row.names = 1)
+informative_heatmap <- get_informative_heatmap_df()
+
 informative_heatmap_matrix = as.matrix(informative_heatmap)
 group_val = informative_heatmap_matrix[,1:3]
 p_val = informative_heatmap_matrix[,4:6]
@@ -9,7 +10,7 @@ p_val = informative_heatmap_matrix[,4:6]
 htmp_plus <- InformativeHeatmap(group_val,
                                  unit_val=7,
                                  pch_val=16,
-                                 signicant_color="black",
+                                 significant_color="black",
                                  trending_color="turquoise",
                                  significant_pvalue=0.05,
                                  trending_pvalue=0.1,
