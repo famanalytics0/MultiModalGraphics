@@ -38,6 +38,6 @@ Suggests:
     testthat,
     rmarkdown
 biocViews: Software, Visualization
-URL: https://github.com/username/package
-BugReports: https://github.com/username/package/issues
+URL: https://github.com/famanalytics0/MultiModalGraphics
+BugReports: https://github.com/famanalytics0/MultiModalGraphics/issues
 VignetteBuilder: knitr
