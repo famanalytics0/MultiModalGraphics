@@ -1,6 +1,6 @@
 # MultiModalGraphics
 
-ClearScatterplot
+## ClearScatterplot
 
 ## Introduction
 
