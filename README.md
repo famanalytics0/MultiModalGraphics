@@ -120,3 +120,48 @@ features and customization, refer to the `ComplexHeatmap` documentation.
 ## Session info
 ```{r, echo=FALSE}
 sessionInfo()
+```
+
+
+# 3. MultifeatureGrid
+
+This example demonstrates how to use the `MultifeatureGrid` class from the 
+`MultiModalGraphics` package to create comprehensive heatmaps integrating 
+various data features such as z-scores, p-values, and counts.
+
+## Example Data Preparation
+
+First, we create a sample dataset representing biological data across different 
+tissues and signaling pathways, with associated p-values and activation 
+z-scores.
+
+```{r example-data}
+data <- get_multifeature_grid_df()
+
+```
+
+## Creating a MultifeatureGrid Object
+
+We initialize the `MultifeatureGrid` object with the data prepared above.
+
+```{r create-grid}
+mg <- MultifeatureGrid(data)
+```
+
+## Plotting the Heatmap
+
+We then plot the heatmap, specifying 'tissue' as the independent variable for 
+faceting.
+
+```{r plot-heatmap}
+plot_heatmap(mg, independantVariable = "tissue")
+```
+
+This plot provides a visual summary of the signaling activity and the 
+statistical significance across different tissues, utilizing a color gradient 
+to represent activation z-scores and the size of points to indicate the number 
+of genes involved.
+
+## Session info
+```{r, echo=FALSE}
+sessionInfo()
