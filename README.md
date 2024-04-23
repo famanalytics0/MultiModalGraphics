@@ -54,7 +54,7 @@ scattered_plot  # Display the plot
 ## Session info
 ```{r, echo=FALSE}
 sessionInfo()
-
+```
 
 # Informative Heatmap
 
