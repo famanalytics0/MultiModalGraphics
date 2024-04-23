@@ -1,18 +1,6 @@
 # MultiModalGraphics
 
-title: "Using ClearScatterplot"
-output: rmarkdown::html_vignette
-vignette: >
-  %\VignetteIndexEntry{Using ClearScatterplot}
-  %\VignetteEngine{knitr::rmarkdown}
-  %\VignetteEncoding{UTF-8}
----
-
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-library(MultiModalGraphics)
-library(dplyr)
-```
+ClearScatterplot
 
 ## Introduction
 
