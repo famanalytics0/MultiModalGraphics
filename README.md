@@ -56,14 +56,9 @@ scattered_plot  # Display the plot
 sessionInfo()
 
 
-
-
-
-# Informative Heatmap Usage
-
 # Informative Heatmap
 
-This vignette demonstrates how to create and visualize an informative heatmap 
+This section demonstrates how to create and visualize an informative heatmap 
 using the `MultiModalGraphics` package which utilizes the `ComplexHeatmap` 
 package for enhanced visualizations.
 
