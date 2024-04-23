@@ -1,6 +1,6 @@
-# MultiModalGraphics
+# MultiModalGraphics Classes
 
-# ClearScatterplot
+# 1. ClearScatterplot
 
 ## Introduction
 
@@ -56,7 +56,7 @@ scattered_plot  # Display the plot
 sessionInfo()
 ```
 
-# Informative Heatmap
+# 2. Informative Heatmap
 
 This section demonstrates how to create and visualize an informative heatmap 
 using the `MultiModalGraphics` package which utilizes the `ComplexHeatmap` 
