@@ -4,7 +4,7 @@
 
 ## Introduction
 
-This example demonstrates how to use the `ClearScatterplot` class to create 
+This  example demonstrates how to use the `ClearScatterplot` class to create 
 enhanced scatterplots. The `ClearScatterplot` class provides functionalities 
 for creating scatterplots with enhanced visualization features like coloring 
 based on significance levels and plotting against different variables.
