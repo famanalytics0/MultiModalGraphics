@@ -67,6 +67,16 @@ setMethod("InformativeHeatmap", "ANY", function(data,
                                                 significant_pvalue = 0.05,
                                                 trending_pvalue = 0.1,
                                                 ...) {
+  # First, check if 'data' is a matrix
+  if (!is.matrix(data)) {
+    stop("Data must be a matrix.")
+  }
+
+  # Second, check if the matrix contains only numeric values
+  if (!all(is.numeric(data))) {
+    stop("Data matrix must contain only numeric values.")
+  }
+
   if (!requireNamespace("ComplexHeatmap", quietly <- TRUE)) {
     stop(
       "ComplexHeatmap is required for creating an InformativeHeatmap object. ",
@@ -120,10 +130,22 @@ setMethod("InformativeHeatmap", "ANY", function(data,
   heatmap_obj <- do.call(ComplexHeatmap::Heatmap, c(list(data), params_list))
 
   # Construct and return the InformativeHeatmap object
-  new("InformativeHeatmap", heatmap = heatmap_obj, params = params_list)
+  methods::new("InformativeHeatmap", heatmap = heatmap_obj, params = params_list)
 
 })
 
+
+#' Define a Generic Method 'updateLayerFun'
+#'
+#' This generic function is for updating the layer function of an existing
+#' InformativeHeatmap objects.
+#'
+#' @param x An `InformativeHeatmap` object whose layer function is to be updated.
+#' @param layer_fun A function that defines the new layer to be applied to the heatmap.
+#'   The class of this object will determine which specific method is used.
+#'
+#' @return Returns an updated `InformativeHeatmap` object with the new layer function applied.
+#' @export
 setGeneric("updateLayerFun", function(x, layer_fun) {
   standardGeneric("updateLayerFun")
 })
@@ -179,7 +201,18 @@ setMethod("updateLayerFun", "InformativeHeatmap", function(x, layer_fun) {
   return(x)
 })
 
-# Define a method to get the Heatmap object from InformativeHeatmap
+#' Define a Generic Method 'getHeatmapObject'
+#'
+#' This generic function is designed to retrieve the Heatmap object from
+#' InformativeHeatmap objects. Specific methods should be defined for
+#' different classes to extract the Heatmap object as needed.
+#'
+#' @param x The object from which the Heatmap object is to be retrieved.
+#'   The class of this object will determine which specific method is used.
+#'
+#' @return The result of the specific method for retrieving the Heatmap object,
+#'   typically a Heatmap object.
+#' @export
 setGeneric("getHeatmapObject", function(x) {
   standardGeneric("getHeatmapObject")
 })
@@ -194,6 +227,7 @@ setGeneric("getHeatmapObject", function(x) {
 #'
 #' @param x An `InformativeHeatmap` object from which the Heatmap object is to
 #' be retrieved.
+#'
 #' @return A Heatmap object from the `ComplexHeatmap` package.
 #'
 #' @examples

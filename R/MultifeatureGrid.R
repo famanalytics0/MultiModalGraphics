@@ -83,7 +83,7 @@ MultifeatureGrid <-
            color_palette = "RdYlBu",
            breaks = seq(-1, 1, 0.5)) {
     # Initializes a MultifeatureGrid object with provided or default parameters
-    new(
+    methods::new(
       "MultifeatureGrid",
       data = data,
       title = title,
@@ -97,7 +97,16 @@ MultifeatureGrid <-
     )
   }
 
-# Method for plotting the heatmap for MultifeatureGrid objects
+#' Define a Generic Method 'plot_heatmap'
+#'
+#' This generic function is designed for plotting the heatmap for MultifeatureGrid objects
+#'
+#' @param object The object for which the plot is to be created. The class of this object
+#'   will determine which specific method is used.
+#' @param ... Additional arguments to be passed to the specific method for creating the plot.
+#'
+#' @return The result of the specific method for creating the plot, typically a ggplot object.
+#' @export
 setGeneric("plot_heatmap", function(object, ...)
   standardGeneric("plot_heatmap"))
 
