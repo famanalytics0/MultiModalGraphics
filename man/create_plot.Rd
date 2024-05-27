@@ -50,3 +50,20 @@ The ggplot object.
 \description{
 This function creates the actual plot based on processed data and aesthetic choices.
 }
+\examples{
+plotdata <- get_clear_scatterplot_df()
+p <- create_plot(
+  plotdata,
+  color1 = "cornflowerblue",
+  color2 = "grey",
+  color3 = "indianred",
+  highLog2fc = 0.585,
+  lowLog2fc = -0.585,
+  expressionDirection = "regulation",
+  negativeLogPValue = "negLog10p",
+  logFoldChange = "log2fc",
+  timeVariable = "reg_time_org",
+  xAxis = "organ",
+  yAxis = "timePoint"
+)
+}

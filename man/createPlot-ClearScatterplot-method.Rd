@@ -15,8 +15,8 @@
   expressionDirection = "regulation",
   negativeLogPValue = "negLog10p",
   timeVariable = "reg_time_org",
-  xAxis = xAxis,
-  yAxis = yAxis
+  xAxis = "organ",
+  yAxis = "timePoint"
 )
 }
 \arguments{
@@ -36,7 +36,7 @@
 
 \item{expressionDirection}{Direction of gene expression.}
 
-\item{negativeLogPValue}{The name of the column containing the negative log pValues}
+\item{negativeLogPValue}{The name of the column containing the negative log p-values.}
 
 \item{timeVariable}{The variable representing time.}
 
@@ -49,4 +49,27 @@ The ClearScatterplot object with the plot updated.
 }
 \description{
 Creates a plot based on the ClearScatterplot object data.
+}
+\examples{
+plotdata <- get_clear_scatterplot_df()
+scatterplotObject <- ClearScatterplot(
+  data = plotdata,
+  logFoldChange = "log2fc",
+  timePointColumn = "timePoint",
+  timePointLevels = c("T10R1", "T5R1")
+)
+scattered_plot <- createPlot(
+  scatterplotObject,
+  color1 = "cornflowerblue",
+  color2 = "grey",
+  color3 = "indianred",
+  highLog2fc = 0.585,
+  lowLog2fc = -0.585,
+  negLog10pValue = 1.301,
+  expressionDirection = "regulation",
+  negativeLogPValue = "negLog10p",
+  timeVariable = "reg_time_org",
+  xAxis = "organ",
+  yAxis = "timePoint"
+)
 }
