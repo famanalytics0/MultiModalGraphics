@@ -31,6 +31,7 @@ devtools::install_github("famanalytics0/MultiModalGraphics")
 
 \examples{
 # Example of creating an InformativeHeatmap
+library(ComplexHeatmap)
 library(MultiModalGraphics)
 data <- matrix(rnorm(100), ncol = 10)
 heatmap <- InformativeHeatmap(data, pch_val = 20, unit_val = 2,
