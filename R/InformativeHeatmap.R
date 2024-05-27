@@ -194,7 +194,6 @@ setGeneric("getHeatmapObject", function(x) {
 #'
 #' @param x An `InformativeHeatmap` object from which the Heatmap object is to
 #' be retrieved.
-#'
 #' @return A Heatmap object from the `ComplexHeatmap` package.
 #'
 #' @examples

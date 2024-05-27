@@ -32,7 +32,9 @@ Imports:
     ComplexHeatmap,
     dplyr,
     ggplot2,
-    RColorBrewer
+    RColorBrewer,
+    methods,
+    magrittr
 Suggests:
     knitr,
     testthat,
