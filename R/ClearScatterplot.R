@@ -35,14 +35,35 @@ setGeneric("ClearScatterplot", function(data, ...) {
 #' @return An object of class ClearScatterplot.
 #' @export
 #' @examples
-#' data <- data.frame(
-#'   timePoint = c("T0", "T1"), p = runif(10),
-#'   log2fc = runif(10, -2, 2)
+#' plotdata <- get_clear_scatterplot_df()
+#'
+#' scatterplotObject <- ClearScatterplot(
+#'   data = plotdata,
+#'   logFoldChange = "log2fc",
+#'   timePointColumn = "timePoint",
+#'   timePointLevels = c("T10R1", "T5R1")
 #' )
-#' scatterplot <- ClearScatterplot(
-#'   data = data, pValueColumn = "p",
-#'   expressionColumnName = "log2fc"
-#' )
+#'
+#' # Create the plot
+#' scattered_plot <-
+#'   createPlot(
+#'     scatterplotObject,
+#'     color1 = "cornflowerblue",
+#'     color2 = "grey",
+#'     color3 = "indianred",
+#'     highLog2fc = 0.585,
+#'     lowLog2fc = -0.585,
+#'     negLog10pValue = 1.301,
+#'     expressionDirection = "regulation",
+#'     negativeLogPValue = "negLog10p",
+#'     timeVariable = "reg_time_org",
+#'     xAxis = "organ",
+#'     yAxis = "timePoint"
+#'   )
+#' # Print the plot
+#' scattered_plot  # This will call the 'show' method and display the plot
+#'
+
 ClearScatterplot <- function(data,
                              logFoldChange = "log2fc",
                              negativeLogPValue = "negLog10p",
@@ -50,8 +71,7 @@ ClearScatterplot <- function(data,
                              lowLog2fc = -0.585,
                              negLog10pValue = 1.301,
                              timePointColumn = "timePoint",
-                             timePointLevels = NULL,
-                             ...) {
+                             timePointLevels = NULL) {
   if (!is.data.frame(data)) {
     stop("Data must be a data frame.")
   }
@@ -92,8 +112,11 @@ setGeneric("createPlot", function(object, ...) standardGeneric("createPlot"))
 #' @param highLog2fc Threshold for high log2 fold change values.
 #' @param lowLog2fc Threshold for low log2 fold change values.
 #' @param expressionDirection Direction of gene expression.
+#' @param negLog10pValue Threshold for -log10 p-value.
 #' @param negativeLogPValue The name of the column containing the negative log pValues
 #' @param timeVariable The variable representing time.
+#' @param xAxis The x-axis values.
+#' @param yAxis The y-axis values.
 #' @return The ClearScatterplot object with the plot updated.
 #' @export
 setMethod(
@@ -132,7 +155,24 @@ setMethod(
   }
 )
 
+
 # Function to create the actual plot based on processed data and aesthetic choices
+#' Create the Actual Plot
+#'
+#' This function creates the actual plot based on processed data and aesthetic choices.
+#' @param data The data frame containing the plot data.
+#' @param color1 Color for one category of data points.
+#' @param color2 Color for another category of data points.
+#' @param color3 Color for a third category of data points.
+#' @param highLog2fc Threshold for high log2 fold change values.
+#' @param lowLog2fc Threshold for low log2 fold change values.
+#' @param expressionDirection Direction of gene expression.
+#' @param negativeLogPValue The name of the column containing the negative log p-values.
+#' @param logFoldChange The name of the column containing log fold change values.
+#' @param timeVariable The variable representing time.
+#' @param xAxis The name of the x-axis variable.
+#' @param yAxis The name of the y-axis variable.
+#' @return The ggplot object.
 create_plot <-
   function(data,
            color1 = "cornflowerblue",
@@ -261,9 +301,8 @@ create_plot <-
 #' This method displays the scatterplot stored in the ClearScatterplot object.
 #' It invokes the `print` method on the `plot` object, which must be a ggplot object.
 #' @param object A ClearScatterplot object.
-#' @return Prints the ggplot object stored in the plot slot of the
-#' ClearScatterplot.
-#'         The function itself returns invisible `NULL` to avoid additional console output.
+#' @return Prints the ggplot object stored in the plot slot of the ClearScatterplot.
+#' The function itself returns invisible `NULL` to avoid additional console output.
 #' @export
 setMethod(
   "show",
