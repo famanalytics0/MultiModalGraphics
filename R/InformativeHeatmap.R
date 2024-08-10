@@ -95,16 +95,16 @@ setMethod("InformativeHeatmap", "ANY", function(data,
     significance_level <- params_list$significance_level
 
     custom_layer_fun <- function(j, i, x, y, w, h, fill) {
-      ind_mat <- restore_matrix(j, i, x, y)
+      ind_mat <- ComplexHeatmap::restore_matrix(j, i, x, y)
       for (ir in seq_len(nrow(ind_mat))) {
         for (ic in seq_len(ncol(ind_mat))) {
           ind <- ind_mat[ir, ic]  # previous column
           v <- significance_level[i[ind], j[ind]]
-          grid.points(x[ind],
+          grid::grid.points(x[ind],
                       y[ind],
                       pch <-
                         pch_val,
-                      gp = gpar(col = ifelse(
+                      gp = grid::gpar(col = ifelse(
                         v < significant_pvalue,
                         significant_color,
                         ifelse(
@@ -113,7 +113,7 @@ setMethod("InformativeHeatmap", "ANY", function(data,
                           NA
                         )
                       )),
-                      size <- unit(unit_val, "mm"))
+                      size <- grid::unit(unit_val, "mm"))
         }
       }
     }
