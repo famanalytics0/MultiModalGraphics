@@ -159,7 +159,7 @@ ClearScatterplot <- function(data,
 #' final_metadata <- combined_metadata[, c("SampleID", "TimePoint", "SampleType", "Group", "Condition1", "Condition2", "Condition3")]
 #'
 #' # Create the MultiAssayExperiment object
-#' mae <- MultiAssayExperiment(experiments = expression_data_list, colData = final_metadata)
+#' mae <- MultiAssayExperiment::MultiAssayExperiment(experiments = expression_data_list, colData = final_metadata)
 #'
 #' # Check available assay names
 #' assayNames <- names(MultiAssayExperiment::experiments(mae))
