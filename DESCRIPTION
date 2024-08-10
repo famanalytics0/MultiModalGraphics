@@ -27,9 +27,11 @@ Description: The MultimodalGraphics R package provides rich functionalities for 
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.1
+RoxygenNote: 7.3.2
 Imports: 
     ComplexHeatmap,
+    MultiAssayExperiment,
+    limma,
     dplyr,
     ggplot2,
     RColorBrewer,
