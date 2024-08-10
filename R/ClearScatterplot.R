@@ -96,6 +96,8 @@ ClearScatterplot <- function(data,
 #' @param highLog2fc Threshold for high log2 fold change values.
 #' @param lowLog2fc Threshold for low log2 fold change values.
 #' @param negLog10pValue Threshold for -log10 p-value.
+#' @param timepoint The name of the column containing time point information.
+#' @param sampleType The name of the column containing sample type information (e.g., tissue or organ).
 #' @return An object of class ClearScatterplot.
 #' @examples
 #' # Parameters
@@ -166,7 +168,9 @@ ClearScatterplot <- function(data,
 #' # Assuming ClearScatterplot_MAE is already defined in your script
 #' scatterplotObject <- ClearScatterplot_MAE(
 #'   mae = mae,
-#'   assayName = assayName
+#'   assayName = assayName,
+#'   timepoint = "TimePoint",
+#'   sampleType = "SampleType"
 #' )
 #'
 #' # Assuming createPlot is already defined in your script
@@ -186,8 +190,9 @@ ClearScatterplot <- function(data,
 #' @export
 ClearScatterplot_MAE <- function(mae, assayName = NULL, logFoldChange = "log2fc",
                                  negativeLogPValue = "negLog10p", highLog2fc = 0.585,
-                                 lowLog2fc = -0.585, negLog10pValue = 1.301) {
-  if (!inherits(mae, "MultiAssayExperiment")) {
+                                 lowLog2fc = -0.585, negLog10pValue = 1.301,
+                                 timepoint = "TimePoint", sampleType = "SampleType") {
+    if (!inherits(mae, "MultiAssayExperiment")) {
     stop("Data must be a MultiAssayExperiment object.")
   }
 
@@ -209,9 +214,6 @@ ClearScatterplot_MAE <- function(mae, assayName = NULL, logFoldChange = "log2fc"
   fit <- limma::lmFit(expr_data, design)
   fit <- limma::eBayes(fit)
   topTable <- limma::topTable(fit, adjust.method = "BH", number = Inf)
-
-  timepoint = "TimePoint"
-  sampleType = "SampleType"
 
   # Format the results
   data <- data.frame(
