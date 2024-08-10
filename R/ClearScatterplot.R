@@ -1,5 +1,5 @@
 # Suppress warnings for global variables
-utils::globalVariables(c(".data", "n1", "n2"))
+utils::globalVariables(c(".data", "n1", "n2","neglog10p"))
 
 #' ClearScatterplot: A Class for Enhanced Scatterplot
 #'
@@ -8,6 +8,9 @@ utils::globalVariables(c(".data", "n1", "n2"))
 #' @slot plot An object storing the ggplot representation of the data.
 #' @name ClearScatterplot
 #' @docType class
+#' @importFrom MultiAssayExperiment experiments colData assay
+#' @importFrom limma lmFit eBayes topTable
+#' @importFrom stats model.matrix
 #' @importFrom ggplot2 aes geom_point geom_text geom_jitter facet_grid
 #'   theme scale_fill_hue scale_color_manual labs element_text element_rect
 #' @export ClearScatterplot
@@ -79,6 +82,154 @@ ClearScatterplot <- function(data,
 
   return(obj)
 }
+
+
+
+#' Create a ClearScatterplot Object from MultiAssayExperiment
+#'
+#' Constructor function for creating an instance of the ClearScatterplot class from a MultiAssayExperiment object.
+#' This function performs differential expression analysis using limma.
+#' @param mae A MultiAssayExperiment object containing the assay data.
+#' @param assayName The name of the assay to use for plotting.
+#' @param logFoldChange The name of the column containing expression values.
+#' @param negativeLogPValue The name of the column containing the negative log p-values.
+#' @param highLog2fc Threshold for high log2 fold change values.
+#' @param lowLog2fc Threshold for low log2 fold change values.
+#' @param negLog10pValue Threshold for -log10 p-value.
+#' @return An object of class ClearScatterplot.
+#' @examples
+#' # Parameters
+#' num_genes <- 1000
+#' num_samples <- 1000  # Total number of samples
+#' conditions <- list(
+#'   Condition1 = c("Cond1A", "Cond1B"),
+#'   Condition2 = c("Cond2A", "Cond2B"),
+#'   Condition3 = c("Cond3A", "Cond3B")
+#' )
+#'
+#' # Function to generate expression data
+#' generate_expression_data <- function(num_genes, num_samples) {
+#'   matrix(rnorm(num_genes * num_samples, mean = 6, sd = 2), nrow = num_genes, ncol = num_samples)
+#' }
+#'
+#' # Initialize lists
+#' expression_data_list <- list()
+#' metadata_list <- list()
+#'
+#' # Generate samples for each combination of conditions
+#' all_combinations <- expand.grid(conditions)
+#' num_combinations <- nrow(all_combinations)
+#' samples_per_combination <- num_samples %/% num_combinations
+#' remaining_samples <- num_samples %% num_combinations
+#'
+#' for (i in 1:num_combinations) {
+#'   combination <- all_combinations[i, ]
+#'   combination_name <- paste(combination, collapse = "_")
+#'
+#'   # Calculate the number of samples for this combination
+#'   num_samples_for_this_combination <- samples_per_combination + ifelse(i <= remaining_samples, 1, 0)
+#'
+#'   expression_data <- generate_expression_data(num_genes, num_samples_for_this_combination)
+#'   colnames(expression_data) <- paste0(combination_name, "_Sample", 1:num_samples_for_this_combination)
+#'   rownames(expression_data) <- paste0("Gene", 1:num_genes)
+#'
+#'   sample_metadata <- data.frame(
+#'     SampleID = colnames(expression_data),
+#'     Group = rep(c("Control", "Treatment"), length.out = num_samples_for_this_combination),
+#'     stringsAsFactors = FALSE,
+#'     TimePoint = rep(c("T1", "T1", "T2", "T2"), length.out = num_samples_for_this_combination),  # Example time points
+#'     SampleType = rep(c("Tissue", "Organ"), length.out = num_samples_for_this_combination)  # Example sample types
+#'   )
+#'
+#'   for (cond in names(combination)) {
+#'     sample_metadata[[cond]] <- combination[[cond]]
+#'   }
+#'
+#'   expression_data_list[[combination_name]] <- expression_data
+#'   metadata_list[[combination_name]] <- sample_metadata
+#' }
+#'
+#' # Combine metadata into a single data frame
+#' combined_metadata <- do.call(rbind, metadata_list)
+#' rownames(combined_metadata) <- combined_metadata$SampleID
+#'
+#' # Select only the relevant columns for the final metadata
+#' final_metadata <- combined_metadata[, c("SampleID", "TimePoint", "SampleType", "Group", "Condition1", "Condition2", "Condition3")]
+#'
+#' # Create the MultiAssayExperiment object
+#' mae <- MultiAssayExperiment(experiments = expression_data_list, colData = final_metadata)
+#'
+#' # Check available assay names
+#' assayNames <- names(MultiAssayExperiment::experiments(mae))
+#' assayName <- assayNames[1]
+#'
+#' # Assuming ClearScatterplot_MAE is already defined in your script
+#' scatterplotObject <- ClearScatterplot_MAE(
+#'   mae = mae,
+#'   assayName = assayName
+#' )
+#'
+#' # Assuming createPlot is already defined in your script
+#' # Generate and display the plot
+#' scatterplotObject <- createPlot(
+#'   scatterplotObject,
+#'   color1 = "cornflowerblue",
+#'   color2 = "grey",
+#'   color3 = "indianred",
+#'   highLog2fc = 0.585,
+#'   lowLog2fc = -0.585,
+#'   negLog10pValue = 1.301
+#' )
+#'
+#' # Show the plot
+#' print(scatterplotObject@plot)
+#' @export
+ClearScatterplot_MAE <- function(mae, assayName = NULL, logFoldChange = "log2fc",
+                                 negativeLogPValue = "negLog10p", highLog2fc = 0.585,
+                                 lowLog2fc = -0.585, negLog10pValue = 1.301) {
+  if (!inherits(mae, "MultiAssayExperiment")) {
+    stop("Data must be a MultiAssayExperiment object.")
+  }
+
+  if (is.null(assayName) || !assayName %in% names(MultiAssayExperiment::experiments(mae))) {
+    stop("Please specify a valid assayName from the MultiAssayExperiment object.")
+  }
+
+  se <- MultiAssayExperiment::experiments(mae)[[assayName]]
+  col_data <- MultiAssayExperiment::colData(mae)
+  expr_data <- MultiAssayExperiment::assay(se)
+
+  # Ensure columns match and are in the correct order
+  sample_names <- colnames(expr_data)
+  col_data <- col_data[rownames(col_data) %in% sample_names, ]
+  col_data <- col_data[match(sample_names, rownames(col_data)), ]
+
+  # Differential expression analysis using limma
+  design <- model.matrix(~ Group, data = col_data)
+  fit <- limma::lmFit(expr_data, design)
+  fit <- limma::eBayes(fit)
+  topTable <- limma::topTable(fit, adjust.method = "BH", number = Inf)
+
+  timepoint = "TimePoint"
+  sampleType = "SampleType"
+
+  # Format the results
+  data <- data.frame(
+    log2fc = topTable$logFC,
+    negLog10p = -log10(topTable$P.Value),
+    regulation = ifelse (topTable$logFC > 0, "up", "down"),
+    organ = colData(mae)[[sampleType]],
+    timePoint = colData(mae)[[timepoint]],
+    reg_time_org = ifelse (topTable$logFC > 0, "up", "down"),
+    row.names = rownames(topTable)
+  )
+
+  ClearScatterplot(data, logFoldChange, negativeLogPValue, highLog2fc, lowLog2fc, negLog10pValue)
+}
+
+
+
+
 
 # Define a generic method 'createPlot' to create plots for objects
 #' Define a Generic Method 'createPlot'
