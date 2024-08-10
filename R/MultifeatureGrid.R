@@ -1,3 +1,6 @@
+# Suppress warnings for global variables
+utils::globalVariables(c("signaling", "tissue", "Activation_z_score"))
+
 #' MultifeatureGrid: A Class for 2D Heatmap Visualization
 #'
 #' This class facilitates the creation of 2D heatmaps for visualizing biological data,
