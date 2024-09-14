@@ -201,6 +201,121 @@ setMethod("updateLayerFun", "InformativeHeatmap", function(x, layer_fun) {
   return(x)
 })
 
+# setGeneric("InformativeHeatmapFromMAE", function(mae, ...) {
+#   standardGeneric("InformativeHeatmapFromMAE")
+# })
+
+#' Create an InformativeHeatmap from a MultiAssayExperiment Object
+#'
+#' This method takes a `MultiAssayExperiment` object, performs feature selection using
+#' `iClusterPlus`, and creates an `InformativeHeatmap` with a custom `layer_fun`
+#' based on significance levels.
+#'
+#' @param mae A `MultiAssayExperiment` object containing multiple assays.
+#' @param significant_pvalue P-value threshold for significance.
+#'   Points with p-values below this threshold will be colored with `significant_color`.
+#'   Default is 0.05.
+#' @param trending_pvalue P-value threshold for trending significance.
+#'   Points with p-values above `significant_pvalue` and below this threshold
+#'   will be colored with `trending_color`. Default is 0.1.
+#' @param significant_color Color to be used for points representing significant values.
+#'   Default is "black".
+#' @param trending_color Color to be used for points representing trending values
+#'   (significant but less so than those meeting the `significant_pvalue` criterion).
+#'   Default is "yellow".
+#' @param pch_val Plotting character (pch) value for points in the heatmap. Default is 16.
+#' @param unit_val Size of the points in the heatmap. Specified in 'mm'. Default is 1.
+#' @param ... Additional parameters passed to `ComplexHeatmap::Heatmap`.
+#' @return An object of class `InformativeHeatmap`.
+#' @export
+InformativeHeatmapFromMAE <- function(mae,
+                                      significant_pvalue = 0.05,
+                                      trending_pvalue = 0.1,
+                                      significant_color = "black",
+                                      trending_color = "yellow",
+                                      pch_val = 16,
+                                      unit_val = 1,
+                                      ...) {
+  # Convert MultiAssayExperiment to a list for iClusterPlus
+  data_list <- lapply(assays(mae), function(assay) {
+    assay_matrix <- as.matrix(assay)
+    mode(assay_matrix) <- "numeric"
+    return(t(assay_matrix))  # Transpose so that samples are rows and features are columns
+  })
+
+  # Run iClusterPlus for feature selection
+  set.seed(123)
+  # Create a list of named arguments dt1, dt2, dt3, etc.
+  dt_list <- setNames(data_list, paste0("dt", seq_along(data_list)))
+
+  # Pass the named list along with other required arguments to iClusterPlus
+  fit <- do.call(iClusterPlus, c(dt_list, list(type = rep("gaussian", length(data_list)),
+                                               K = 2, lambda = rep(0.03, length(data_list)))))
+
+  #fit <- do.call(iClusterPlus, c(data_list, list(type = rep("gaussian", length(data_list)),
+  #                                               K = 2, lambda = rep(0.03, length(data_list)))))
+
+  # Define a threshold for selecting important features based on the magnitude of the coefficients
+  threshold <- 0.1
+
+  # Extract selected features based on the threshold
+  selected_features_list <- lapply(seq_along(data_list), function(i) {
+    colnames(data_list[[i]])[apply(fit$beta[[i]], 1, function(x) any(abs(x) > threshold))]
+  })
+
+  # Combine selected features
+  selected_features <- unique(unlist(selected_features_list))
+
+  # Prepare combined data matrix with selected features
+  combined_selected_data <- do.call(rbind, lapply(seq_along(data_list), function(i) {
+    assay_data <- assays(mae)[[i]]
+    assay_data[selected_features_list[[i]], , drop = FALSE]
+  }))
+
+  # Transpose combined data matrix for heatmap
+  heatmap_data <- t(combined_selected_data)
+
+  # Call the InformativeHeatmap constructor with the processed data
+  heatmap_obj <- InformativeHeatmap(heatmap_data,
+                                    pch_val = pch_val,
+                                    unit_val = unit_val,
+                                    significant_color = significant_color,
+                                    trending_color = trending_color,
+                                    significant_pvalue = significant_pvalue,
+                                    trending_pvalue = trending_pvalue,
+                                    ...)
+
+  return(heatmap_obj)
+
+  # Define a custom layer_fun based on significance levels
+  # custom_layer_fun <- function(j, i, x, y, w, h, fill) {
+  #   ind_mat <- ComplexHeatmap::restore_matrix(j, i, x, y)
+  #   for (ir in seq_len(nrow(ind_mat))) {
+  #     for (ic in seq_len(ncol(ind_mat))) {
+  #       ind <- ind_mat[ir, ic]
+  #       v <- fit$beta[[ir]][, ic]  # Significance level based on fit
+  #       grid::grid.points(x[ind],
+  #                         y[ind],
+  #                         pch = pch_val,
+  #                         gp = grid::gpar(col = ifelse(
+  #                           v < significant_pvalue,
+  #                           significant_color,
+  #                           ifelse(
+  #                             v >= significant_pvalue && v < trending_pvalue,
+  #                             trending_color,
+  #                             NA
+  #                           )
+  #                         )),
+  #                         size = grid::unit(unit_val, "mm"))
+  #     }
+  #   }
+  # }
+
+  # Create and return the InformativeHeatmap object with the custom layer_fun
+  # return(InformativeHeatmap(heatmap_data, layer_fun = custom_layer_fun, ...))
+}
+
+
 #' Define a Generic Method 'getHeatmapObject'
 #'
 #' This generic function is designed to retrieve the Heatmap object from
