@@ -1,3 +1,6 @@
+# Suppress warnings for global variables
+utils::globalVariables(c("assays", "setNames", "iClusterPlus"))
+
 #' InformativeHeatmap: A Class for Enhanced Heatmaps
 #'
 #' This class encapsulates the ComplexHeatmap package's Heatmap object,
@@ -252,7 +255,7 @@ InformativeHeatmapFromMAE <- function(mae,
 
   # Run iClusterPlus clustering
   set.seed(123)
-  dt_list <- setNames(data_list, paste0("dt", seq_along(data_list)))
+  dt_list <- stats::setNames(data_list, paste0("dt", seq_along(data_list)))
 
   fit <- do.call(iClusterPlus, c(dt_list, list(
     type = rep("gaussian", length(data_list)),
