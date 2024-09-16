@@ -3,6 +3,7 @@
 export(ClearScatterplot)
 export(ClearScatterplot_MAE)
 export(InformativeHeatmap)
+export(InformativeHeatmapFromMAE)
 export(MultifeatureGrid)
 export(createPlot)
 export(create_plot)
