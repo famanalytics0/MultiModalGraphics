@@ -61,7 +61,7 @@ setGeneric("InformativeHeatmap", function(data, ...) {
 
 setMethod("InformativeHeatmap", "ANY", function(data,
                                                 pch_val = 16,
-                                                unit_val = 1,
+                                                unit_val = 4,
                                                 significant_color = "black",
                                                 trending_color = "yellow",
                                                 significant_pvalue = 0.05,
@@ -205,11 +205,12 @@ setMethod("updateLayerFun", "InformativeHeatmap", function(x, layer_fun) {
 #   standardGeneric("InformativeHeatmapFromMAE")
 # })
 
+
 #' Create an InformativeHeatmap from a MultiAssayExperiment Object
 #'
-#' This method takes a `MultiAssayExperiment` object, performs feature selection using
-#' `iClusterPlus`, and creates an `InformativeHeatmap` with a custom `layer_fun`
-#' based on significance levels.
+#' This method takes a `MultiAssayExperiment` object, clusters the samples using `iClusterPlus`,
+#' compares the clusters using `limma`, and creates an `InformativeHeatmap` with a custom `layer_fun`
+#' based on significance levels from the cluster comparison.
 #'
 #' @param mae A `MultiAssayExperiment` object containing multiple assays.
 #' @param significant_pvalue P-value threshold for significance.
@@ -220,11 +221,13 @@ setMethod("updateLayerFun", "InformativeHeatmap", function(x, layer_fun) {
 #'   will be colored with `trending_color`. Default is 0.1.
 #' @param significant_color Color to be used for points representing significant values.
 #'   Default is "black".
-#' @param trending_color Color to be used for points representing trending values
-#'   (significant but less so than those meeting the `significant_pvalue` criterion).
+#' @param trending_color Color to be used for points representing trending values.
 #'   Default is "yellow".
 #' @param pch_val Plotting character (pch) value for points in the heatmap. Default is 16.
 #' @param unit_val Size of the points in the heatmap. Specified in 'mm'. Default is 1.
+#' @param K Number of clusters for `iClusterPlus`. Default is 3.
+#' @param lambda Regularization parameter for `iClusterPlus`. Default is 0.2.
+#' @param coef Compare cluster group to be used as a contrast for `limma` analysis.
 #' @param ... Additional parameters passed to `ComplexHeatmap::Heatmap`.
 #' @return An object of class `InformativeHeatmap`.
 #' @export
@@ -234,87 +237,113 @@ InformativeHeatmapFromMAE <- function(mae,
                                       significant_color = "black",
                                       trending_color = "yellow",
                                       pch_val = 16,
-                                      unit_val = 1,
+                                      unit_val = 4,
+                                      K = 3,  # Number of clusters for iClusterPlus
+                                      lambda = 0.2,  # Regularization for iClusterPlus
+                                      coef = 2,  # Contrast to compare cluster groups in limma
                                       ...) {
-  # Convert MultiAssayExperiment to a list for iClusterPlus
+
+  # Convert MultiAssayExperiment to a list of matrices for iClusterPlus
   data_list <- lapply(assays(mae), function(assay) {
     assay_matrix <- as.matrix(assay)
     mode(assay_matrix) <- "numeric"
     return(t(assay_matrix))  # Transpose so that samples are rows and features are columns
   })
 
-  # Run iClusterPlus for feature selection
+  # Run iClusterPlus clustering
   set.seed(123)
-  # Create a list of named arguments dt1, dt2, dt3, etc.
   dt_list <- setNames(data_list, paste0("dt", seq_along(data_list)))
 
-  # Pass the named list along with other required arguments to iClusterPlus
-  fit <- do.call(iClusterPlus, c(dt_list, list(type = rep("gaussian", length(data_list)),
-                                               K = 2, lambda = rep(0.03, length(data_list)))))
+  fit <- do.call(iClusterPlus, c(dt_list, list(
+    type = rep("gaussian", length(data_list)),
+    K = K,  # Number of clusters
+    lambda = rep(lambda, length(data_list)),
+    maxiter = 20
+  )))
 
-  #fit <- do.call(iClusterPlus, c(data_list, list(type = rep("gaussian", length(data_list)),
-  #                                               K = 2, lambda = rep(0.03, length(data_list)))))
+  # Get the clustering results
+  clusters <- factor(fit$clusters)
 
-  # Define a threshold for selecting important features based on the magnitude of the coefficients
-  threshold <- 0.1
+  # Create design matrix for limma analysis based on clusters
+  design <- model.matrix(~ 0 + clusters)
+  colnames(design) <- levels(clusters)
 
-  # Extract selected features based on the threshold
-  selected_features_list <- lapply(seq_along(data_list), function(i) {
-    colnames(data_list[[i]])[apply(fit$beta[[i]], 1, function(x) any(abs(x) > threshold))]
+  # Perform limma analysis on each assay to compare the cluster groups
+  limma_results <- lapply(names(assays(mae)), function(assay_name) {
+    assay_data <- assays(mae)[[assay_name]]
+    fit_limma <- lmFit(assay_data, design)
+    fit_limma <- eBayes(fit_limma)
+    topTable_limma <- topTable(fit_limma, coef = coef, number = Inf)
+
+    # Extract logFC and p-values
+    logFC <- topTable_limma$logFC
+    p_values <- topTable_limma$P.Value
+
+    return(list(logFC = logFC, p_values = p_values))
   })
+  names(limma_results) <- names(assays(mae))
 
-  # Combine selected features
-  selected_features <- unique(unlist(selected_features_list))
-
-  # Prepare combined data matrix with selected features
-  combined_selected_data <- do.call(rbind, lapply(seq_along(data_list), function(i) {
-    assay_data <- assays(mae)[[i]]
-    assay_data[selected_features_list[[i]], , drop = FALSE]
+  # Combine logFCs across assays for heatmap
+  combined_logFC <- do.call(rbind, lapply(limma_results, function(result) {
+    return(result$logFC)
   }))
 
+  # Combine p-values across assays
+  combined_pvalues <- do.call(rbind, lapply(limma_results, function(result) {
+    return(result$p_values)
+  }))
+
+  # Ensure that combined_pvalues and combined_logFC have the same number of rows
+  if (nrow(combined_logFC) != nrow(combined_pvalues)) {
+    stop("Mismatch between the number of rows in logFC and p-values")
+  }
+
   # Transpose combined data matrix for heatmap
-  heatmap_data <- t(combined_selected_data)
+  heatmap_data <- t(combined_logFC)
 
-  # Call the InformativeHeatmap constructor with the processed data
-  heatmap_obj <- InformativeHeatmap(heatmap_data,
-                                    pch_val = pch_val,
-                                    unit_val = unit_val,
-                                    significant_color = significant_color,
-                                    trending_color = trending_color,
-                                    significant_pvalue = significant_pvalue,
-                                    trending_pvalue = trending_pvalue,
-                                    ...)
+  # Define a custom layer_fun based on p-values
+  custom_layer_fun <- function(j, i, x, y, w, h, fill) {
+    ind_mat <- ComplexHeatmap::restore_matrix(j, i, x, y)
+    n_rows <- nrow(combined_pvalues)
+    n_cols <- ncol(combined_pvalues)
 
-  return(heatmap_obj)
+    for (ir in seq_len(nrow(ind_mat))) {
+      for (ic in seq_len(ncol(ind_mat))) {
+        ind <- ind_mat[ir, ic]
+        # Make sure to use the right index to access combined_pvalues and combined_logFC
+        if (ir <= n_rows && ic <= n_cols) {
+          p_value <- combined_pvalues[ir, ic]
 
-  # Define a custom layer_fun based on significance levels
-  # custom_layer_fun <- function(j, i, x, y, w, h, fill) {
-  #   ind_mat <- ComplexHeatmap::restore_matrix(j, i, x, y)
-  #   for (ir in seq_len(nrow(ind_mat))) {
-  #     for (ic in seq_len(ncol(ind_mat))) {
-  #       ind <- ind_mat[ir, ic]
-  #       v <- fit$beta[[ir]][, ic]  # Significance level based on fit
-  #       grid::grid.points(x[ind],
-  #                         y[ind],
-  #                         pch = pch_val,
-  #                         gp = grid::gpar(col = ifelse(
-  #                           v < significant_pvalue,
-  #                           significant_color,
-  #                           ifelse(
-  #                             v >= significant_pvalue && v < trending_pvalue,
-  #                             trending_color,
-  #                             NA
-  #                           )
-  #                         )),
-  #                         size = grid::unit(unit_val, "mm"))
-  #     }
-  #   }
-  # }
+          # Determine color based on p-value
+          col_value <- ifelse(
+            p_value < significant_pvalue,
+            significant_color,
+            ifelse(
+              p_value >= significant_pvalue && p_value < trending_pvalue,
+              trending_color,
+              NA
+            )
+          )
+
+          # Only draw points for non-NA values
+          if (!is.na(col_value)) {
+            grid::grid.points(
+              x[ind], y[ind],
+              pch = pch_val,
+              gp = grid::gpar(col = col_value),
+              size = grid::unit(unit_val, "mm")
+            )
+          }
+        } else {
+          warning("Index out of bounds in combined_pvalues")
+        }
+      }
+    }
+  }
 
   # Create and return the InformativeHeatmap object with the custom layer_fun
-  # return(InformativeHeatmap(heatmap_data, layer_fun = custom_layer_fun, ...))
+  return(InformativeHeatmap(heatmap_data, layer_fun = custom_layer_fun, ...))
 }
-
 
 #' Define a Generic Method 'getHeatmapObject'
 #'
