@@ -1,19 +1,54 @@
+
 ---
-title: "ClearScatterplotExample"
+title: "ClearScatterplot Example"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{ClearScatterplotExample}
+  %\VignetteIndexEntry{ClearScatterplot Example}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
 
-```{r, include = FALSE}
+```{r setup, include=FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>"
 )
+library(MultiModalGraphics)
 ```
 
-```{r setup}
-library(MultiModalGraphics)
+# Example Usage of ClearScatterplot
+
+This vignette demonstrates how to use `MultiModalGraphics` to create a `ClearScatterplot` visualization.
+
+```{r}
+
+# Load the data
+file_path <- system.file("extdata", "scatterexample.csv", package = "yourPackageName")
+filtered_data <- read.csv(file_path)
+
+# Transform and set up for plot
+filtered_data$negLog10p <- -log10(filtered_data$p)
+filtered_data$negLog10q <- -log10(filtered_data$q)
+
+# Create the ClearScatterplot instance
+scattered_plot <- ClearScatterplot(
+  data = filtered_data,
+  logFoldChange = "log2fc",
+  timePointColumn = "timePoint"
+)
+
+# Generate the plot
+scattered_plot <- createPlot(
+  scattered_plot,
+  color1 = "cornflowerblue",
+  color2 = "grey",
+  color3 = "indianred",
+  highLog2fc = 0.585,
+  lowLog2fc = -0.585,
+  expressionDirection = "regulation",
+  timeVariable = "reg_time_org"
+)
+
+# Display the plot
+scattered_plot
 ```
