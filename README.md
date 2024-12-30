@@ -6,8 +6,7 @@
 
 This  example demonstrates how to use the `ClearScatterplot` class to create 
 enhanced scatterplots. The `ClearScatterplot` class provides functionalities 
-for creating scatterplots with enhanced visualization features like coloring 
-based on significance levels and plotting against different variables.
+for creating scatterplots with enhanced visualization features like text showing the number of significant and/or up and down regulated features, coloring based on significance levels and fold change.
 
 ## Example: Creating a Scatterplot
 
@@ -59,7 +58,7 @@ sessionInfo()
 # 2. InformativeHeatmap
 
 This section demonstrates how to create and visualize an informative heatmap 
-using the `MultiModalGraphics` package which utilizes the `ComplexHeatmap` 
+using the `MultiModalGraphics` package which uses some functions of the `ComplexHeatmap` 
 package for enhanced visualizations.
 
 ## Basic Usage
