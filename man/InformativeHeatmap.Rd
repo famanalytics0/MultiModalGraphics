@@ -9,7 +9,7 @@
 \S4method{InformativeHeatmap}{ANY}(
   data,
   pch_val = 16,
-  unit_val = 1,
+  unit_val = 4,
   significant_color = "black",
   trending_color = "yellow",
   significant_pvalue = 0.05,

@@ -46,7 +46,7 @@ mg <- MultifeatureGrid(data)
 We then plot the heatmap, specifying 'tissue' as the independent variable for 
 faceting.
 
-```{r plot-heatmap}
+```{r plot-heatmap, fig.width=10, fig.height=8}
 plot_heatmap(mg, independantVariable = "tissue")
 ```
 

@@ -1,0 +1,7 @@
+pandoc: '3.2'
+pkgdown: 2.1.0
+pkgdown_sha: ~
+articles:
+  multifeature_grid: multifeature_grid.html
+  MultiModalGraphics: MultiModalGraphics.html
+last_built: 2024-07-28T18:15Z

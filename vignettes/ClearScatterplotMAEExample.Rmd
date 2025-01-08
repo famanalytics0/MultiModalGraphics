@@ -1,0 +1,122 @@
+
+---
+title: "ClearScatterplot MAE Example"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{ClearScatterplot MAE Example}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Example Usage of ClearScatterplot with MAE
+
+This vignette demonstrates how to use `MultiModalGraphics` to create a `ClearScatterplot` visualization.
+
+```{r}
+# Load required libraries
+library(MultiAssayExperiment)
+library(MultiModalGraphics)
+library(dplyr)
+
+# Parameters
+num_genes <- 1000
+num_samples <- 1000  # Total number of samples
+conditions <- list(
+  Condition1 = c("Cond1A", "Cond1B"),
+  Condition2 = c("Cond2A", "Cond2B"),
+  Condition3 = c("Cond3A", "Cond3B")
+)
+
+# Function to generate expression data
+generate_expression_data <- function(num_genes, num_samples) {
+  matrix(rnorm(num_genes * num_samples, mean = 6, sd = 2), nrow = num_genes, ncol = num_samples)
+}
+
+# Initialize lists
+expression_data_list <- list()
+metadata_list <- list()
+
+# Generate samples for each combination of conditions
+all_combinations <- expand.grid(conditions)
+num_combinations <- nrow(all_combinations)
+samples_per_combination <- num_samples %/% num_combinations
+remaining_samples <- num_samples %% num_combinations
+
+for (i in 1:num_combinations) {
+  combination <- all_combinations[i, ]
+  combination_name <- paste(combination, collapse = "_")
+
+  # Calculate the number of samples for this combination
+  num_samples_for_this_combination <- samples_per_combination + ifelse(i <= remaining_samples, 1, 0)
+
+  expression_data <- generate_expression_data(num_genes, num_samples_for_this_combination)
+  colnames(expression_data) <- paste0(combination_name, "_Sample", 1:num_samples_for_this_combination)
+  rownames(expression_data) <- paste0("Gene", 1:num_genes)
+
+  sample_metadata <- data.frame(
+    SampleID = colnames(expression_data),
+    Group = rep(c("Control", "Treatment"), length.out = num_samples_for_this_combination),
+    stringsAsFactors = FALSE,
+    TimePoint = rep(c("T1","T1" ,"T2",  "T2"), length.out = num_samples_for_this_combination),  # Example time points
+    SampleType = rep(c("Tissue", "Organ"), length.out = num_samples_for_this_combination)  # Example sample types
+  )
+
+  for (cond in names(combination)) {
+    sample_metadata[[cond]] <- combination[[cond]]
+  }
+
+  expression_data_list[[combination_name]] <- expression_data
+  metadata_list[[combination_name]] <- sample_metadata
+}
+
+# Combine metadata into a single data frame
+combined_metadata <- do.call(rbind, metadata_list)
+rownames(combined_metadata) <- combined_metadata$SampleID
+
+# Select only the relevant columns for the final metadata
+final_metadata <- combined_metadata[, c("SampleID", "TimePoint", "SampleType", "Group", "Condition1", "Condition2", "Condition3")]
+
+# Check the size of the final metadata
+print(dim(final_metadata))  # Should be 1000 rows
+head(final_metadata)
+
+# Create the MultiAssayExperiment object
+mae <- MultiAssayExperiment::MultiAssayExperiment(experiments = expression_data_list, colData = final_metadata)
+
+# Check available assay names
+print(names(MultiAssayExperiment::experiments(mae)))
+
+# Use a valid assay name (example: select the first one)
+assayNames <- names(MultiAssayExperiment::experiments(mae))
+assayName <- assayNames[1]
+print(paste("Using assay name:", assayName))
+
+# Assuming ClearScatterplot_MAE is already defined in your script
+scatterplotObject <- ClearScatterplot_MAE(
+  mae = mae,
+  assayName = assayName,
+  timepoint = "TimePoint",
+  sampleType = "SampleType"
+)
+
+
+# Assuming createPlot is already defined in your script
+# Generate and display the plot
+scatterplotObject <- createPlot(
+  scatterplotObject,
+  color1 = "cornflowerblue",
+  color2 = "grey",
+  color3 = "indianred",
+  highLog2fc = 0.585,
+  lowLog2fc = -0.585,
+  negLog10pValue = 1.301
+)
+
+# Show the plot
+print(scatterplotObject@plot)
+
+```

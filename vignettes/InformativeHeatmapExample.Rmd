@@ -1,0 +1,569 @@
+
+---
+title: "Creating Informative Heatmaps"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Creating Informative Heatmaps}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+## Overview
+
+This vignette demonstrates how to generate complex and informative heatmaps using multiple datasets. We will utilize the `MultiModalGraphics`, `ComplexHeatmap`, and other visualization libraries to create an interactive visualization.
+
+---
+
+## Required Libraries
+
+```{r libraries}
+# Load required packages for heatmap generation, data manipulation, and color schemes
+library(MultiModalGraphics)
+library(paletteer)
+library(ggthemes)
+library(ComplexHeatmap)
+library(seriation)
+library(circlize)
+library(gridtext)
+library(ggplot2)
+library(wesanderson)
+library(RColorBrewer)
+library(GetoptLong)
+library(methods)
+library(reshape)
+library(dplyr)
+```
+
+## Load and Preprocess Data
+
+The following datasets are used in this analysis:
+
+1. CNA mutation data
+2. miRNA-mRNA interaction data
+3. DNA methylation data
+4. Protein-mRNA interaction data
+
+```{r load-data}
+# Load datasets
+file_path <- system.file("extdata", 
+                         "Pan_cancer_CESC_Mutated_CNV_STR_VART.csv", 
+                         package = "MultiModalGraphics")
+cna_mut_stv <- read.csv(file_path, row.names = 1)
+
+file_path <- system.file("extdata",
+                         "Pan_cancer_miRNA-mRNA_interaction_data.csv",
+                         package = "MultiModalGraphics")
+pancancer_mirna_log2 <- read.csv(file_path, row.names = 1)
+
+file_path <- system.file("extdata", 
+                         "Pan_Cancer_DNA_methylation.csv", 
+                         package = "MultiModalGraphics")
+pancancer_methylation <- read.csv(file_path, row.names = 1)
+
+file_path <- system.file("extdata", 
+                         "Pan_cancer_protein-mRNA_combined_data.csv", 
+                         package = "MultiModalGraphics")
+protein_mrna_pvalues <- read.csv(file_path, row.names = 1)
+```
+
+---
+
+
+## Generate Heatmaps
+
+### miRNA Heatmap
+
+```{r mirna-heatmap}
+# Define color functions
+cna_col_fun = colorRamp2(c(0, 1, 2), c("grey96", "grey90", "grey80"))
+
+
+qvaluepancancer = cna_mut_stv$q.value
+
+ha_cna_pancancer = rowAnnotation(
+  q_value = anno_simple(
+    cna_mut_stv$CNA,
+    col = cna_col_fun,
+    na_col = "white",
+    pch = ifelse(
+      qvaluepancancer < 0.00000000001,
+      "***",
+      ifelse(
+        qvaluepancancer < 0.00001,
+        "**",
+        ifelse(qvaluepancancer <
+                 0.1, "*", "")
+      )
+    )
+  ),
+  CNV = anno_barplot(
+    cna_mut_stv$CNA,
+    border = FALSE,
+    gp = gpar(fill = "rosybrown")
+  ),
+  gap = unit(3, "mm"),
+  width = unit(60, "mm"),
+  CNA = anno_text(
+    cna_mut_stv$CNA_alteration,
+    gp = gpar(fontsize = 10, fontface = "bold"),
+    just = "left",
+    location = unit(0.05, "npc")
+  )
+)
+
+mutated_col_fun = colorRamp2(c(0:11), c(paste0(
+  "grey", c(85, 80, 75, 70, 65, 60, 55, 50, 45, 40, 35, 30)
+)))
+ha_mutated_pancancer = rowAnnotation(
+  cytoband = anno_text(
+    cna_mut_stv$Cytoband,
+    gp = gpar(fontsize = 10, fontface = "bold"),
+    just = "left",
+    location = unit(0.075, "npc")
+  ),
+  mutat_freq = anno_simple(
+    cna_mut_stv$Mutation,
+    col = mutated_col_fun,
+    na_col = "white"
+  )
+)
+
+ha_structural_variant = rowAnnotation(
+  cancer_gene = anno_text(
+    ifelse(cna_mut_stv$Cancer.Gene == "yes", "+", "-"),
+    gp = gpar(fontsize = 16, fontface = "bold"),
+    just = "right",
+    location = unit(0.7, "npc")
+  ),
+  STR_VARNT = anno_barplot(
+    cna_mut_stv$Structural.Variant,
+    border = FALSE,
+    gp = gpar(fill = "lightgrey")
+  ),
+  width = unit(30, "mm")
+)
+
+
+ha_mir_pancancer = rowAnnotation(
+  mir_pancancer_anno = anno_text(
+    pancancer_mirna_log2$miRNA,
+    gp = gpar(fontsize = 8, fontface = "bold"),
+    just = "left",
+    location = unit(0, "npc")
+  )
+)
+
+pancancer_mirna_log2_matrix = as.matrix(pancancer_mirna_log2[, 2:7])
+
+col_fun_mir = colorRamp2(c(-2, -1, 0, 1, 2),
+                         c("slategray3", "slategray1", "white", "thistle3", "rosybrown4"))
+
+htmp_mir_pancancer <- InformativeHeatmap(
+  pancancer_mirna_log2_matrix,
+  show_row_names = F,
+  column_title = "miRNA",
+  column_title_side = c("top"),
+  column_title_gp = gpar(fontsize = 12, fontface = "bold"),
+  column_title_rot = 0,
+  na_col = "white",
+  show_heatmap_legend = F,
+  rect_gp = gpar(col = "white", lwd = 2),
+  cluster_rows = F,
+  cluster_columns = F,
+  show_column_names = T,
+  column_names_gp = gpar(fontsize = 10, fontface = "bold"),
+  right_annotation = ha_mir_pancancer,
+  col = col_fun_mir,
+  column_names_rot = 45,
+  width = unit(35, "mm")
+)
+
+```
+
+
+###  Heatmap
+
+```{r protein-heatmap}
+
+pancancer_methylation2 = pancancer_methylation[, c(2, 4, 6, 8, 10, 12, 1, 3, 5, 7, 9, 11)]
+
+pancancer_methylation2$probe_name = with(
+  pancancer_methylation2,
+  paste(CESC_dmp, OV_dmp, PRAD_dmp, TGCT_dmp, UCEC_dmp, UCS_dmp, sep = "; ")
+)
+
+ha_dmrpancancer = rowAnnotation(
+  dmrpancancer_anno = anno_text(
+    pancancer_methylation2$probe_name,
+    gp = gpar(fontsize = 8, fontface = "bold"),
+    just = "left",
+    location = unit(0, "npc")
+  )
+)
+
+pancancer_dmp_matrix = as.matrix(pancancer_methylation2[, 1:6])
+
+pancancer_dmp_matrix[is.na(pancancer_dmp_matrix)] <- 0
+
+col_fun_dmr = colorRampPalette(rev(brewer.pal(n = 9, name = "Oranges")))(10)
+col_fun_dmr = colorRampPalette(rev(brewer.pal(n = 11, name = "PuOr")))(100)
+
+col_fun_dmp = colorRamp2(
+  c(0.0, 0.2, 0.4, 0.6, 0.8, 1.0),
+  c(
+    "blanchedalmond",
+    "bisque",
+    "burlywood1",
+    "darkgoldenrod1",
+    "orange",
+    "darkorange1"
+  )
+)# "orange"))
+
+htmp_dmp_pancancer <- InformativeHeatmap(
+  pancancer_dmp_matrix,
+  show_row_names = F,
+  column_title = "cis-regulatory DMPs",
+  column_title_side = c("top"),
+  column_title_gp = gpar(fontsize = 12, fontface = "bold"),
+  column_title_rot = 0,
+  show_heatmap_legend = F,
+  rect_gp = gpar(col = "white", lwd = 2),
+  cluster_rows = F,
+  cluster_columns = F,
+  show_column_names = T,
+  column_names_gp = gpar(fontsize = 10, fontface = "bold"),
+  right_annotation = ha_dmrpancancer,
+  col = col_fun_dmp,
+  column_names_rot = 45,
+  width = unit(35, "mm")
+)
+
+```
+
+### Heatmap
+
+```{r dmp-heatmap}
+
+case_numbers = data.frame(cbind (
+  c("CESC", "OV", "PRAD", "TGCT", "UCEC", "UCS"),
+  c(312, 461, 547, 157, 444, 56)
+))
+names(case_numbers) = c("cancer", "cases")
+
+ha_cases = HeatmapAnnotation(
+  . = anno_barplot(
+    as.numeric(case_numbers$cases),
+    name = "number of subjects",
+    show_annotation_name = F,
+    annotation_name_side = "left",
+    gp = gpar(fill = "grey"),
+    gap = unit(10, "mm"),
+    height = unit(10, "mm")
+  ),
+  pathways = anno_empty(border = F, height = unit(6, "mm"))
+)
+
+protein_mrna_pvalues_matrix = as.matrix(protein_mrna_pvalues)
+
+colnames(protein_mrna_pvalues_matrix)
+
+# protein heatmap
+o1_protein = seriate(dist(protein_mrna_pvalues_matrix[, c(1:6)]), method = "GW")
+o2_protein = seriate(dist(t(protein_mrna_pvalues_matrix[, c(13:18)])), method = "GW")
+
+small_mat_protein = protein_mrna_pvalues_matrix[, c(1:6)]
+small_mat_pv_protein = protein_mrna_pvalues_matrix[, c(13:18)]
+
+colnames(small_mat_protein) = c(case_numbers$cancer)
+col_fun = colorRamp2(c(-0.5, 0, 0.4), c("blue", "white", "red"))
+htmp1_protein <- InformativeHeatmap(
+  small_mat_protein,
+  significance_level = small_mat_pv_protein,
+  col = col_fun,
+  show_heatmap_legend = F,
+  show_column_dend = F,
+  show_row_dend = F,
+  show_row_names = F,
+  cluster_columns = F,
+  cluster_column_slices = F,
+  column_title = "protein",
+  column_title_gp = gpar(fontsize = 12, fontface = "bold"),
+  column_names_gp = gpar(fontsize = 10, fontface = "bold"),
+  row_names_side = c("left"),
+  row_names_gp = gpar(fontsize = 10, fontface = "bold"),
+  column_names_rot = 45,
+  row_dend_reorder = TRUE,
+  rect_gp = gpar(col = "white", lwd = 2)
+)
+
+
+```
+
+---
+
+## Heatmap
+
+```{r legends}
+
+o1_mrna = seriate(dist(protein_mrna_pvalues_matrix[, c(7:12)]), method = "GW")
+o2_mrna = seriate(dist(t(protein_mrna_pvalues_matrix[, c(19:24)])), method = "GW")
+
+small_mat_mrna = protein_mrna_pvalues_matrix[, c(7:12)]
+small_mat_pv_mrna = protein_mrna_pvalues_matrix[, c(19:24)]
+
+colnames(small_mat_mrna) = case_numbers$cancer
+col_fun = colorRamp2(c(-0.5, 0, 0.4), c("blue", "white", "red"))
+htmp1_mRNA <- InformativeHeatmap(
+  small_mat_mrna,
+  significance_level = small_mat_pv_mrna,
+  name = "log2FC",
+  col = col_fun,
+  show_heatmap_legend = F,
+  top_annotation = ha_cases,
+  show_column_dend = F,
+  show_row_dend = F,
+  cluster_columns = F,
+  cluster_column_slices = F,
+  row_title = "cellular proliferation and antiapoptotic pathways",
+  column_title = "mRNA",
+  column_title_gp = gpar(fontsize = 12, fontface = "bold"),
+  cluster_rows = T,
+  show_row_names = T,
+  column_names_gp = gpar(fontsize = 10, fontface = "bold"),
+  row_names_side = c("left"),
+  row_names_gp = gpar(fontsize = 10, fontface = "bold"),
+  column_names_rot = 45,
+  row_km = 3,
+  row_dend_reorder = TRUE,
+  rect_gp = gpar(col = "white", lwd = 2)
+)
+
+
+```
+
+---
+
+## Combine and Draw Final Heatmap
+
+```{r final-heatmap, fig.width=24, fig.height=16}
+
+ht_opt(
+  heatmap_column_names_gp = gpar(fontface = "bold"),
+  heatmap_column_title_gp = gpar(fontsize = 10),
+  annotation_border = NULL #TRUE
+)
+
+ht_opt(RESET = TRUE)
+
+
+# setup and draw legends
+col_fun2 = colorRamp2(c(-1, 0, 1), c("blue", "white", "red"))
+lgd1 = Legend(
+  col_fun = col_fun2,
+  title = "log2(fold change)",
+  title_position = "topcenter",
+  direction = "horizontal",
+  legend_height = unit(4, "cm")
+)#, at = c(-1, -0.5, 0, 0.5, 1), labels = c("-1", "-0.5", "0", "0.5", "1"))
+
+
+lgd_significant = Legend(
+  labels = c("p < 0.05", "0.05 <= p < 0.1 "),
+  title = "protein/mRNA\np-value",
+  type = "points",
+  title_position =  "leftcenter",
+  grid_height = unit(5, "mm"),
+  grid_width = unit(5, "mm"),
+  pch = 16,
+  size = unit(5, "mm"),
+  labels_gp = gpar(fontsize = 9),
+  legend_gp = gpar(col = c(1, 7)),
+  background = "white"
+)
+
+col_fun_mir = colorRamp2(c(-2, -1, 0, 1, 2),
+                         c("slategray3", "slategray1", "white", "thistle3", "rosybrown4"))
+lgd_miR = Legend(
+  col_fun_mir,
+  title = "miRNA\nlog2(fold change)",
+  at = c(-2, -1, 0, 1, 2),
+  labels = c("-2", "-1", "0", "1", "2"),
+  title_position = "topcenter",
+  direction = "horizontal",
+  legend_width =  unit(3, "cm")
+)
+
+col_fun_dmp = colorRamp2(
+  c(0.0, 0.2, 0.4, 0.6, 0.8, 1.0),
+  c(
+    "blanchedalmond",
+    "bisque",
+    "burlywood1",
+    "darkgoldenrod1",
+    "orange",
+    "darkorange1"
+  )
+)# "orange"))
+
+lgd_dmp = Legend(
+  title = "hyper-methylation",
+  title_position = "topcenter",
+  direction = "horizontal",
+  legend_width =  unit(4, "cm"),
+  col_fun_dmp,
+  at = c(0.0, 0.2, 0.4, 0.6, 0.8, 1.0),
+  labels = c(0.0, 0.2, 0.4, 0.6, 0.8, 1.0)
+)
+
+# working code for the copy number alterations
+cna_col_fun = colorRamp2(c(0, 1, 2), c("grey96", "grey90", "grey80"))
+ha_cna_pancancer = rowAnnotation(
+  q_value = anno_simple(
+    cna_mut_stv$CNA,
+    col = cna_col_fun,
+    na_col = "white",
+    pch = ifelse(
+      qvaluepancancer < 0.0000000001,
+      "***",
+      ifelse(
+        qvaluepancancer < 0.00001,
+        "**",
+        ifelse(qvaluepancancer < 0.05, "*", "")
+      )
+    )
+  ),
+  CNV_freq = anno_barplot(
+    cna_mut_stv$CNA,
+    border = FALSE,
+    gp = gpar(fill = "rosybrown")
+  ),
+  gap = unit(3, "mm"),
+  width = unit(60, "mm"),
+  CNA = anno_text(
+    cna_mut_stv$CNA_alteration,
+    gp = gpar(fontsize = 10, fontface = "bold"),
+    just = "left",
+    location = unit(0.05, "npc")
+  )
+)
+
+cna_col_fun = colorRamp2(c(0, 1, 2), c("grey96", "grey90", "grey80"))
+lgd_cna = Legend(
+  pch = c("*", "**", "***"),
+  type = "points",
+  labels = c("< 5e-2", "<1e-5", "<1e-10"),
+  title = "copy number variations\nq-value",
+  title_position =  "leftcenter",
+  size = unit(5, "mm"),
+  labels_gp = gpar(fontsize = 11),
+  legend_gp = gpar(col = c(1, 1, 1)),
+  background = "white"
+)
+
+# working code for structural variant good
+ha_structural_variant = rowAnnotation(
+  cancer_gene = anno_text(
+    ifelse(cna_mut_stv$Cancer.Gene == "yes", "+", "-"),
+    gp = gpar(fontsize = 16, fontface = "bold"),
+    just = "right",
+    location = unit(0.7, "npc")
+  ),
+  str_vrnt_freq = anno_barplot(
+    cna_mut_stv$Structural.Variant,
+    border = FALSE,
+    gp = gpar(fill = "lightgrey")
+  ),
+  width = unit(30, "mm")
+)
+
+lgd_structural_variant = Legend(
+  pch = c("+", "-"),
+  type = "points",
+  labels = c("yes", "no"),
+  title = "Is cancer gene?",
+  title_position =  "leftcenter",
+  size = unit(5, "mm"),
+  labels_gp = gpar(fontsize = 11, fontface = "bold"),
+  legend_gp = gpar(col = c(1, 1, 1)),
+  background = "white"
+)
+
+# working code for mutated genes
+mutated_col_fun = colorRamp2(c(0:11), c(paste0(
+  "grey", c(85, 80, 75, 70, 65, 60, 55, 50, 45, 40, 35, 30)
+)))
+ha_mutated_pancancer = rowAnnotation(
+  cytoband = anno_text(
+    cna_mut_stv$Cytoband,
+    gp = gpar(fontsize = 10, fontface = "bold"),
+    just = "left",
+    location = unit(0.075, "npc")
+  ),
+  mutat_freq = anno_simple(
+    cna_mut_stv$Mutation,
+    col = mutated_col_fun,
+    na_col = "white"
+  )
+)
+
+min(cna_mut_stv$Mutation)
+
+mutated_col_fun = colorRamp2(c(0:11), c(paste0(
+  "grey", c(85, 80, 75, 70, 65, 60, 55, 50, 45, 40, 35, 30)
+)))
+lgd_mutated = Legend(
+  mutated_col_fun,
+  title = "mutation frequency (in %)",
+  at = c(0, 2, 4, 6, 8, 10, 12),
+  labels = c("0", "2", "4", "6", "8", "10", "12"),
+  title_position = "topcenter",
+  direction = "horizontal",
+  legend_width =  unit(4, "cm")
+)
+
+# draw heatmaps
+draw(
+  getHeatmapObject(htmp1_mRNA) + getHeatmapObject(htmp1_protein) +
+    getHeatmapObject(htmp_mir_pancancer) + getHeatmapObject(htmp_dmp_pancancer) +
+    ha_cna_pancancer + ha_structural_variant + ha_mutated_pancancer,
+  ht_gap = unit(c(7, 7, 7, 7, 7, 7, 7), "mm"),
+  auto_adjust = FALSE,
+  padding = unit(c(40, 10, 10, 10), "mm") # bottom, right, top, left
+)
+
+# packaged legends
+packaged_legends = packLegend(
+  lgd1,
+  lgd_significant,
+  lgd_miR,
+  lgd_dmp,
+  lgd_cna,
+  lgd_structural_variant,
+  lgd_mutated,
+  column_gap = unit(2, "cm"),
+  direction = "horizontal"
+) #, lgd_deps)
+
+# draw legends
+draw(
+  packaged_legends,
+  x = unit(0.5, "npc"),
+  y = unit(0.05, "npc"),
+  just = "center"
+)
+
+```
+
+---
+
+## Conclusion
+
+This vignette demonstrates the integration of complex heatmaps and annotations for biological datasets, providing actionable insights into multi-omics data.

@@ -40,7 +40,15 @@ Imports:
 Suggests:
     knitr,
     testthat,
-    rmarkdown
+    rmarkdown,
+    GetoptLong,
+    circlize,
+    ggthemes,
+    gridtext,
+    paletteer,
+    reshape,
+    seriation,
+    wesanderson
 biocViews: Software, Visualization
 URL: https://github.com/famanalytics0/MultiModalGraphics
 BugReports: https://github.com/famanalytics0/MultiModalGraphics/issues
