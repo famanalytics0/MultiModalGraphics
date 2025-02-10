@@ -1,4 +1,3 @@
-
 ---
 title: "ClearScatterplot MAE Example"
 output: rmarkdown::html_vignette

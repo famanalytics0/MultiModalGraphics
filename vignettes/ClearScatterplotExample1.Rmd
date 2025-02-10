@@ -1,4 +1,3 @@
-
 ---
 title: "ClearScatterplot Example"
 output: rmarkdown::html_vignette

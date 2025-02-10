@@ -1,4 +1,3 @@
-
 ---
 title: "MultiModalGraphics: Comprehensive Guide"
 output: rmarkdown::html_vignette

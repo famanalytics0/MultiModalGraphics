@@ -1,4 +1,3 @@
-
 ---
 title: "MultifeatureGrid Example"
 output: rmarkdown::html_vignette
