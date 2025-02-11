@@ -254,7 +254,7 @@ InformativeHeatmapFromMAE <- function(mae,
   })
 
   # Run iClusterPlus clustering
-  set.seed(123)
+  # set.seed(123)
   dt_list <- stats::setNames(data_list, paste0("dt", seq_along(data_list)))
 
   fit <- do.call(iClusterPlus, c(dt_list, list(
