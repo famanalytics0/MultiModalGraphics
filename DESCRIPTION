@@ -1,6 +1,6 @@
 Package: MultiModalGraphics
 Title: MultiModalGraphics: An R Package for Graphical Integration of Multimodal Datasets
-Version: 0.99.3
+Version: 0.99.4
 Authors@R: 
     person("Seid", "Muhie", , "yimersm@gmail.com", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0003-3409-049X"))
