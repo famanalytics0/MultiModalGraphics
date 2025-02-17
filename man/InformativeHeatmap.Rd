@@ -64,12 +64,10 @@ for heatmap customization, including visual customization based on significance 
 }}
 
 \examples{
-\donttest{
   data <- matrix(rnorm(100), ncol = 10)
   heatmap <- InformativeHeatmap(data, pch_val = 20, unit_val = 2,
                                 significant_color = "red",
                                 trending_color = "blue",
                                 significant_pvalue = 0.05,
                                 trending_pvalue = 0.1)
-}
 }
