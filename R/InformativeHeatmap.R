@@ -52,14 +52,12 @@ setGeneric("InformativeHeatmap", function(data, ...) {
 #' @return An object of class `InformativeHeatmap` with the heatmap initialized
 #'   and customized according to the provided parameters.
 #' @examples
-#' \donttest{
 #'   data <- matrix(rnorm(100), ncol = 10)
 #'   heatmap <- InformativeHeatmap(data, pch_val = 20, unit_val = 2,
 #'                                 significant_color = "red",
 #'                                 trending_color = "blue",
 #'                                 significant_pvalue = 0.05,
 #'                                 trending_pvalue = 0.1)
-#' }
 #' @export
 
 setMethod("InformativeHeatmap", "ANY", function(data,
@@ -80,7 +78,7 @@ setMethod("InformativeHeatmap", "ANY", function(data,
     stop("Data matrix must contain only numeric values.")
   }
 
-  if (!requireNamespace("ComplexHeatmap", quietly <- TRUE)) {
+  if (!requireNamespace("ComplexHeatmap", quietly = TRUE)) {
     stop(
       "ComplexHeatmap is required for creating an InformativeHeatmap object. ",
       "Please install it using BiocManager::install('ComplexHeatmap')."
@@ -105,8 +103,7 @@ setMethod("InformativeHeatmap", "ANY", function(data,
           v <- significance_level[i[ind], j[ind]]
           grid::grid.points(x[ind],
                       y[ind],
-                      pch <-
-                        pch_val,
+                      pch = pch_val,
                       gp = grid::gpar(col = ifelse(
                         v < significant_pvalue,
                         significant_color,
@@ -148,6 +145,7 @@ setMethod("InformativeHeatmap", "ANY", function(data,
 #'   The class of this object will determine which specific method is used.
 #'
 #' @return Returns an updated `InformativeHeatmap` object with the new layer function applied.
+#' @rdname updateLayerFun
 #' @export
 setGeneric("updateLayerFun", function(x, layer_fun) {
   standardGeneric("updateLayerFun")
@@ -163,17 +161,22 @@ setGeneric("updateLayerFun", function(x, layer_fun) {
 #' @param layer_fun A function that defines the new layer to be applied to the heatmap.
 #'   This function should be compatible with the layering system of `ComplexHeatmap`.
 #' @return Returns an updated `InformativeHeatmap` object with the new layer function applied.
+#' @rdname updateLayerFun
 #' @examples
-#' \donttest{
 #'   # Assume `ih` is an existing InformativeHeatmap object
 #'   # Define a new layer function
+#'   data <- matrix(rnorm(100), ncol = 10)
+#'   ih <- InformativeHeatmap(data, pch_val = 20, unit_val = 2,
+#'                                 significant_color = "red",
+#'                                 trending_color = "blue",
+#'                                 significant_pvalue = 0.05,
+#'                                 trending_pvalue = 0.1)
 #'   new_layer_fun <- function(j, i, x, y, w, h, fill) {
 #'     grid::grid.points(x, y, pch = 16, size = unit(2, "mm"), gp = grid::gpar(col = "red"))
 #'   }
 #'
 #'   # Update the layer function of the heatmap
 #'   ih <- updateLayerFun(ih, new_layer_fun)
-#' }
 #' @export
 setMethod("updateLayerFun", "InformativeHeatmap", function(x, layer_fun) {
   if (!requireNamespace("ComplexHeatmap", quietly <- TRUE)) {
@@ -358,6 +361,7 @@ InformativeHeatmapFromMAE <- function(mae,
 #'
 #' @return The result of the specific method for retrieving the Heatmap object,
 #'   typically a Heatmap object.
+#' @rdname getHeatmapObject
 #' @export
 setGeneric("getHeatmapObject", function(x) {
   standardGeneric("getHeatmapObject")
@@ -377,12 +381,17 @@ setGeneric("getHeatmapObject", function(x) {
 #' @return A Heatmap object from the `ComplexHeatmap` package.
 #'
 #' @examples
-#' \donttest{
+#'   data <- matrix(rnorm(100), ncol = 10)
+#'   ih <- InformativeHeatmap(data, pch_val = 20, unit_val = 2,
+#'                                 significant_color = "red",
+#'                                 trending_color = "blue",
+#'                                 significant_pvalue = 0.05,
+#'                                 trending_pvalue = 0.1)
 #'   # Assume `ih` is an existing InformativeHeatmap object
 #'   heatmap_obj <- getHeatmapObject(ih)
 #'   # Now `heatmap_obj` can be used directly with ComplexHeatmap functions
-#' }
 #'
+#' @rdname getHeatmapObject
 #' @export
 setMethod("getHeatmapObject", "InformativeHeatmap", function(x) {
   if (!requireNamespace("ComplexHeatmap", quietly = TRUE)) {
