@@ -488,11 +488,24 @@ create_plot <- function(data,
 #' @export
 #' @examples
 #' # Create example data
-#' data <- data.frame(log2fc = rnorm(100), negLog10p = -log10(runif(100)))
-#' scatterplotObject <- ClearScatterplot(data)
+#' plotdata <- get_clear_scatterplot_df()
+#' p <- create_plot(
+#'   plotdata,
+#'   color1 = "cornflowerblue",
+#'   color2 = "grey",
+#'   color3 = "indianred",
+#'   highLog2fc = 0.585,
+#'   lowLog2fc = -0.585,
+#'   expressionDirection = "regulation",
+#'   negativeLogPValue = "negLog10p",
+#'   logFoldChange = "log2fc",
+#'   timeVariable = "reg_time_org",
+#'   xAxis = "organ",
+#'   yAxis = "timePoint"
+#' )
 #' 
 #' # Display the plot
-#' show(scatterplotObject)
+#' show(p)
 setMethod(
   "show",
   signature(object = "ClearScatterplot"),
