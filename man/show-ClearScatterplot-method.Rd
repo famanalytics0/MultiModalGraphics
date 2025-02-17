@@ -17,3 +17,24 @@ The function itself returns invisible \code{NULL} to avoid additional console ou
 This method displays the scatterplot stored in the ClearScatterplot object.
 It invokes the \code{print} method on the \code{plot} object, which must be a ggplot object.
 }
+\examples{
+# Create example data
+plotdata <- get_clear_scatterplot_df()
+p <- create_plot(
+  plotdata,
+  color1 = "cornflowerblue",
+  color2 = "grey",
+  color3 = "indianred",
+  highLog2fc = 0.585,
+  lowLog2fc = -0.585,
+  expressionDirection = "regulation",
+  negativeLogPValue = "negLog10p",
+  logFoldChange = "log2fc",
+  timeVariable = "reg_time_org",
+  xAxis = "organ",
+  yAxis = "timePoint"
+)
+
+# Display the plot
+show(p)
+}

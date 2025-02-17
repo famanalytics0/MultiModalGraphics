@@ -2,20 +2,45 @@
 % Please edit documentation in R/InformativeHeatmap.R
 \name{updateLayerFun}
 \alias{updateLayerFun}
+\alias{updateLayerFun,InformativeHeatmap-method}
 \title{Define a Generic Method 'updateLayerFun'}
 \usage{
 updateLayerFun(x, layer_fun)
+
+\S4method{updateLayerFun}{InformativeHeatmap}(x, layer_fun)
 }
 \arguments{
 \item{x}{An \code{InformativeHeatmap} object whose layer function is to be updated.}
 
 \item{layer_fun}{A function that defines the new layer to be applied to the heatmap.
-The class of this object will determine which specific method is used.}
+This function should be compatible with the layering system of \code{ComplexHeatmap}.}
 }
 \value{
+Returns an updated \code{InformativeHeatmap} object with the new layer function applied.
+
 Returns an updated \code{InformativeHeatmap} object with the new layer function applied.
 }
 \description{
 This generic function is for updating the layer function of an existing
 InformativeHeatmap objects.
+
+This method allows updating the layer function of an existing \code{InformativeHeatmap} object.
+It requires the \code{ComplexHeatmap} package to recreate the heatmap with the new layer function.
+If \code{ComplexHeatmap} is not installed, it will stop and prompt the user to install \code{ComplexHeatmap}.
+}
+\examples{
+  # Assume `ih` is an existing InformativeHeatmap object
+  # Define a new layer function
+  data <- matrix(rnorm(100), ncol = 10)
+  ih <- InformativeHeatmap(data, pch_val = 20, unit_val = 2,
+                                significant_color = "red",
+                                trending_color = "blue",
+                                significant_pvalue = 0.05,
+                                trending_pvalue = 0.1)
+  new_layer_fun <- function(j, i, x, y, w, h, fill) {
+    grid::grid.points(x, y, pch = 16, size = unit(2, "mm"), gp = grid::gpar(col = "red"))
+  }
+
+  # Update the layer function of the heatmap
+  ih <- updateLayerFun(ih, new_layer_fun)
 }

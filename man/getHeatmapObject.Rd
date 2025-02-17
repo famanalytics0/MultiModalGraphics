@@ -2,20 +2,43 @@
 % Please edit documentation in R/InformativeHeatmap.R
 \name{getHeatmapObject}
 \alias{getHeatmapObject}
+\alias{getHeatmapObject,InformativeHeatmap-method}
 \title{Define a Generic Method 'getHeatmapObject'}
 \usage{
 getHeatmapObject(x)
+
+\S4method{getHeatmapObject}{InformativeHeatmap}(x)
 }
 \arguments{
-\item{x}{The object from which the Heatmap object is to be retrieved.
-The class of this object will determine which specific method is used.}
+\item{x}{An \code{InformativeHeatmap} object from which the Heatmap object is to
+be retrieved.}
 }
 \value{
 The result of the specific method for retrieving the Heatmap object,
 typically a Heatmap object.
+
+A Heatmap object from the \code{ComplexHeatmap} package.
 }
 \description{
 This generic function is designed to retrieve the Heatmap object from
 InformativeHeatmap objects. Specific methods should be defined for
 different classes to extract the Heatmap object as needed.
+
+This method extracts the underlying Heatmap object stored within an
+\code{InformativeHeatmap} object. It allows direct access to the \code{Heatmap} object
+for further manipulation or inspection using \code{ComplexHeatmap} package
+functionalities. Note that the \code{ComplexHeatmap} package is required
+to fully utilize the returned Heatmap object.
+}
+\examples{
+  data <- matrix(rnorm(100), ncol = 10)
+  ih <- InformativeHeatmap(data, pch_val = 20, unit_val = 2,
+                                significant_color = "red",
+                                trending_color = "blue",
+                                significant_pvalue = 0.05,
+                                trending_pvalue = 0.1)
+  # Assume `ih` is an existing InformativeHeatmap object
+  heatmap_obj <- getHeatmapObject(ih)
+  # Now `heatmap_obj` can be used directly with ComplexHeatmap functions
+
 }
