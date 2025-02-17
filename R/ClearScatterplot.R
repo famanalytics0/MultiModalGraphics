@@ -244,6 +244,7 @@ ClearScatterplot_MAE <- function(mae, assayName = NULL, logFoldChange = "log2fc"
 #' @param ... Additional arguments to be passed to the specific method for creating the plot.
 #'
 #' @return The result of the specific method for creating the plot, typically a plot object.
+#' @rdname createPlot
 #' @export
 setGeneric("createPlot", function(object, ...) standardGeneric("createPlot"))
 
@@ -263,6 +264,7 @@ setGeneric("createPlot", function(object, ...) standardGeneric("createPlot"))
 #' @param xAxis The x-axis values.
 #' @param yAxis The y-axis values.
 #' @return The ClearScatterplot object with the plot updated.
+#' @rdname createPlot
 #' @export
 #' @examples
 #' plotdata <- get_clear_scatterplot_df()
@@ -484,6 +486,13 @@ create_plot <- function(data,
 #' @return Prints the ggplot object stored in the plot slot of the ClearScatterplot.
 #' The function itself returns invisible `NULL` to avoid additional console output.
 #' @export
+#' @examples
+#' # Create example data
+#' data <- data.frame(log2fc = rnorm(100), negLog10p = -log10(runif(100)))
+#' scatterplotObject <- ClearScatterplot(data)
+#' 
+#' # Display the plot
+#' show(scatterplotObject)
 setMethod(
   "show",
   signature(object = "ClearScatterplot"),
