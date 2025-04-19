@@ -21,21 +21,38 @@ This vignette demonstrates how to generate complex and informative heatmaps usin
 ## Required Libraries
 
 ```{r libraries}
-# Load required packages for heatmap generation, data manipulation, and color schemes
-library(MultiModalGraphics)
-library(paletteer)
-library(ggthemes)
-library(ComplexHeatmap)
-library(seriation)
-library(circlize)
-library(gridtext)
-library(ggplot2)
-library(wesanderson)
-library(RColorBrewer)
-library(GetoptLong)
-library(methods)
-library(reshape)
-library(dplyr)
+# Load packages for heatmap generation, data manipulation & color schemes
+if (exists("suppressPackageStartupMessage", mode = "function")) {
+  suppressPackageStartupMessage(library(MultiModalGraphics))
+  suppressPackageStartupMessage(library(paletteer))
+  suppressPackageStartupMessage(library(ggthemes))
+  suppressPackageStartupMessage(library(ComplexHeatmap))
+  suppressPackageStartupMessage(library(seriation))
+  suppressPackageStartupMessage(library(circlize))
+  suppressPackageStartupMessage(library(gridtext))
+  suppressPackageStartupMessage(library(ggplot2))
+  suppressPackageStartupMessage(library(wesanderson))
+  suppressPackageStartupMessage(library(RColorBrewer))
+  suppressPackageStartupMessage(library(GetoptLong))
+  suppressPackageStartupMessage(library(methods))
+  suppressPackageStartupMessage(library(reshape))
+  suppressPackageStartupMessage(library(dplyr))
+} else {
+  library(MultiModalGraphics)
+  library(paletteer)
+  library(ggthemes)
+  library(ComplexHeatmap)
+  library(seriation)
+  library(circlize)
+  library(gridtext)
+  library(ggplot2)
+  library(wesanderson)
+  library(RColorBrewer)
+  library(GetoptLong)
+  library(methods)
+  library(reshape)
+  library(dplyr)
+}
 ```
 
 ## Load and Preprocess Data
