@@ -9,9 +9,15 @@ vignette: >
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-library(MultiModalGraphics)
-library(ComplexHeatmap)
-library(dplyr)
+if (exists("suppressPackageStartupMessage", mode = "function")) {
+  suppressPackageStartupMessage(library(MultiModalGraphics))
+  suppressPackageStartupMessage(library(ComplexHeatmap))
+  suppressPackageStartupMessage(library(dplyr))
+} else {
+  library(MultiModalGraphics)
+  library(ComplexHeatmap)
+  library(dplyr)
+}
 ```
 
 # Introduction
