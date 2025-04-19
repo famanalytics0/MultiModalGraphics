@@ -15,7 +15,7 @@ Datasets were obtained from [The Cancer Genome Atlas (TCGA)](https://www.google.
 
 - scatterexample.csv
 
-‘These datasets were downloaded from [Gene Expression Omnibus GSE45035](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE45035). Brain regions include AY: amygdala, HC: hippocampus, MPFC: medial prefrontal cortex, SE: septal region, ST: corpus striatum, and VS: ventral striatum.’
+These datasets were downloaded from [Gene Expression Omnibus GSE45035](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE45035). Brain regions include AY: amygdala, HC: hippocampus, MPFC: medial prefrontal cortex, SE: septal region, ST: corpus striatum, and VS: ventral striatum.’
 
 
 ***ClearScatterplot dataset***
