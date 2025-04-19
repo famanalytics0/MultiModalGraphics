@@ -17,7 +17,11 @@ This vignette demonstrates how to use `MultiModalGraphics` to create a `ClearSca
 
 ```{r}
 # Load required libraries
-library(MultiModalGraphics)
+if (exists("suppressPackageStartupMessage", mode = "function")) {
+  suppressPackageStartupMessage(library(MultiModalGraphics))
+} else {
+  library(MultiModalGraphics)
+}
 
 # Load the data
 file_path <- system.file("extdata", "scatterexample.csv", package = "MultiModalGraphics")
