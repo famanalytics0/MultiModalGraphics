@@ -16,7 +16,11 @@ knitr::opts_chunk$set(echo = TRUE)
 This vignette demonstrates how to use `MultiModalGraphics` to create a `MultifeatureGrid` visualization.
 
 ```{r}
-library(MultiModalGraphics)
+if (exists("suppressPackageStartupMessage", mode = "function")) {
+  suppressPackageStartupMessage(library(MultiModalGraphics))
+} else {
+  library(MultiModalGraphics)
+}
 # Example usage:
 filepath <- system.file("extdata", "twoD_graphics.csv", package = "MultiModalGraphics")
 data <- read.csv(filepath)
