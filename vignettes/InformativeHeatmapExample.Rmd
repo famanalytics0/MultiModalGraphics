@@ -7,6 +7,12 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
+## Abstract
+
+The `InformativeHeatmap` class extends the `ComplexHeatmap` object to overlay analytical outputs—such as p-values, q-values, standard deviations, or uncertainty/error metrics—that are not typically visible in standard heatmaps. This enriched visualization provides insight into the **statistical significance of molecular features**, highlighting those that truly contribute to group separations (e.g., control vs. case). Squares are visually marked using star icons to represent significance levels (e.g., dark for significant, yellow for trending, none for not significant), helping users avoid misleading interpretations based solely on color intensity.
+
+This vignette demonstrates how to generate an `InformativeHeatmap` and apply it to a dataset with group-level contrasts. Compared to standard heatmap tools in Bioconductor such as `ComplexHeatmap`, `pheatmap`, or `heatmaply`, `InformativeHeatmap` emphasizes **feature-level significance** within the heatmap grid, addressing a common gap in omics visualization. This makes it particularly suitable for pathway exploration, biomarker discovery, and visual QC of statistical outputs.
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
