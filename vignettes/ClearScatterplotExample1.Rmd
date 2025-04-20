@@ -7,6 +7,14 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
+## Abstract
+
+`ClearScatterplot` is a highly customizable scatter plot class that extends `ggplot2` to allow users to visualize multiple datasets in a unified layout. It supports **flexible customization of color schemes, thresholds, annotations**, and groupings to highlight molecular features (e.g., transcripts or proteins) that meet statistical criteria such as p-values and fold changes. One key feature is the ability to **explicitly show the number of features passing user-defined thresholds**, adding critical context often missing in conventional volcano or MA-plots.
+
+This vignette showcases how to generate `ClearScatterplot` visualizations from raw or summarized data and highlights its applicability to multi-condition, multi-group, or multi-timepoint designs. Compared to other Bioconductor scatter plotting tools, such as `EnhancedVolcano`, `ggVolcanoR`, or manual `ggplot2` solutions, `ClearScatterplot` focuses on providing **quantitative clarity** through visual summary of significance thresholds and grouping structure.
+
+It is particularly useful for **multi-condition** or **multi-group** designs, where the number of features passing user-defined thresholds can be explicitly shown. This is a critical feature that is often missing in conventional volcano or MA-plots.
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
