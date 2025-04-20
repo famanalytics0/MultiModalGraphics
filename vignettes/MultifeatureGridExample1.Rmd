@@ -7,6 +7,13 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
+## Abstract
+
+`MultifeatureGrid` introduces a composite grid heatmap visualization, where **each row represents a group of related features**—such as molecular features grouped by pathway—rather than individual features. This approach allows users to visualize activation or inhibition patterns of grouped biological entities across multiple conditions, brain regions, or time points.
+
+This vignette demonstrates the use of `MultifeatureGrid` to explore activation/inhibition status across 20 flat file datasets, showing the flexibility of this tool for **high-dimensional longitudinal and spatial data**. Circle sizes indicate the number of contributing features, while circle colors denote the statistical significance of the grouped pattern. In contrast to Bioconductor tools like `ComplexHeatmap`, `multiplot`, or custom `ggplot2` extensions, `MultifeatureGrid` uniquely visualizes **multi-feature summaries per row**, enabling group-level interpretation rather than feature-by-feature comparisons.
+
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
