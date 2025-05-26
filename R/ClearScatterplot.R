@@ -89,7 +89,7 @@ ClearScatterplot <- function(data,
 #'
 #' Constructor function for creating an instance of the ClearScatterplot class from a MultiAssayExperiment object.
 #' This function performs differential expression analysis using limma.
-#' @param mae A MultiAssayExperiment object containing the assay data.
+#' @param mae A \code{MultiAssayExperiment} object containing the assay data.
 #' @param assayName The name of the assay to use for plotting.
 #' @param logFoldChange The name of the column containing expression values.
 #' @param negativeLogPValue The name of the column containing the negative log p-values.
@@ -98,7 +98,8 @@ ClearScatterplot <- function(data,
 #' @param negLog10pValue Threshold for -log10 p-value.
 #' @param timepoint The name of the column containing time point information.
 #' @param sampleType The name of the column containing sample type information (e.g., tissue or organ).
-#' @return An object of class ClearScatterplot.
+#' @param groupColumn The name of the column in \code{colData(mae)} that defines the grouping variable for the design matrix.
+#' @return An object of class \code{ClearScatterplot}.
 #' @examples
 #' # Parameters
 #' num_genes <- 1000
@@ -191,7 +192,8 @@ ClearScatterplot <- function(data,
 ClearScatterplot_MAE <- function(mae, assayName = NULL, logFoldChange = "log2fc",
                                  negativeLogPValue = "negLog10p", highLog2fc = 0.585,
                                  lowLog2fc = -0.585, negLog10pValue = 1.301,
-                                 timepoint = "TimePoint", sampleType = "SampleType") {
+                                 timepoint = "TimePoint", sampleType = "SampleType",
+                                 groupColumn = "Group") {
     if (!inherits(mae, "MultiAssayExperiment")) {
     stop("Data must be a MultiAssayExperiment object.")
   }
@@ -210,7 +212,10 @@ ClearScatterplot_MAE <- function(mae, assayName = NULL, logFoldChange = "log2fc"
   col_data <- col_data[match(sample_names, rownames(col_data)), ]
 
   # Differential expression analysis using limma
-  design <- model.matrix(~ Group, data = col_data)
+  design_formula <- as.formula(paste0("~", groupColumn))
+  design <- model.matrix(design_formula, data = col_data)
+  #design <- model.matrix(~ Group, data = col_data)
+
   fit <- limma::lmFit(expr_data, design)
   fit <- limma::eBayes(fit)
   topTable <- limma::topTable(fit, adjust.method = "BH", number = Inf)
@@ -503,7 +508,7 @@ create_plot <- function(data,
 #'   xAxis = "organ",
 #'   yAxis = "timePoint"
 #' )
-#' 
+#'
 #' # Display the plot
 #' show(p)
 setMethod(
