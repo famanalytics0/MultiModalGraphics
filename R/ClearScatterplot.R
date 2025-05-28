@@ -214,7 +214,6 @@ ClearScatterplot_MAE <- function(mae, assayName = NULL, logFoldChange = "log2fc"
   # Differential expression analysis using limma
   design_formula <- as.formula(paste0("~", groupColumn))
   design <- model.matrix(design_formula, data = col_data)
-  #design <- model.matrix(~ Group, data = col_data)
 
   fit <- limma::lmFit(expr_data, design)
   fit <- limma::eBayes(fit)
