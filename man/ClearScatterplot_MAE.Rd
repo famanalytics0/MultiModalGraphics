@@ -13,11 +13,12 @@ ClearScatterplot_MAE(
   lowLog2fc = -0.585,
   negLog10pValue = 1.301,
   timepoint = "TimePoint",
-  sampleType = "SampleType"
+  sampleType = "SampleType",
+  groupColumn = "Group"
 )
 }
 \arguments{
-\item{mae}{A MultiAssayExperiment object containing the assay data.}
+\item{mae}{A \code{MultiAssayExperiment} object containing the assay data.}
 
 \item{assayName}{The name of the assay to use for plotting.}
 
@@ -34,9 +35,11 @@ ClearScatterplot_MAE(
 \item{timepoint}{The name of the column containing time point information.}
 
 \item{sampleType}{The name of the column containing sample type information (e.g., tissue or organ).}
+
+\item{groupColumn}{The name of the column in \code{colData(mae)} that defines the grouping variable for the design matrix.}
 }
 \value{
-An object of class ClearScatterplot.
+An object of class \code{ClearScatterplot}.
 }
 \description{
 Constructor function for creating an instance of the ClearScatterplot class from a MultiAssayExperiment object.
