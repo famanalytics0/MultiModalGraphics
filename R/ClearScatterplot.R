@@ -31,24 +31,11 @@ setGeneric("ClearScatterplot", function(data, ...) standardGeneric("ClearScatter
 
 #' Constructor: ClearScatterplot
 #'
-#' Create a ClearScatterplot S4 object from a precomputed data frame. 
-#' Automatically flags up/down-regulated genes.
-#'
 #' @param data           data.frame with required columns
 #' @param highLog2fc     numeric threshold for up-regulation (default 0.585)
 #' @param lowLog2fc      numeric threshold for down-regulation (default -0.585)
 #' @param negLog10pValue numeric threshold for p-value significance (default 1.301)
 #' @return ClearScatterplot instance
-#' @examples
-#' df <- data.frame(
-#'   log2fc = rnorm(100),
-#'   negLog10p = runif(100),
-#'   regulation = sample(c("up","down"),100,TRUE),
-#'   SampleType = sample(c("A","B"),100,TRUE),
-#'   timePoint = sample(c("T1","T2"),100,TRUE)
-#' )
-#' cs <- ClearScatterplot(df)
-#' createPlot(cs)
 #' @export
 ClearScatterplot <- function(
   data,
@@ -69,8 +56,6 @@ ClearScatterplot <- function(
 }
 
 #' Internal utility: Differential Expression for a cell (SampleType x TimePoint)
-#'
-#' @keywords internal
 .run_DE <- function(expr, meta, groupColumn, designMat, dataType, cellLabel) {
   if (dataType == "count") {
     v <- limma::voom(expr, designMat, plot = FALSE)
@@ -94,39 +79,15 @@ ClearScatterplot <- function(
 
 #' Constructor: ClearScatterplot from MultiAssayExperiment
 #'
-#' This function builds a ClearScatterplot object from a MultiAssayExperiment, 
-#' running limma DE per SampleType x TimePoint cell (if present).
-#'
 #' @param mae         MultiAssayExperiment
-#' @param assayName   character: name of assay
-#' @param groupColumn character: column in colData defining groups
-#' @param sampleType  character: column for faceting (columns)
-#' @param timepoint   character or NULL: column for faceting (rows)
-#' @param dataType    one of "auto", "continuous", "count"
-#' @param vectorized  one of "auto", "perCell", "vectorized"
-#' @param BPPARAM     BiocParallelParam for parallelization
+#' @param assayName   character
+#' @param groupColumn character
+#' @param sampleType  character
+#' @param timepoint   character or NULL
+#' @param dataType    "auto", "continuous", "count"
+#' @param vectorized  "auto", "perCell", "vectorized"
+#' @param BPPARAM     BiocParallelParam
 #' @return ClearScatterplot
-#'
-#' @examples
-#' library(MultiAssayExperiment)
-#' data("miniACC", package="MultiAssayExperiment")
-#'
-#' # Remove NAs from key metadata columns before analysis
-#' md <- as.data.frame(colData(miniACC)[,c("SCNA.cluster","pathologic_stage","C1A.C1B")])
-#' keep <- rownames(md)[!is.na(md$SCNA.cluster) & !is.na(md$pathologic_stage) & !is.na(md$C1A.C1B)]
-#' miniACC_clean <- miniACC[, keep]
-#'
-#' cs <- ClearScatterplot_MAE(
-#'   mae         = miniACC_clean,
-#'   assayName   = "RNASeq2GeneNorm",
-#'   sampleType  = "pathologic_stage",
-#'   timepoint   = "SCNA.cluster",
-#'   groupColumn = "C1A.C1B",
-#'   dataType    = "auto",
-#'   vectorized  = "auto"
-#' )
-#' cs <- createPlot(cs)
-#' show(cs)
 #' @export
 ClearScatterplot_MAE <- function(
   mae,
@@ -163,38 +124,15 @@ ClearScatterplot_MAE <- function(
 
 #' Constructor: ClearScatterplot from Expression Matrix + Metadata Table
 #'
-#' This function builds a ClearScatterplot object from a numeric matrix 
-#' (e.g. normalized gene expression or counts) and metadata table, 
-#' running limma DE per SampleType x TimePoint cell (if present).
-#'
-#' @param expr        matrix (rows: features, cols: samples)
-#' @param meta        data.frame (metadata, rownames should match colnames(expr))
-#' @param groupColumn character: group variable
-#' @param sampleType  character: facet columns
-#' @param timepoint   character or NULL: facet rows
-#' @param dataType    one of "auto", "continuous", "count"
-#' @param vectorized  one of "auto", "perCell", "vectorized"
+#' @param expr        matrix
+#' @param meta        data.frame
+#' @param groupColumn character
+#' @param sampleType  character
+#' @param timepoint   character or NULL
+#' @param dataType    "auto", "continuous", "count"
+#' @param vectorized  "auto", "perCell", "vectorized"
 #' @param BPPARAM     BiocParallelParam
 #' @return ClearScatterplot
-#'
-#' @examples
-#' # Example: direct from table
-#' expr <- matrix(rpois(1000, lambda=10), nrow=100)
-#' meta <- data.frame(
-#'   SampleType = rep(c("Tissue","Blood"), each=5),
-#'   timePoint = rep(c("T1","T2"), 5),
-#'   Group = rep(c("Case","Control"), 5),
-#'   row.names = paste0("S", 1:10)
-#' )
-#' cs <- ClearScatterplot_table(
-#'   expr = expr[,1:10],
-#'   meta = meta[1:10,],
-#'   groupColumn = "Group",
-#'   sampleType = "SampleType",
-#'   timepoint = "timePoint"
-#' )
-#' cs <- createPlot(cs)
-#' show(cs)
 #' @export
 ClearScatterplot_table <- function(
   expr,
@@ -222,8 +160,6 @@ ClearScatterplot_table <- function(
 }
 
 #' Internal core: shared between MAE and table constructors
-#'
-#' @keywords internal
 .ClearScatterplot_core <- function(
   expr, meta, groupColumn, sampleType, timepoint,
   dataType, vectorized, BPPARAM
@@ -232,13 +168,21 @@ ClearScatterplot_table <- function(
   if (!is.null(timepoint)) needed <- c(needed, timepoint)
   missing <- setdiff(needed, names(meta))
   if (length(missing)) stop("Missing required metadata: ", paste(missing, collapse = ", "))
-  keep <- rownames(meta)[stats::complete.cases(meta[, needed, drop = FALSE])]
-  if (length(keep) < 2) stop("Too few samples after NA removal.")
-  expr <- expr[, keep, drop = FALSE]
-  meta <- meta[keep, , drop = FALSE]
 
+  # Find samples present in BOTH meta and expr
+  all_samples <- intersect(rownames(meta), colnames(expr))
+  meta_sub    <- meta[all_samples, , drop = FALSE]
+  expr_sub    <- expr[, all_samples, drop = FALSE]
+
+  # Keep only samples with NO missing metadata
+  keep <- rownames(meta_sub)[stats::complete.cases(meta_sub[, needed, drop = FALSE])]
+  expr_sub <- expr_sub[, keep, drop = FALSE]
+  meta_sub <- meta_sub[keep, , drop = FALSE]
+  if (length(keep) < 2) stop("Too few samples after NA/matching removal.")
+
+  # Determine data type if needed
   if (dataType == "auto") {
-    if (all(expr == floor(expr)) && max(expr, na.rm = TRUE) > 30) {
+    if (all(expr_sub == floor(expr_sub)) && max(expr_sub, na.rm = TRUE) > 30) {
       dataType <- "count"
     } else {
       dataType <- "continuous"
@@ -246,13 +190,13 @@ ClearScatterplot_table <- function(
   }
   cells <- if (!is.null(timepoint)) {
     expand.grid(
-      timePoint  = unique(meta[[timepoint]]),
-      SampleType = unique(meta[[sampleType]]),
+      timePoint  = unique(meta_sub[[timepoint]]),
+      SampleType = unique(meta_sub[[sampleType]]),
       stringsAsFactors = FALSE
     )
   } else {
     data.frame(
-      SampleType = unique(meta[[sampleType]]),
+      SampleType = unique(meta_sub[[sampleType]]),
       timePoint  = NA_character_,
       stringsAsFactors = FALSE
     )
@@ -261,13 +205,13 @@ ClearScatterplot_table <- function(
     tp <- cells$timePoint[i]
     st <- cells$SampleType[i]
     idx <- if (!is.null(timepoint)) {
-      which(meta[[timepoint]] == tp & meta[[sampleType]] == st)
+      which(meta_sub[[timepoint]] == tp & meta_sub[[sampleType]] == st)
     } else {
-      which(meta[[sampleType]] == st)
+      which(meta_sub[[sampleType]] == st)
     }
-    if (length(idx) < 2 || length(unique(meta[[groupColumn]][idx])) < 2) return(NULL)
-    cell_expr <- expr[, idx, drop = FALSE]
-    cell_meta <- meta[idx, , drop = FALSE]
+    if (length(idx) < 2 || length(unique(meta_sub[[groupColumn]][idx])) < 2) return(NULL)
+    cell_expr <- expr_sub[, idx, drop = FALSE]
+    cell_meta <- meta_sub[idx, , drop = FALSE]
     if (dataType == "continuous" && max(cell_expr, na.rm = TRUE) > 50) {
       cell_expr <- log2(cell_expr + 1)
     }
@@ -298,8 +242,6 @@ ClearScatterplot_table <- function(
 setGeneric("createPlot", function(object, ...) standardGeneric("createPlot"))
 
 #' S4 Method: createPlot for ClearScatterplot
-#'
-#' Render the volcano scatterplot, faceted by SampleType and timePoint if present, with up/down gene count overlays.
 #'
 #' @param object   ClearScatterplot
 #' @param color1   up-regulation color
@@ -362,6 +304,7 @@ setMethod("show", "ClearScatterplot", function(object) {
   print(object@plot)
   invisible(object)
 })
+
 
 
 
