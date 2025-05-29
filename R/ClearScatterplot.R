@@ -14,6 +14,7 @@ utils::globalVariables(c(".data", "n1", "n2"))
 #' @import methods
 #' @importFrom ggplot2 ggplot aes geom_point geom_jitter geom_text facet_grid theme_bw theme labs scale_color_manual element_line element_blank
 #' @importFrom dplyr group_by tally
+#' @exportClass ClearScatterplot
 #' @export
 setClass(
   "ClearScatterplot",
@@ -65,7 +66,7 @@ ClearScatterplot <- function(
   new("ClearScatterplot", data = data, plot = NULL)
 }
 
-#' Constructor: ClearScatterplot from MAE
+#' Constructor: ClearScatterplot from MultiAssayExperiment
 #'
 #' Builds ClearScatterplot by running per-cell limma differential
 #' expression on a MultiAssayExperiment.
@@ -137,10 +138,7 @@ ClearScatterplot_MAE <- function(
     st <- cells$SampleType[i]
 
     idx <- if (!is.null(timepoint)) {
-      which(
-        cd2[[timepoint]]  == tp &
-        cd2[[sampleType]] == st
-      )
+      which(cd2[[timepoint]] == tp & cd2[[sampleType]] == st)
     } else {
       which(cd2[[sampleType]] == st)
     }
@@ -184,77 +182,15 @@ ClearScatterplot_MAE <- function(
 #' @param color2 neutral color
 #' @param color3 down-regulation color
 #' @return object with plot slot filled
+#' @exportGeneric createPlot
+#' @exportMethod createPlot
 #' @export
 setGeneric(
   "createPlot",
   function(object, ...) standardGeneric("createPlot")
 )
-setMethod(
-  "createPlot",
-  signature(object = "ClearScatterplot"),
-  function(
-    object,
-    color1 = "cornflowerblue",
-    color2 = "grey",
-    color3 = "indianred"
-  ) {
-    df   <- object@data
-    xvar <- "SampleType"
-    yvar <- "timePoint"
-    ux   <- unique(df[[xvar]])
-    uy   <- unique(df[[yvar]])
-    facet_formula <- if (
-      length(ux) > 1 && length(uy) > 1
-    ) {
-      stats::as.formula(paste(yvar, "~", xvar))
-    } else if (length(uy) > 1) {
-      stats::as.formula(paste(yvar, "~ ."))
-    } else {
-      stats::as.formula(paste(".~", xvar))
-    }
 
-    p <- ggplot2::ggplot(
-      df,
-      ggplot2::aes(
-        x     = log2fc,
-        y     = negLog10p,
-        color = factor(color_flag)
-      )
-    ) +
-      ggplot2::geom_point(alpha = 0.5, size = 1.75) +
-      ggplot2::geom_jitter() +
-      ggplot2::labs(
-        x = expression(log2 ~ fold ~ change),
-        y = expression(-log10 ~ p)
-      ) +
-      ggplot2::scale_color_manual(
-        values = c(color1, color2, color3)
-      ) +
-      ggplot2::facet_grid(facet_formula, space = "free") +
-      ggplot2::theme_bw() +
-      ggplot2::theme(
-        panel.grid.major = ggplot2::element_line(color = "grey80"),
-        panel.grid.minor = ggplot2::element_blank(),
-        strip.background = ggplot2::element_rect(fill = "white", color = "black"),
-        strip.text       = ggplot2::element_text(size = 12, face = "bold"),
-        axis.title       = ggplot2::element_text(size = 12, face = "bold"),
-        axis.text        = ggplot2::element_text(size = 10),
-        legend.position  = "bottom"
-      )
-
-    cnt_up <- df[df$color_flag == 1, ] |> dplyr::group_by(.data[[xvar]], .data[[yvar]]) |> dplyr::tally(name = "n1")
-    cnt_dn <- df[df$color_flag == -1, ] |> dplyr::group_by(.data[[xvar]], .data[[yvar]]) |> dplyr::tally(name = "n2")
-
-    p <- p +
-      ggplot2::geom_text(data = cnt_up, ggplot2::aes(label = n1), x = Inf, y = Inf, hjust = 1.1, vjust = 1.1, color = color1) +
-      ggplot2::geom_text(data = cnt_dn, ggplot2::aes(label = n2), x = -Inf, y = Inf, hjust = -0.1, vjust = 1.1, color = color3)
-
-    object@plot <- p
-    invisible(object)
-  }
-)
-
-#' Show method
+#' @exportMethod show
 #' @export
 setMethod(
   "show",
