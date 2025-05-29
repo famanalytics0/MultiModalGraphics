@@ -129,7 +129,7 @@ ClearScatterplot_MAE <- function(
     stop("Missing colData columns: ", paste(missing_cols, collapse=", "))
   }
 
-  ## 2) Drop samples with NA in any of the three grouping columns
+  ## 2) Drop samples with NA in any of the grouping columns
   keep_samps <- rownames(cd)[stats::complete.cases(cd[, needed, drop=FALSE])]
   if (length(keep_samps) < 2) {
     stop("Too few samples after dropping NAs in: ", paste(needed, collapse=", "))
@@ -150,17 +150,28 @@ ClearScatterplot_MAE <- function(
 
   ## 5) Loop per cell: subset samples, run limma DE, collect results
   df_list <- lapply(seq_len(nrow(cells)), function(i) {
-    tp <- cells$timePoint[i]
-    st <- cells$SampleType[i]
-    idx <- which(cd2[[timepoint]] == tp & cd2[[sampleType]] == st)
-    if (length(idx) < 2 ||
-        length(unique(cd2[[groupColumn]][idx])) < 2) return(NULL)
+    tp  <- cells$timePoint[i]
+    st  <- cells$SampleType[i]
+    idx <- which(
+      cd2[[timepoint]]  == tp &
+      cd2[[sampleType]] == st
+    )
+    # must have >2 samples AND at least two groups
+    if (length(idx) <= 2 ||
+        length(unique(cd2[[groupColumn]][idx])) < 2) {
+      return(NULL)
+    }
 
     expr_cell <- expr[, idx, drop = FALSE]
     cd_cell   <- cd2[idx, , drop = FALSE]
     design    <- stats::model.matrix(~ cd_cell[[groupColumn]])
-    fit_cell  <- limma::lmFit(expr_cell, design) |> limma::eBayes()
-    tt_cell   <- limma::topTable(fit_cell, coef = 2, number = Inf)
+    # ensure there is at least one residual degree of freedom
+    if (nrow(cd_cell) <= ncol(design)) {
+      return(NULL)
+    }
+
+    fit_cell <- limma::lmFit(expr_cell, design) |> limma::eBayes()
+    tt_cell  <- limma::topTable(fit_cell, coef = 2, number = Inf)
 
     data.frame(
       log2fc      = tt_cell[["logFC"]],
