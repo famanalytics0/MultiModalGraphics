@@ -23,6 +23,7 @@ setClass(
 )
 
 #' S4 Generic: ClearScatterplot
+#'
 #' @param data data.frame
 #' @param ... additional arguments
 #' @export
@@ -78,8 +79,7 @@ ClearScatterplot <- function(
 
 #' Constructor: ClearScatterplot from MultiAssayExperiment
 #'
-#' This function does all NA removal, matching, and sample sanity checks internally,
-#' exactly as specified by the workflow you requested (feature filter, NA filter, etc).
+#' Handles NA removal, feature filtering, and sample checks internally.
 #'
 #' @param mae         MultiAssayExperiment
 #' @param assayName   character
@@ -88,9 +88,10 @@ ClearScatterplot <- function(
 #' @param timepoint   character or NULL
 #' @param dataType    "auto", "continuous", "count"
 #' @param vectorized  "auto", "perCell", "vectorized"
-#' @param varFilterQuantile numeric. Quantile for row variance filtering (default 0.75)
 #' @param BPPARAM     BiocParallelParam
+#' @param var_quantile Numeric (default .75): filter out features below this row variance quantile.
 #' @return ClearScatterplot
+#' @importFrom IRanges IntegerList
 #' @export
 ClearScatterplot_MAE <- function(
   mae,
@@ -100,49 +101,36 @@ ClearScatterplot_MAE <- function(
   timepoint   = NULL,
   dataType    = c("auto", "continuous", "count"),
   vectorized  = c("auto", "perCell", "vectorized"),
-  varFilterQuantile = 0.75,
-  BPPARAM     = BiocParallel::bpparam()
+  BPPARAM     = BiocParallel::bpparam(),
+  var_quantile = 0.75
 ) {
   dataType   <- match.arg(dataType)
   vectorized <- match.arg(vectorized)
+  # Feature filter by row variance
+  expr_full   <- SummarizedExperiment::assay(MultiAssayExperiment::experiments(mae)[[assayName]])
+  rv          <- matrixStats::rowVars(expr_full, na.rm = TRUE)
+  keep_feat   <- which(rv >= quantile(rv, var_quantile, na.rm = TRUE))
+  mae_filt    <- subsetByRow(mae, IRanges::IntegerList(setNames(list(keep_feat), assayName)))
 
-  # 1. Pull expression matrix and feature filter
-  expr_full <- SummarizedExperiment::assay(
-    MultiAssayExperiment::experiments(mae)[[assayName]]
-  )
-  rowvars <- matrixStats::rowVars(expr_full)
-  keep_feat <- which(rowvars >= quantile(rowvars, varFilterQuantile, na.rm = TRUE))
-  expr_filt <- expr_full[keep_feat, , drop = FALSE]
+  # Extract colData and assay from the filtered object
+  meta <- as.data.frame(SummarizedExperiment::colData(mae_filt), stringsAsFactors = FALSE)
+  expr <- SummarizedExperiment::assay(MultiAssayExperiment::experiments(mae_filt)[[assayName]])
 
-  # 2. Subset MAE to filtered features
-  mae_filt <- subsetByRow(mae, S4Vectors::IntegerList(setNames(list(keep_feat), assayName)))
+  # Identify required columns
+  needed <- c(groupColumn, sampleType)
+  if (!is.null(timepoint)) needed <- c(needed, timepoint)
+  md     <- as.data.frame(meta[, needed, drop = FALSE])
+  keep_samps <- rownames(md)[apply(md, 1, function(row) all(!is.na(row)))]
+  meta   <- meta[keep_samps, , drop = FALSE]
+  expr   <- expr[, keep_samps, drop = FALSE]
 
-  # 3. Pull meta for relevant columns only
-  meta_cols <- unique(c(groupColumn, sampleType, timepoint))
-  meta <- as.data.frame(
-    SummarizedExperiment::colData(mae_filt)[, meta_cols, drop = FALSE],
-    stringsAsFactors = FALSE
-  )
-
-  # 4. Vectorized: retain only samples with no NA in needed columns
-  keep_samps <- rownames(meta)[rowSums(is.na(meta)) == 0]
-  if(length(keep_samps) < 6) stop("Too few samples after NA removal.")
-  mae_clean  <- mae_filt[, keep_samps]
-  expr_clean <- SummarizedExperiment::assay(
-    MultiAssayExperiment::experiments(mae_clean)[[assayName]]
-  )
-  meta_clean <- as.data.frame(
-    SummarizedExperiment::colData(mae_clean)[, meta_cols, drop = FALSE],
-    stringsAsFactors = FALSE
-  )
-
-  # 5. Group size check
-  n_group <- table(meta_clean[[groupColumn]])
-  if(any(n_group < 3)) stop("Fewer than 3 samples per group after NA removal.")
+  n_group <- table(meta[[groupColumn]])
+  if (any(n_group < 3)) stop("Fewer than 3 samples per group after NA removal.")
+  if (length(keep_samps) < 6) stop("Too few samples after NA/matching removal.")
 
   .ClearScatterplot_core(
-    expr       = expr_clean,
-    meta       = meta_clean,
+    expr        = expr,
+    meta        = meta,
     groupColumn = groupColumn,
     sampleType  = sampleType,
     timepoint   = timepoint,
@@ -164,7 +152,9 @@ ClearScatterplot_MAE <- function(
 #' @param dataType    "auto", "continuous", "count"
 #' @param vectorized  "auto", "perCell", "vectorized"
 #' @param BPPARAM     BiocParallelParam
+#' @param var_quantile Numeric (default .75): filter out features below this row variance quantile.
 #' @return ClearScatterplot
+#' @importFrom IRanges IntegerList
 #' @export
 ClearScatterplot_table <- function(
   expr,
@@ -174,34 +164,31 @@ ClearScatterplot_table <- function(
   timepoint   = NULL,
   dataType    = c("auto", "continuous", "count"),
   vectorized  = c("auto", "perCell", "vectorized"),
-  BPPARAM     = BiocParallel::bpparam()
+  BPPARAM     = BiocParallel::bpparam(),
+  var_quantile = 0.75
 ) {
   dataType   <- match.arg(dataType)
   vectorized <- match.arg(vectorized)
   stopifnot(is.matrix(expr), is.data.frame(meta))
+  # Feature filter by row variance
+  rv        <- matrixStats::rowVars(expr, na.rm = TRUE)
+  keep_feat <- which(rv >= quantile(rv, var_quantile, na.rm = TRUE))
+  expr      <- expr[keep_feat, , drop = FALSE]
 
-  needed <- c(groupColumn, sampleType)
+  needed    <- c(groupColumn, sampleType)
   if (!is.null(timepoint)) needed <- c(needed, timepoint)
-  meta_cols <- needed
+  md        <- as.data.frame(meta[, needed, drop = FALSE])
+  keep_samps <- rownames(md)[apply(md, 1, function(row) all(!is.na(row)))]
+  meta      <- meta[keep_samps, , drop = FALSE]
+  expr      <- expr[, keep_samps, drop = FALSE]
 
-  # Only samples in both meta and expr
-  shared_samples <- intersect(rownames(meta), colnames(expr))
-  meta <- meta[shared_samples, , drop = FALSE]
-  expr <- expr[, shared_samples, drop = FALSE]
-
-  # Apply the same fully vectorized NA-removal
-  keep_samps <- rownames(meta)[rowSums(is.na(meta[, meta_cols, drop = FALSE])) == 0]
-  if(length(keep_samps) < 6) stop("Too few samples after NA removal.")
-  expr_clean <- expr[, keep_samps, drop = FALSE]
-  meta_clean <- meta[keep_samps, , drop = FALSE]
-
-  # Group size check
-  n_group <- table(meta_clean[[groupColumn]])
-  if(any(n_group < 3)) stop("Fewer than 3 samples per group after NA removal.")
+  n_group <- table(meta[[groupColumn]])
+  if (any(n_group < 3)) stop("Fewer than 3 samples per group after NA removal.")
+  if (length(keep_samps) < 6) stop("Too few samples after NA/matching removal.")
 
   .ClearScatterplot_core(
-    expr       = expr_clean,
-    meta       = meta_clean,
+    expr        = expr,
+    meta        = meta,
     groupColumn = groupColumn,
     sampleType  = sampleType,
     timepoint   = timepoint,
@@ -218,7 +205,7 @@ ClearScatterplot_table <- function(
 ) {
   needed <- c(groupColumn, sampleType)
   if (!is.null(timepoint)) needed <- c(needed, timepoint)
-  keep <- rownames(meta)[rowSums(is.na(meta[, needed, drop = FALSE])) == 0]
+  keep <- rownames(meta)[stats::complete.cases(meta[, needed, drop = FALSE])]
   if (length(keep) < 6) stop("Too few samples after NA/matching removal.")
   expr <- expr[, keep, drop = FALSE]
   meta <- meta[keep, , drop = FALSE]
