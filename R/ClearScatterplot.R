@@ -8,7 +8,7 @@ utils::globalVariables(c(".data", "n1", "n2"))
 #'
 #' @slot data data.frame with columns: log2fc, negLog10p, regulation,
 #'             SampleType, timePoint (optional), color_flag
-#' @slot plot ggplot object for the rendered plot
+#' @slot plot  ANY storing the generated ggplot object
 #' @name ClearScatterplot
 #' @docType class
 #' @import methods
@@ -19,11 +19,11 @@ setClass(
   "ClearScatterplot",
   slots = c(
     data = "data.frame",
-    plot = "ggplot"
+    plot = "ANY"
   ),
   validity = function(object) {
     req_cols <- c("log2fc", "negLog10p", "regulation", "SampleType")
-    missing  <- setdiff(req_cols, colnames(object@data))
+    missing  <- setdiff(req_cols, names(object@data))
     if (length(missing)) {
       stop("Missing required columns: ", paste(missing, collapse = ", "))
     }
@@ -33,13 +33,13 @@ setClass(
 
 #' Constructor: ClearScatterplot
 #'
-#' Validates input data and computes color_flag for plotting.
+#' Validates input data and computes a color flag for plotting thresholds.
 #'
-#' @param data data.frame with required columns
-#' @param highLog2fc numeric threshold for up-regulation (default 0.585)
-#' @param lowLog2fc numeric threshold for down-regulation (default -0.585)
-#' @param negLog10pValue numeric threshold for significance (default 1.301)
-#' @return ClearScatterplot object
+#' @param data           data.frame with required columns
+#' @param highLog2fc     numeric threshold for up-regulation (default 0.585)
+#' @param lowLog2fc      numeric threshold for down-regulation (default -0.585)
+#' @param negLog10pValue numeric threshold for p-value significance (default 1.301)
+#' @return ClearScatterplot instance
 #' @export
 ClearScatterplot <- function(
   data,
@@ -49,7 +49,7 @@ ClearScatterplot <- function(
 ) {
   stopifnot(is.data.frame(data))
   req_cols <- c("log2fc", "negLog10p", "regulation", "SampleType")
-  missing  <- setdiff(req_cols, colnames(data))
+  missing  <- setdiff(req_cols, names(data))
   if (length(missing)) {
     stop("Missing columns: ", paste(missing, collapse = ", "))
   }
@@ -58,24 +58,24 @@ ClearScatterplot <- function(
     data,
     ifelse(
       log2fc > highLog2fc & negLog10p > negLog10pValue, 1,
-      ifelse(log2fc < lowLog2fc & negLog10p > negLog10pValue,
-             -1, 0)
+      ifelse(log2fc < lowLog2fc & negLog10p > negLog10pValue, -1, 0)
     )
   )
 
   new("ClearScatterplot", data = data, plot = NULL)
 }
 
-#' Constructor: ClearScatterplot_MAE
+#' Constructor: ClearScatterplot from MAE
 #'
-#' Builds ClearScatterplot from a MultiAssayExperiment by running per-cell DE.
+#' Builds ClearScatterplot by running per-cell limma differential
+#' expression on a MultiAssayExperiment.
 #'
-#' @param mae MultiAssayExperiment object
-#' @param assayName name of assay (must exist)
-#' @param groupColumn column in colData for design
-#' @param sampleType  column in colData for facet columns
-#' @param timepoint   optional column in colData for facet rows
-#' @return ClearScatterplot object
+#' @param mae         a MultiAssayExperiment
+#' @param assayName   name of the assay to use
+#' @param groupColumn colData column for group design
+#' @param sampleType  colData column for facet columns
+#' @param timepoint   optional colData column for facet rows
+#' @return ClearScatterplot instance
 #' @importFrom MultiAssayExperiment experiments colData
 #' @importFrom SummarizedExperiment assay
 #' @importFrom limma lmFit eBayes topTable
@@ -90,7 +90,7 @@ ClearScatterplot_MAE <- function(
 ) {
   stopifnot(inherits(mae, "MultiAssayExperiment"))
   assays <- names(MultiAssayExperiment::experiments(mae))
-  if (!(assayName %in% assays)) {
+  if (!assayName %in% assays) {
     stop("assayName must be one of: ", paste(assays, collapse = ", "))
   }
 
@@ -100,15 +100,14 @@ ClearScatterplot_MAE <- function(
   )
   req <- c(groupColumn, sampleType)
   if (!is.null(timepoint)) req <- c(req, timepoint)
-  missing_cd <- setdiff(req, colnames(cd))
+  missing_cd <- setdiff(req, names(cd))
   if (length(missing_cd)) {
-    stop("Missing colData cols: ", paste(missing_cd, collapse = ", "))
+    stop("Missing colData columns: ", paste(missing_cd, collapse = ", "))
   }
 
-  keep <- rownames(cd)[stats::complete.cases(cd[, req, drop = FALSE])]
+  keep <- rownames(cd)[complete.cases(cd[req])]
   if (length(keep) < 2) {
-    stop("Too few samples after dropping NAs in: ",
-         paste(req, collapse = ", "))
+    stop("Too few samples after dropping NAs in: ", paste(req, collapse = ", "))
   }
 
   mae2 <- mae[, keep]
@@ -146,26 +145,22 @@ ClearScatterplot_MAE <- function(
       which(cd2[[sampleType]] == st)
     }
 
-    if (
-      length(idx) < 2 ||
-      length(unique(cd2[[groupColumn]][idx])) < 2
-    ) return(NULL)
+    if (length(idx) < 2 || length(unique(cd2[[groupColumn]][idx])) < 2) {
+      return(NULL)
+    }
 
     expr_c <- expr[, idx, drop = FALSE]
     cd_c   <- cd2[idx, , drop = FALSE]
     design <- stats::model.matrix(~ cd_c[[groupColumn]])
     if (nrow(cd_c) <= ncol(design)) return(NULL)
 
-    fit <- limma::lmFit(expr_c, design) |>
-      limma::eBayes()
+    fit <- limma::lmFit(expr_c, design) |> limma::eBayes()
     tt  <- limma::topTable(fit, coef = 2, number = Inf)
 
     data.frame(
       log2fc     = tt[["logFC"]],
       negLog10p  = -log10(tt[["P.Value"]]),
-      regulation = ifelse(
-        tt[["logFC"]] > 0, "up", "down"
-      ),
+      regulation = ifelse(tt[["logFC"]] > 0, "up", "down"),
       SampleType = st,
       timePoint  = tp,
       stringsAsFactors = FALSE,
@@ -181,14 +176,14 @@ ClearScatterplot_MAE <- function(
 
 #' Render a ClearScatterplot
 #'
-#' Applies original ggplot styling: geom_point, geom_jitter, theme_bw,
+#' Applies ggplot styling: points, jitter, theme_bw,
 #' and facet_grid with count annotations.
 #'
 #' @param object ClearScatterplot
 #' @param color1 up-regulation color
 #' @param color2 neutral color
 #' @param color3 down-regulation color
-#' @return invisibly returns object with plot slot filled
+#' @return object with plot slot filled
 #' @export
 setGeneric(
   "createPlot",
@@ -238,58 +233,21 @@ setMethod(
       ggplot2::facet_grid(facet_formula, space = "free") +
       ggplot2::theme_bw() +
       ggplot2::theme(
-        panel.grid.major = ggplot2::element_line(
-          color = "grey80"
-        ),
+        panel.grid.major = ggplot2::element_line(color = "grey80"),
         panel.grid.minor = ggplot2::element_blank(),
-        strip.background = ggplot2::element_rect(
-          fill  = "white",
-          color = "black"
-        ),
-        strip.text = ggplot2::element_text(
-          size = 12,
-          face = "bold"
-        ),
-        axis.title = ggplot2::element_text(
-          size = 12,
-          face = "bold"
-        ),
-        axis.text = ggplot2::element_text(
-          size = 10
-        ),
-        legend.position = "bottom"
+        strip.background = ggplot2::element_rect(fill = "white", color = "black"),
+        strip.text       = ggplot2::element_text(size = 12, face = "bold"),
+        axis.title       = ggplot2::element_text(size = 12, face = "bold"),
+        axis.text        = ggplot2::element_text(size = 10),
+        legend.position  = "bottom"
       )
 
-    cnt_up <-
-      df[df$color_flag == 1, ] |> dplyr::group_by(
-        .data[[xvar]],
-        .data[[yvar]]
-      ) |> dplyr::tally(name = "n1")
-    cnt_dn <-
-      df[df$color_flag == -1, ] |> dplyr::group_by(
-        .data[[xvar]],
-        .data[[yvar]]
-      ) |> dplyr::tally(name = "n2")
+    cnt_up <- df[df$color_flag == 1, ] |> dplyr::group_by(.data[[xvar]], .data[[yvar]]) |> dplyr::tally(name = "n1")
+    cnt_dn <- df[df$color_flag == -1, ] |> dplyr::group_by(.data[[xvar]], .data[[yvar]]) |> dplyr::tally(name = "n2")
 
     p <- p +
-      ggplot2::geom_text(
-        data = cnt_up,
-        ggplot2::aes(label = n1),
-        x     = Inf,
-        y     = Inf,
-        hjust = 1.1,
-        vjust = 1.1,
-        color = color1
-      ) +
-      ggplot2::geom_text(
-        data = cnt_dn,
-        ggplot2::aes(label = n2),
-        x     = -Inf,
-        y     = Inf,
-        hjust = -0.1,
-        vjust = 1.1,
-        color = color3
-      )
+      ggplot2::geom_text(data = cnt_up, ggplot2::aes(label = n1), x = Inf, y = Inf, hjust = 1.1, vjust = 1.1, color = color1) +
+      ggplot2::geom_text(data = cnt_dn, ggplot2::aes(label = n2), x = -Inf, y = Inf, hjust = -0.1, vjust = 1.1, color = color3)
 
     object@plot <- p
     invisible(object)
