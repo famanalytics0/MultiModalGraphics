@@ -1,273 +1,237 @@
 # Suppress warnings for global variables
-utils::globalVariables(c(".data", "n1", "n2", "negLog10p"))
+utils::globalVariables(c(".data", "n1", "n2"))
 
-#' ClearScatterplot: Class for Enhanced Faceted Volcano Scatterplots
+#' ClearScatterplot: Class for Enhanced Faceted Volcano Plots
 #'
-#' Provides a unified API for generating volcano plots across sample types
-#' and optional timepoints from MultiAssayExperiment objects.
+#' S4 class encapsulating data and plotting logic for volcano plots,
+#' faceted by sample type and optional timepoint, with count overlays.
 #'
-#' @slot data A data frame with columns: log2fc, negLog10p, regulation,
-#'             SampleType, timePoint (optional), timeVar, color_flag
-#' @slot plot A ggplot object storing the rendered plot
+#' @slot data data.frame with columns: log2fc, negLog10p, regulation,
+#'             SampleType, timePoint (optional), color_flag
+#' @slot plot ggplot object for the rendered plot
 #' @name ClearScatterplot
 #' @docType class
-#' @importFrom methods setClass setGeneric setMethod new
-#' @importFrom MultiAssayExperiment experiments colData
-#' @importFrom SummarizedExperiment assay
-#' @importFrom limma lmFit eBayes topTable
-#' @importFrom stats model.matrix complete.cases
-#' @importFrom ggplot2 ggplot aes geom_point geom_text facet_grid theme scale_color_manual labs
-#' @importFrom dplyr group_by tally
+#' @import methods
 #' @export
 setClass(
   "ClearScatterplot",
   slots = c(
     data = "data.frame",
-    plot = "ANY"
-  )
-)
-
-#' Constructor for ClearScatterplot
-#'
-#' @param data A data.frame containing computed statistics and metadata
-#' @param logFoldChange Column name for log2 fold change values
-#' @param negativeLogPValue Column name for -log10 p-values
-#' @param highLog2fc Threshold above which fold change is considered high
-#' @param lowLog2fc Threshold below which fold change is considered low
-#' @param negLog10pValue Threshold above which p-value is significant
-#' @param timePointColumn Column name for the combined time variable
-#' @return A ClearScatterplot object
-#' @export
-setGeneric(
-  "ClearScatterplot",
-  function(data,
-           logFoldChange = "log2fc",
-           negativeLogPValue = "negLog10p",
-           highLog2fc = 0.585,
-           lowLog2fc = -0.585,
-           negLog10pValue = 1.301,
-           timePointColumn = "timePoint") {
-    stopifnot(is.data.frame(data))
-    # Compute color_flag
-    vals <- data[[logFoldChange]]
-    pvals <- data[[negativeLogPValue]]
-    data[["color_flag"]] <- ifelse(
-      vals > highLog2fc & pvals > negLog10pValue, 1,
-      ifelse(vals < lowLog2fc & pvals > negLog10pValue, -1, 0)
-    )
-    # Factorize timepoint if present
-    if (timePointColumn %in% names(data)) {
-      data[[timePointColumn]] <- as.factor(data[[timePointColumn]])
+    plot = "ggplot"
+  ),
+  validity = function(object) {
+    req <- c("log2fc","negLog10p","regulation","SampleType")
+    missing <- setdiff(req, colnames(object@data))
+    if (length(missing)) {
+      return(paste("Missing required columns:", paste(missing, collapse=", ")))
     }
-    new("ClearScatterplot", data = data)
+    TRUE
   }
 )
+    if (length(missing)) {
+      return(paste("Missing required columns:", paste(missing, collapse=", ")))
+    }
+    TRUE
+  }
+)
+)
+
+#' Construct a ClearScatterplot from precomputed data
+#'
+#' Validates input columns and computes color_flag for visualization.
+#'
+#' @param data data.frame with at least: log2fc, negLog10p, regulation,
+#'        SampleType; optional timePoint column
+#' @param highLog2fc numeric threshold for up-regulation (default 0.585)
+#' @param lowLog2fc numeric threshold for down-regulation (default -0.585)
+#' @param negLog10pValue numeric threshold for significance (default 1.301)
+#' @return ClearScatterplot S4 object
+#' @examples
+#' df <- data.frame(
+#'   log2fc = rnorm(100),
+#'   negLog10p = runif(100),
+#'   regulation = sample(c("up","down"),100,TRUE),
+#'   SampleType = sample(c("A","B"),100,TRUE),
+#'   timePoint = sample(c("T1","T2"),100,TRUE)
+#' )
+#' cs <- ClearScatterplot(df)
+#' createPlot(cs)
+#' @export
+ClearScatterplot <- function(
+  data,
+  highLog2fc = 0.585,
+  lowLog2fc = -0.585,
+  negLog10pValue = 1.301
+) {
+  req_cols <- c("log2fc","negLog10p","regulation","SampleType")
+  missing <- setdiff(req_cols, colnames(data))
+  if (length(missing)) {
+    stop("Missing columns: ", paste(missing, collapse=", "))
+  }
+  data$color_flag <- with(data,
+    ifelse(log2fc > highLog2fc & negLog10p > negLog10pValue, 1,
+    ifelse(log2fc < lowLog2fc & negLog10p > negLog10pValue, -1, 0)))
+  new("ClearScatterplot", data = data, plot = NULL)
+}
 
 #' Build ClearScatterplot from MultiAssayExperiment
 #'
-#' @param mae A MultiAssayExperiment object
-#' @param assayName Name of the assay (SummarizedExperiment) to use
-#' @param groupColumn Column in colData defining groups for DE
-#' @param sampleType Column in colData for sample-type faceting
-#' @param timepoint Optional column in colData for timepoint faceting
-#' @param logFoldChange Name for output log2fc column
-#' @param negativeLogPValue Name for output negLog10p column
-#' @return A ClearScatterplot object
+#' Runs per-cell limma differential expression and aggregates results
+#'
+#' @param mae MultiAssayExperiment with assayName
+#' @param assayName character name of assay (must exist)
+#' @param groupColumn character column in colData for design
+#' @param sampleType character column in colData for facet columns
+#' @param timepoint character column in colData for facet rows (optional)
+#' @return ClearScatterplot object
+#' @importFrom MultiAssayExperiment experiments colData
+#' @importFrom SummarizedExperiment assay
+#' @importFrom limma lmFit eBayes topTable
+#' @importFrom stats model.matrix complete.cases
 #' @export
-setGeneric(
-  "ClearScatterplot_MAE",
-  function(mae,
-           assayName = NULL,
-           groupColumn = "Group",
-           sampleType = "SampleType",
-           timepoint = NULL,
-           logFoldChange = "log2fc",
-           negativeLogPValue = "negLog10p")
-    standardGeneric("ClearScatterplot_MAE")
-)
+ClearScatterplot_MAE <- function(
+  mae,
+  assayName,
+  groupColumn = "Group",
+  sampleType = "SampleType",
+  timepoint = NULL
+) {
+  if (!inherits(mae, "MultiAssayExperiment")) {
+    stop("'mae' must be a MultiAssayExperiment object.")
+  }
+  assays <- names(MultiAssayExperiment::experiments(mae))
+  if (!(assayName %in% assays)) {
+    stop("'assayName' must be one of: ", paste(assays, collapse=", "))
+  }
+  cd <- as.data.frame(MultiAssayExperiment::colData(mae), stringsAsFactors=FALSE)
+  req <- c(groupColumn, sampleType)
+  if (!is.null(timepoint)) req <- c(req, timepoint)
+  missing <- setdiff(req, colnames(cd))
+  if (length(missing)) stop("Missing colData cols: ", paste(missing, collapse=", "))
+  keep <- rownames(cd)[stats::complete.cases(cd[, req, drop=FALSE])]
+  if (length(keep) < 2) stop("Too few samples after dropping NAs.")
 
-setMethod(
-  "ClearScatterplot_MAE",
-  signature(mae = "MultiAssayExperiment"),
-  function(mae,
-           assayName = NULL,
-           groupColumn = "Group",
-           sampleType = "SampleType",
-           timepoint = NULL,
-           logFoldChange = "log2fc",
-           negativeLogPValue = "negLog10p") {
-    # Validate assayName
-    assays <- names(experiments(mae))
-    if (is.null(assayName) || !assayName %in% assays) {
-      stop("assayName must be one of: ", paste(assays, collapse=", "))
-    }
-    # Extract colData
-    cd <- as.data.frame(colData(mae), stringsAsFactors = FALSE)
-    # Required columns
-    req <- c(groupColumn, sampleType)
-    if (!all(req %in% colnames(cd))) {
-      stop("Missing colData columns: ", paste(setdiff(req, colnames(cd)), collapse=", "))
-    }
-    # Include timepoint if provided
-    if (!is.null(timepoint) && timepoint %in% colnames(cd)) {
-      req <- c(req, timepoint)
-    } else {
-      timepoint <- NULL
-    }
-    # Subset samples with complete metadata
-    keep <- rownames(cd)[complete.cases(cd[, req, drop = FALSE])]
-    if (length(keep) < 2) stop("Too few samples after dropping NAs.")
-    mae2 <- mae[, keep]
-    cd2  <- as.data.frame(colData(mae2), stringsAsFactors = FALSE)
-    se   <- experiments(mae2)[[assayName]]
-    expr <- assay(se)
-    # Build combination grid
-    if (!is.null(timepoint)) {
-      cells <- expand.grid(
-        timePoint  = unique(cd2[[timepoint]]),
-        SampleType = unique(cd2[[sampleType]]),
-        stringsAsFactors = FALSE
-      )
-    } else {
-      cells <- data.frame(
-        SampleType = unique(cd2[[sampleType]]),
-        stringsAsFactors = FALSE
-      )
-      cells$timePoint <- NA_character_
-    }
-    # Run per-cell DE
-    df_list <- lapply(seq_len(nrow(cells)), function(i) {
-      tp <- cells$timePoint[i]
-      st <- cells$SampleType[i]
-      if (!is.null(timepoint)) {
-        idx <- which(cd2[[timepoint]] == tp & cd2[[sampleType]] == st)
-      } else {
-        idx <- which(cd2[[sampleType]] == st)
-      }
-      # Minimum samples & groups
-      if (length(idx) < 2 || length(unique(cd2[[groupColumn]][idx])) < 2) return(NULL)
-      expr_c <- expr[, idx, drop = FALSE]
-      cd_c   <- cd2[idx, , drop = FALSE]
-      design <- model.matrix(~ cd_c[[groupColumn]])
-      if (nrow(cd_c) <= ncol(design)) return(NULL)
-      fit <- limma::lmFit(expr_c, design) |> limma::eBayes()
-      tt  <- limma::topTable(fit, coef = 2, number = Inf)
-      # Assemble results
-      df <- data.frame(
-        log2fc     = tt[["logFC"]],
-        negLog10p  = -log10(tt[["P.Value"]]),
-        regulation = ifelse(tt[["logFC"]] > 0, "up", "down"),
-        SampleType = st,
-        timePoint  = tp,
-        stringsAsFactors = FALSE,
-        row.names  = rownames(tt)
-      )
-      # Combined time variable
-      df[["timeVar"]] <- if (!is.na(tp)) {
-        paste(df[["regulation"]], st, tp, sep = "_")
-      } else {
-        paste(df[["regulation"]], st, sep = "_")
-      }
-      df
-    })
-    plotdata <- do.call(rbind, df_list)
-    rownames(plotdata) <- NULL
-    # Construct object
-    ClearScatterplot(
-      data = plotdata,
-      logFoldChange = logFoldChange,
-      negativeLogPValue = negativeLogPValue,
-      timePointColumn = "timeVar"
+  mae2 <- mae[, keep]
+  cd2  <- as.data.frame(MultiAssayExperiment::colData(mae2), stringsAsFactors=FALSE)
+  se   <- MultiAssayExperiment::experiments(mae2)[[assayName]]
+  expr <- SummarizedExperiment::assay(se)
+
+  cells <- if (!is.null(timepoint)) {
+    expand.grid(
+      timePoint  = unique(cd2[[timepoint]]),
+      SampleType = unique(cd2[[sampleType]]),
+      stringsAsFactors = FALSE
+    )
+  } else {
+    data.frame(
+      SampleType = unique(cd2[[sampleType]]),
+      timePoint  = NA_character_,
+      stringsAsFactors = FALSE
     )
   }
-)
 
-#' Generate Plot from ClearScatterplot
+  df_list <- lapply(seq_len(nrow(cells)), function(i) {
+    tp <- cells$timePoint[i]; st <- cells$SampleType[i]
+    idx <- if (!is.null(timepoint)) {
+      which(cd2[[timepoint]] == tp & cd2[[sampleType]] == st)
+    } else {
+      which(cd2[[sampleType]] == st)
+    }
+    if (length(idx) < 2 || length(unique(cd2[[groupColumn]][idx])) < 2) return(NULL)
+
+    expr_c <- expr[, idx, drop=FALSE]
+    cd_c   <- cd2[idx, , drop=FALSE]
+    design <- stats::model.matrix(~ cd_c[[groupColumn]])
+    if (nrow(cd_c) <= ncol(design)) return(NULL)
+
+    fit <- limma::lmFit(expr_c, design) |> limma::eBayes()
+    tt  <- limma::topTable(fit, coef=2, number=Inf)
+
+    data.frame(
+      log2fc     = tt[['logFC']],
+      negLog10p  = -log10(tt[['P.Value']]),
+      regulation = ifelse(tt[['logFC']]>0,'up','down'),
+      SampleType = st,
+      timePoint  = tp,
+      stringsAsFactors = FALSE,
+      row.names  = rownames(tt)
+    )
+  })
+
+  plotdata <- do.call(rbind, df_list)
+  rownames(plotdata) <- NULL
+  ClearScatterplot(plotdata)
+}
+
+#' Render a ClearScatterplot
 #'
-#' @param object A ClearScatterplot object
-#' @param color1 Color for high up-regulation
-#' @param color2 Color for neutral
-#' @param color3 Color for high down-regulation
-#' @param highLog2fc Threshold for high fold-change
-#' @param lowLog2fc Threshold for low fold-change
-#' @param xAxis Column for facet columns (sampleType)
-#' @param yAxis Column for facet rows (timePoint)
-#' @return The same ClearScatterplot object with @plot populated
+#' Applies original ggplot styling: geom_point, geom_jitter, theme_bw,
+#' and facet_grid with count annotations.
+#'
+#' @param object ClearScatterplot
+#' @param color1 up-regulation color
+#' @param color2 neutral color
+#' @param color3 down-regulation color
+#' @return invisibly returns object with plot slot filled
+#' @importFrom ggplot2 ggplot aes geom_point geom_jitter geom_text facet_grid theme_bw theme labs scale_color_manual element_line element_blank
+#' @importFrom dplyr group_by tally
 #' @export
 setGeneric("createPlot", function(object, ...) standardGeneric("createPlot"))
-
 setMethod(
   "createPlot",
   signature(object = "ClearScatterplot"),
   function(object,
            color1 = "cornflowerblue",
            color2 = "grey",
-           color3 = "indianred",
-           highLog2fc = 0.585,
-           lowLog2fc = -0.585,
-           xAxis = "SampleType",
-           yAxis = "timePoint") {
+           color3 = "indianred") {
     df <- object@data
-    ux <- unique(df[[xAxis]])
-    uy <- unique(df[[yAxis]])
-    # Dynamic faceting
-    facet_formula <- if (length(uy) > 1 && length(ux) > 1) {
-      stats::as.formula(paste(yAxis, "~", xAxis))
-    } else if (length(uy) > 1) {
-      stats::as.formula(paste(yAxis, "~ ."))
+    xvar <- "SampleType"; yvar <- "timePoint"
+    ux   <- unique(df[[xvar]]); uy <- unique(df[[yvar]])
+    facet_formula <- if (!all(is.na(uy)) && length(uy)>1 && length(ux)>1) {
+      stats::as.formula(paste(yvar, "~", xvar))
+    } else if (!all(is.na(uy)) && length(uy)>1) {
+      stats::as.formula(paste(yvar, "~ ."))
     } else {
-      stats::as.formula(paste(".~", xAxis))
+      stats::as.formula(paste(".~", xvar))
     }
-    # Base plot
-    p <- ggplot2::ggplot(df, ggplot2::aes(
-      x = .data[["log2fc"]],
-      y = .data[["negLog10p"]],
-      color = factor(.data[["color_flag"]])
-    )) +
-      ggplot2::geom_point(alpha = 0.5) +
-      ggplot2::facet_grid(facet_formula, space = "free") +
-      ggplot2::scale_color_manual(values = c(color1, color2, color3)) +
+
+    p <- ggplot2::ggplot(df, ggplot2::aes(x=log2fc, y=negLog10p, color=factor(color_flag))) +
+      ggplot2::geom_point(alpha=0.5, size=1.75) +
+      ggplot2::geom_jitter() +
+      ggplot2::labs(x=expression(log2~fold~change), y=expression(-log10~p)) +
+      ggplot2::scale_color_manual(values=c(color1,color2,color3)) +
+      ggplot2::facet_grid(facet_formula, space="free") +
+      ggplot2::theme_bw() +
       ggplot2::theme(
-        strip.text = ggplot2::element_text(face = "bold"),
-        legend.position = "bottom"
+        panel.grid.major = ggplot2::element_line(color="grey80"),
+        panel.grid.minor = ggplot2::element_blank(),
+        strip.background = ggplot2::element_rect(fill="white", color="black"),
+        strip.text       = ggplot2::element_text(size=12,face="bold"),
+        axis.title       = ggplot2::element_text(size=12,face="bold"),
+        axis.text        = ggplot2::element_text(size=10),
+        legend.position  = "bottom"
       )
-    # Overlay counts
-    df_up <- subset(df, color_flag == 1)
-    df_dn <- subset(df, color_flag == -1)
-    cnt_up <- df_up |>
-      dplyr::group_by(.data[[xAxis]], .data[[yAxis]]) |> dplyr::tally(name = "n1")
-    cnt_dn <- df_dn |>
-      dplyr::group_by(.data[[xAxis]], .data[[yAxis]]) |> dplyr::tally(name = "n2")
+
+    cnt_up <- df[df$color_flag==1, ] |> dplyr::group_by(.data[[xvar]], .data[[yvar]]) |> dplyr::tally(name="n1")
+    cnt_dn <- df[df$color_flag==-1, ]|> dplyr::group_by(.data[[xvar]], .data[[yvar]]) |> dplyr::tally(name="n2")
+
     p <- p +
-      ggplot2::geom_text(
-        data = cnt_up,
-        ggplot2::aes(label = n1),
-        x = Inf, y = Inf,
-        hjust = 1.1, vjust = 1.1,
-        color = color1
-      ) +
-      ggplot2::geom_text(
-        data = cnt_dn,
-        ggplot2::aes(label = n2),
-        x = -Inf, y = Inf,
-        hjust = -0.1, vjust = 1.1,
-        color = color3
-      )
+      ggplot2::geom_text(data=cnt_up, ggplot2::aes(label=n1), x=Inf,y=Inf,hjust=1.1,vjust=1.1, color=color1) +
+      ggplot2::geom_text(data=cnt_dn, ggplot2::aes(label=n2), x=-Inf,y=Inf,hjust=-0.1,vjust=1.1, color=color3)
+
     object@plot <- p
     invisible(object)
   }
 )
 
-#' Show method for ClearScatterplot
+#' Display a ClearScatterplot
+#'
+#' @param object ClearScatterplot
 #' @export
-setMethod(
-  "show",
-  signature(object = "ClearScatterplot"),
-  function(object) {
-    if (is.null(object@plot)) object <- createPlot(object)
-    print(object@plot)
-    invisible(object)
-  }
-)
+setMethod("show","ClearScatterplot", function(object) {
+  if (is.null(object@plot)) object <- createPlot(object)
+  print(object@plot)
+  invisible(object)
+})
 
 
