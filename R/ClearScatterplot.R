@@ -79,6 +79,8 @@ ClearScatterplot <- function(
 
 #' Constructor: ClearScatterplot from MultiAssayExperiment
 #'
+#' This function does *all* NA removal, matching, and sample sanity checks internally.
+#'
 #' @param mae         MultiAssayExperiment
 #' @param assayName   character
 #' @param groupColumn character
@@ -102,13 +104,29 @@ ClearScatterplot_MAE <- function(
   dataType   <- match.arg(dataType)
   vectorized <- match.arg(vectorized)
 
-  if (!inherits(mae, "MultiAssayExperiment")) stop("mae must be a MultiAssayExperiment.")
-  assays <- names(MultiAssayExperiment::experiments(mae))
-  if (is.null(assayName) || !(assayName %in% assays))
-    stop("Specify a valid assayName from: ", paste(assays, collapse = ", "))
-  se <- MultiAssayExperiment::experiments(mae)[[assayName]]
-  expr <- SummarizedExperiment::assay(se)
-  meta <- as.data.frame(MultiAssayExperiment::colData(mae), stringsAsFactors = FALSE)
+  # 1. Extract colData and assay
+  meta <- as.data.frame(SummarizedExperiment::colData(mae), stringsAsFactors = FALSE)
+  expr <- SummarizedExperiment::assay(MultiAssayExperiment::experiments(mae)[[assayName]])
+
+  # 2. Determine columns required for analysis
+  needed <- c(groupColumn, sampleType)
+  if (!is.null(timepoint)) needed <- c(needed, timepoint)
+
+  # 3. Find samples in both meta and expr
+  shared_samples <- intersect(rownames(meta), colnames(expr))
+  meta <- meta[shared_samples, , drop = FALSE]
+  expr <- expr[, shared_samples, drop = FALSE]
+
+  # 4. Remove samples with NA in any of the needed columns
+  keep <- rownames(meta)[stats::complete.cases(meta[, needed, drop = FALSE])]
+  meta <- meta[keep, , drop = FALSE]
+  expr <- expr[, keep, drop = FALSE]
+
+  # 5. Ensure minimum sample size per group
+  n_group <- table(meta[[groupColumn]])
+  if (any(n_group < 3)) stop("Fewer than 3 samples per group after NA removal.")
+
+  if (length(keep) < 6) stop("Too few samples after NA/matching removal.")
 
   .ClearScatterplot_core(
     expr       = expr,
@@ -123,6 +141,8 @@ ClearScatterplot_MAE <- function(
 }
 
 #' Constructor: ClearScatterplot from Expression Matrix + Metadata Table
+#'
+#' Handles NA/matching inside.
 #'
 #' @param expr        matrix
 #' @param meta        data.frame
@@ -147,6 +167,23 @@ ClearScatterplot_table <- function(
   dataType   <- match.arg(dataType)
   vectorized <- match.arg(vectorized)
   stopifnot(is.matrix(expr), is.data.frame(meta))
+
+  needed <- c(groupColumn, sampleType)
+  if (!is.null(timepoint)) needed <- c(needed, timepoint)
+
+  # Only samples in both meta and expr
+  shared_samples <- intersect(rownames(meta), colnames(expr))
+  meta <- meta[shared_samples, , drop = FALSE]
+  expr <- expr[, shared_samples, drop = FALSE]
+  keep <- rownames(meta)[stats::complete.cases(meta[, needed, drop = FALSE])]
+  meta <- meta[keep, , drop = FALSE]
+  expr <- expr[, keep, drop = FALSE]
+
+  # 5. Ensure minimum sample size per group
+  n_group <- table(meta[[groupColumn]])
+  if (any(n_group < 3)) stop("Fewer than 3 samples per group after NA removal.")
+  if (length(keep) < 6) stop("Too few samples after NA/matching removal.")
+
   .ClearScatterplot_core(
     expr       = expr,
     meta       = meta,
@@ -166,23 +203,14 @@ ClearScatterplot_table <- function(
 ) {
   needed <- c(groupColumn, sampleType)
   if (!is.null(timepoint)) needed <- c(needed, timepoint)
-  missing <- setdiff(needed, names(meta))
-  if (length(missing)) stop("Missing required metadata: ", paste(missing, collapse = ", "))
+  # -- this block is now redundant since it's handled upstream, but keeps contract --
+  keep <- rownames(meta)[stats::complete.cases(meta[, needed, drop = FALSE])]
+  if (length(keep) < 6) stop("Too few samples after NA/matching removal.")
+  expr <- expr[, keep, drop = FALSE]
+  meta <- meta[keep, , drop = FALSE]
 
-  # Find samples present in BOTH meta and expr
-  all_samples <- intersect(rownames(meta), colnames(expr))
-  meta_sub    <- meta[all_samples, , drop = FALSE]
-  expr_sub    <- expr[, all_samples, drop = FALSE]
-
-  # Keep only samples with NO missing metadata
-  keep <- rownames(meta_sub)[stats::complete.cases(meta_sub[, needed, drop = FALSE])]
-  expr_sub <- expr_sub[, keep, drop = FALSE]
-  meta_sub <- meta_sub[keep, , drop = FALSE]
-  if (length(keep) < 2) stop("Too few samples after NA/matching removal.")
-
-  # Determine data type if needed
   if (dataType == "auto") {
-    if (all(expr_sub == floor(expr_sub)) && max(expr_sub, na.rm = TRUE) > 30) {
+    if (all(expr == floor(expr)) && max(expr, na.rm = TRUE) > 30) {
       dataType <- "count"
     } else {
       dataType <- "continuous"
@@ -190,13 +218,13 @@ ClearScatterplot_table <- function(
   }
   cells <- if (!is.null(timepoint)) {
     expand.grid(
-      timePoint  = unique(meta_sub[[timepoint]]),
-      SampleType = unique(meta_sub[[sampleType]]),
+      timePoint  = unique(meta[[timepoint]]),
+      SampleType = unique(meta[[sampleType]]),
       stringsAsFactors = FALSE
     )
   } else {
     data.frame(
-      SampleType = unique(meta_sub[[sampleType]]),
+      SampleType = unique(meta[[sampleType]]),
       timePoint  = NA_character_,
       stringsAsFactors = FALSE
     )
@@ -205,13 +233,13 @@ ClearScatterplot_table <- function(
     tp <- cells$timePoint[i]
     st <- cells$SampleType[i]
     idx <- if (!is.null(timepoint)) {
-      which(meta_sub[[timepoint]] == tp & meta_sub[[sampleType]] == st)
+      which(meta[[timepoint]] == tp & meta[[sampleType]] == st)
     } else {
-      which(meta_sub[[sampleType]] == st)
+      which(meta[[sampleType]] == st)
     }
-    if (length(idx) < 2 || length(unique(meta_sub[[groupColumn]][idx])) < 2) return(NULL)
-    cell_expr <- expr_sub[, idx, drop = FALSE]
-    cell_meta <- meta_sub[idx, , drop = FALSE]
+    if (length(idx) < 2 || length(unique(meta[[groupColumn]][idx])) < 2) return(NULL)
+    cell_expr <- expr[, idx, drop = FALSE]
+    cell_meta <- meta[idx, , drop = FALSE]
     if (dataType == "continuous" && max(cell_expr, na.rm = TRUE) > 50) {
       cell_expr <- log2(cell_expr + 1)
     }
@@ -304,7 +332,6 @@ setMethod("show", "ClearScatterplot", function(object) {
   print(object@plot)
   invisible(object)
 })
-
 
 
 
