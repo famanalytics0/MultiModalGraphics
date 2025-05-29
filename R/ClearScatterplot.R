@@ -237,6 +237,56 @@ setMethod(
   }
 )
 
+#' @export
+create_plot <- function(
+  data,
+  color1 = "cornflowerblue",
+  color2 = "grey",
+  color3 = "indianred",
+  highLog2fc = 0.585,
+  lowLog2fc = -0.585,
+  expressionDirection = "regulation",
+  negativeLogPValue = "negLog10p",
+  logFoldChange = "log2fc",
+  timeVariable = "timeVar",
+  xAxis = "SampleType",
+  yAxis = "timePoint"
+) {
+  colorFlag   <- "color_flag"
+  facetFormula <- paste0(yAxis, "~", xAxis)
+
+  p <- ggplot(data, aes(
+    x = .data[[logFoldChange]],
+    y = .data[[negativeLogPValue]],
+    color = factor(.data[[colorFlag]])
+  )) +
+    geom_point(alpha = 0.5, size = 1.75) +
+    facet_grid(facetFormula, space = "free") +
+    theme_bw() +
+    scale_color_manual(values = c(color1, color2, color3)) +
+    labs(
+      x = expression("log2 (fold change)"),
+      y = expression("-log10 (p-value)")
+    ) +
+    theme(
+      axis.title=element_text(size=12,face="bold"),
+      strip.text=element_text(size=12,face="bold")
+    )
+
+  # Add counts per facet
+  df_up   <- data[data[[colorFlag]] == 1, ]
+  df_down <- data[data[[colorFlag]] == -1, ]
+  cnt_up   <- df_up   %>% group_by(.data[[xAxis]], .data[[yAxis]]) %>% tally(name="n1")
+  cnt_down <- df_down %>% group_by(.data[[xAxis]], .data[[yAxis]]) %>% tally(name="n2")
+
+  p <- p +
+    geom_text(data=cnt_up, aes(label=n1), x=Inf, y=Inf, hjust=1.1, vjust=1.1, color=color3) +
+    geom_text(data=cnt_down, aes(label=n2), x=-Inf, y=Inf, hjust=-0.1, vjust=1.1, color=color1) +
+    theme(legend.position="bottom")
+
+  return(p)
+}
+
 #' Show method for ClearScatterplot
 #' @export
 setMethod(
