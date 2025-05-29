@@ -36,7 +36,12 @@ Imports:
     ggplot2,
     RColorBrewer,
     methods,
-    magrittr
+    magrittr,
+    matrixStats,
+    SummarizedExperiment,
+    BiocParallel,
+    IRanges,
+    S4Vectors
 Suggests:
     knitr,
     testthat,
