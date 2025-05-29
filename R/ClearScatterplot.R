@@ -125,7 +125,6 @@ ClearScatterplot_MAE <- function(
   # 5. Ensure minimum sample size per group
   n_group <- table(meta[[groupColumn]])
   if (any(n_group < 3)) stop("Fewer than 3 samples per group after NA removal.")
-
   if (length(keep) < 6) stop("Too few samples after NA/matching removal.")
 
   .ClearScatterplot_core(
@@ -332,6 +331,7 @@ setMethod("show", "ClearScatterplot", function(object) {
   print(object@plot)
   invisible(object)
 })
+
 
 
 
