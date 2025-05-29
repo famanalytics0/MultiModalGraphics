@@ -1,22 +1,12 @@
 # Suppress warnings for global variables
 utils::globalVariables(c(".data", "n1", "n2"))
 
-#' ClearScatterplot: S4 Class for Faceted Volcano Plots
+#' S4 Class: ClearScatterplot
 #'
-#' This S4 class encapsulates the data and plotting logic for volcano (MA) plots,
-#' with flexible faceting by sample type and optional timepoint, including overlayed
-#' counts of up-/down-regulated features.
+#' Encapsulates data and plotting logic for volcano plots with flexible faceting.
 #'
-#' @slot data       data.frame with columns: log2fc, negLog10p, regulation,
-#'                  SampleType, timePoint (optional), color_flag
-#' @slot plot       ggplot object (or NULL until created)
-#'
-#' @details
-#' `ClearScatterplot` objects are typically constructed via
-#' [ClearScatterplot_MAE()] or [ClearScatterplot_table()], which handle normalization,
-#' DE, and input validation. Plots are generated with [createPlot()].
-#'
-#' @import methods
+#' @slot data data.frame with columns: log2fc, negLog10p, regulation, SampleType, (optional) timePoint, color_flag
+#' @slot plot ANY storing the generated ggplot object
 #' @exportClass ClearScatterplot
 setClass(
   "ClearScatterplot",
@@ -32,32 +22,20 @@ setClass(
   }
 )
 
-#' ClearScatterplot Constructor
+#' S4 Generic: ClearScatterplot
 #'
-#' Validates and builds a ClearScatterplot S4 object from a results data.frame.
+#' @param data data.frame
+#' @param ... additional arguments
+#' @export
+setGeneric("ClearScatterplot", function(data, ...) standardGeneric("ClearScatterplot"))
+
+#' Constructor: ClearScatterplot
 #'
 #' @param data           data.frame with required columns
-#' @param highLog2fc     Threshold for up-regulation (default 0.585)
-#' @param lowLog2fc      Threshold for down-regulation (default -0.585)
-#' @param negLog10pValue Threshold for significance (-log10 p, default 1.301)
-#'
-#' @details
-#' The `data` frame must contain: log2fc, negLog10p, regulation, SampleType.
-#' color_flag (for plot coloring) will be computed automatically.
-#'
-#' @return S4 ClearScatterplot object
-#'
-#' @examples
-#' df <- data.frame(
-#'   log2fc = rnorm(100),
-#'   negLog10p = runif(100, 0, 5),
-#'   regulation = sample(c("up", "down"), 100, TRUE),
-#'   SampleType = sample(c("A", "B"), 100, TRUE),
-#'   timePoint = sample(c("T1", "T2"), 100, TRUE)
-#' )
-#' cs <- ClearScatterplot(df)
-#' cs <- createPlot(cs)
-#' show(cs)
+#' @param highLog2fc     numeric threshold for up-regulation (default 0.585)
+#' @param lowLog2fc      numeric threshold for down-regulation (default -0.585)
+#' @param negLog10pValue numeric threshold for p-value significance (default 1.301)
+#' @return ClearScatterplot instance
 #' @export
 ClearScatterplot <- function(
   data,
@@ -74,14 +52,10 @@ ClearScatterplot <- function(
       ifelse(log2fc < lowLog2fc & negLog10p > negLog10pValue, -1, 0)
     )
   )
-  new("ClearScatterplot", data = data, plot = NULL)
+  methods::new("ClearScatterplot", data = data, plot = NULL)
 }
 
-#' Internal: Differential Expression for a cell (SampleType x TimePoint)
-#'
-#' Used internally by ClearScatterplot_MAE and ClearScatterplot_table.
-#'
-#' @noRd
+#' Internal utility: Differential Expression for a cell (SampleType x TimePoint)
 .run_DE <- function(expr, meta, groupColumn, designMat, dataType, cellLabel) {
   if (dataType == "count") {
     v <- limma::voom(expr, designMat, plot = FALSE)
@@ -103,43 +77,17 @@ ClearScatterplot <- function(
   )
 }
 
-#' Build ClearScatterplot from MultiAssayExperiment
+#' Constructor: ClearScatterplot from MultiAssayExperiment
 #'
-#' Runs cell-wise (SampleType x timePoint) differential expression and returns
-#' a ClearScatterplot object. Handles RNA-seq (count), microarray (continuous),
-#' and automatically detects expression type by default.
-#'
-#' @param mae         MultiAssayExperiment containing assay and metadata
-#' @param assayName   Name of the SummarizedExperiment in experiments(mae)
-#' @param groupColumn Column in colData defining the group (e.g., case/control)
-#' @param sampleType  Column for faceting columns
-#' @param timepoint   Column for faceting rows (optional; NULL for cross-sectional)
-#' @param dataType    "auto" (default), "continuous" or "count"
-#' @param vectorized  "auto", "perCell" (default per-cell DE), or "vectorized" (full model)
-#' @param BPPARAM     BiocParallelParam object for parallelization (default: bpparam())
-#'
-#' @details
-#' - For RNAseq, use "count" (applies voom)
-#' - For log-scale or microarray, use "continuous"
-#' - "auto" inspects data and picks appropriately
-#' - Handles NA and group imbalance gracefully
-#'
-#' @return S4 ClearScatterplot object
-#'
-#' @examples
-#' library(MultiAssayExperiment)
-#' data("miniACC", package = "MultiAssayExperiment")
-#' cs <- ClearScatterplot_MAE(
-#'   mae         = miniACC,
-#'   assayName   = "RNASeq2GeneNorm",
-#'   groupColumn = "C1A.C1B",
-#'   sampleType  = "pathologic_stage",
-#'   timepoint   = "MethyLevel",
-#'   dataType    = "auto",
-#'   vectorized  = "auto"
-#' )
-#' cs <- createPlot(cs)
-#' show(cs)
+#' @param mae         MultiAssayExperiment
+#' @param assayName   character
+#' @param groupColumn character
+#' @param sampleType  character
+#' @param timepoint   character or NULL
+#' @param dataType    "auto", "continuous", "count"
+#' @param vectorized  "auto", "perCell", "vectorized"
+#' @param BPPARAM     BiocParallelParam
+#' @return ClearScatterplot
 #' @export
 ClearScatterplot_MAE <- function(
   mae,
@@ -163,8 +111,8 @@ ClearScatterplot_MAE <- function(
   meta <- as.data.frame(MultiAssayExperiment::colData(mae), stringsAsFactors = FALSE)
 
   .ClearScatterplot_core(
-    expr        = expr,
-    meta        = meta,
+    expr       = expr,
+    meta       = meta,
     groupColumn = groupColumn,
     sampleType  = sampleType,
     timepoint   = timepoint,
@@ -174,33 +122,17 @@ ClearScatterplot_MAE <- function(
   )
 }
 
-#' Build ClearScatterplot from Expression Matrix and Metadata Table
+#' Constructor: ClearScatterplot from Expression Matrix + Metadata Table
 #'
-#' Same as [ClearScatterplot_MAE()], but works directly with a normalized
-#' expression matrix (microarray, voom-counts) and corresponding metadata.
-#'
-#' @param expr         Gene-by-sample matrix
-#' @param meta         data.frame with sample annotations
-#' @inheritParams ClearScatterplot_MAE
-#'
-#' @examples
-#' expr <- matrix(rnorm(1000), nrow = 100, ncol = 10)
-#' meta <- data.frame(
-#'   Group = rep(c("A", "B"), 5),
-#'   SampleType = rep(c("Tissue", "Blood"), each = 5),
-#'   timePoint = rep(c("Day1", "Day2"), each = 5),
-#'   row.names = paste0("S", 1:10)
-#' )
-#' cs <- ClearScatterplot_table(
-#'   expr        = expr,
-#'   meta        = meta,
-#'   groupColumn = "Group",
-#'   sampleType  = "SampleType",
-#'   timepoint   = "timePoint",
-#'   dataType    = "auto"
-#' )
-#' cs <- createPlot(cs)
-#' show(cs)
+#' @param expr        matrix
+#' @param meta        data.frame
+#' @param groupColumn character
+#' @param sampleType  character
+#' @param timepoint   character or NULL
+#' @param dataType    "auto", "continuous", "count"
+#' @param vectorized  "auto", "perCell", "vectorized"
+#' @param BPPARAM     BiocParallelParam
+#' @return ClearScatterplot
 #' @export
 ClearScatterplot_table <- function(
   expr,
@@ -216,8 +148,8 @@ ClearScatterplot_table <- function(
   vectorized <- match.arg(vectorized)
   stopifnot(is.matrix(expr), is.data.frame(meta))
   .ClearScatterplot_core(
-    expr        = expr,
-    meta        = meta,
+    expr       = expr,
+    meta       = meta,
     groupColumn = groupColumn,
     sampleType  = sampleType,
     timepoint   = timepoint,
@@ -227,7 +159,7 @@ ClearScatterplot_table <- function(
   )
 }
 
-#' @noRd
+#' Internal core: shared between MAE and table constructors
 .ClearScatterplot_core <- function(
   expr, meta, groupColumn, sampleType, timepoint,
   dataType, vectorized, BPPARAM
@@ -294,24 +226,21 @@ ClearScatterplot_table <- function(
   ClearScatterplot(plotdata)
 }
 
-#' Render a ClearScatterplot as a ggplot
+#' S4 Generic: createPlot
 #'
-#' Builds and stores the faceted volcano plot, using theme_bw,
-#' facet_grid, and overlays up/down counts per cell.
-#'
-#' @param object   ClearScatterplot object
-#' @param color1   up-regulation color (default "cornflowerblue")
-#' @param color2   neutral color (default "grey")
-#' @param color3   down-regulation color (default "indianred")
-#'
-#' @return The input object, with the plot slot populated
-#'
-#' @examples
-#' cs <- ClearScatterplot(df)
-#' cs <- createPlot(cs)
-#' show(cs)
+#' @param object ClearScatterplot object
+#' @param ... extra arguments (see method)
 #' @export
 setGeneric("createPlot", function(object, ...) standardGeneric("createPlot"))
+
+#' S4 Method: createPlot for ClearScatterplot
+#'
+#' @param object   ClearScatterplot
+#' @param color1   up-regulation color
+#' @param color2   neutral color
+#' @param color3   down-regulation color
+#' @return invisibly returns object with plot slot filled
+#' @exportMethod createPlot
 setMethod(
   "createPlot",
   signature(object = "ClearScatterplot"),
@@ -357,17 +286,17 @@ setMethod(
   }
 )
 
-#' Show a ClearScatterplot
+#' S4 Method: show for ClearScatterplot
 #'
-#' Prints the plot to the graphics device. If missing, builds it.
-#'
-#' @param object   ClearScatterplot object
-#' @return         Invisibly returns the object (for chaining)
-#' @export
+#' Prints the volcano plot.
+#' @param object ClearScatterplot
+#' @exportMethod show
 setMethod("show", "ClearScatterplot", function(object) {
   if (is.null(object@plot)) object <- createPlot(object)
   print(object@plot)
   invisible(object)
 })
+
+
 
 
