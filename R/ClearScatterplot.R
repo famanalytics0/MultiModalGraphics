@@ -104,28 +104,21 @@ ClearScatterplot_MAE <- function(
   dataType   <- match.arg(dataType)
   vectorized <- match.arg(vectorized)
 
-  # 1. Extract colData and assay
   meta <- as.data.frame(SummarizedExperiment::colData(mae), stringsAsFactors = FALSE)
   expr <- SummarizedExperiment::assay(MultiAssayExperiment::experiments(mae)[[assayName]])
-
-  # 2. Determine columns required for analysis
   needed <- c(groupColumn, sampleType)
   if (!is.null(timepoint)) needed <- c(needed, timepoint)
-
-  # 3. Find samples in both meta and expr
-  shared_samples <- intersect(rownames(meta), colnames(expr))
-  meta <- meta[shared_samples, , drop = FALSE]
-  expr <- expr[, shared_samples, drop = FALSE]
-
-  # 4. Remove samples with NA in any of the needed columns
-  keep <- rownames(meta)[stats::complete.cases(meta[, needed, drop = FALSE])]
-  meta <- meta[keep, , drop = FALSE]
-  expr <- expr[, keep, drop = FALSE]
-
-  # 5. Ensure minimum sample size per group
+  # Only keep metadata columns needed for NA removal
+  meta_needed <- meta[, needed, drop = FALSE]
+  # Find samples with no NA in those columns
+  keep_samps <- rownames(meta_needed)[Reduce(`&`, lapply(meta_needed, function(col) !is.na(col)))]
+  # Subset both meta and expr identically by keep_samps
+  meta <- meta[keep_samps, , drop = FALSE]
+  expr <- expr[, keep_samps, drop = FALSE]
+  # Minimum sample size per group check
   n_group <- table(meta[[groupColumn]])
   if (any(n_group < 3)) stop("Fewer than 3 samples per group after NA removal.")
-  if (length(keep) < 6) stop("Too few samples after NA/matching removal.")
+  if (length(keep_samps) < 6) stop("Too few samples after NA/matching removal.")
 
   .ClearScatterplot_core(
     expr       = expr,
@@ -169,19 +162,16 @@ ClearScatterplot_table <- function(
 
   needed <- c(groupColumn, sampleType)
   if (!is.null(timepoint)) needed <- c(needed, timepoint)
-
-  # Only samples in both meta and expr
-  shared_samples <- intersect(rownames(meta), colnames(expr))
+  meta_needed <- meta[, needed, drop = FALSE]
+  # Find samples with no NA in those columns, and that are present in expr
+  valid_samples <- rownames(meta_needed)[Reduce(`&`, lapply(meta_needed, function(col) !is.na(col)))]
+  shared_samples <- intersect(valid_samples, colnames(expr))
   meta <- meta[shared_samples, , drop = FALSE]
   expr <- expr[, shared_samples, drop = FALSE]
-  keep <- rownames(meta)[stats::complete.cases(meta[, needed, drop = FALSE])]
-  meta <- meta[keep, , drop = FALSE]
-  expr <- expr[, keep, drop = FALSE]
 
-  # 5. Ensure minimum sample size per group
   n_group <- table(meta[[groupColumn]])
   if (any(n_group < 3)) stop("Fewer than 3 samples per group after NA removal.")
-  if (length(keep) < 6) stop("Too few samples after NA/matching removal.")
+  if (length(shared_samples) < 6) stop("Too few samples after NA/matching removal.")
 
   .ClearScatterplot_core(
     expr       = expr,
@@ -202,7 +192,7 @@ ClearScatterplot_table <- function(
 ) {
   needed <- c(groupColumn, sampleType)
   if (!is.null(timepoint)) needed <- c(needed, timepoint)
-  # -- this block is now redundant since it's handled upstream, but keeps contract --
+  # This block is redundant since handled upstream, but keeps contract
   keep <- rownames(meta)[stats::complete.cases(meta[, needed, drop = FALSE])]
   if (length(keep) < 6) stop("Too few samples after NA/matching removal.")
   expr <- expr[, keep, drop = FALSE]
@@ -331,7 +321,6 @@ setMethod("show", "ClearScatterplot", function(object) {
   print(object@plot)
   invisible(object)
 })
-
 
 
 
