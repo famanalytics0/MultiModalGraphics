@@ -87,152 +87,108 @@ ClearScatterplot <- function(data,
 
 #' Create a ClearScatterplot Object from MultiAssayExperiment
 #'
-#' Constructor function for creating an instance of the ClearScatterplot class from a MultiAssayExperiment object.
-#' This function performs differential expression analysis using limma.
-#' @param mae A \code{MultiAssayExperiment} object containing the assay data.
-#' @param assayName The name of the assay to use for plotting.
-#' @param logFoldChange The name of the column containing expression values.
-#' @param negativeLogPValue The name of the column containing the negative log p-values.
-#' @param highLog2fc Threshold for high log2 fold change values.
-#' @param lowLog2fc Threshold for low log2 fold change values.
-#' @param negLog10pValue Threshold for -log10 p-value.
-#' @param timepoint The name of the column containing time point information.
-#' @param sampleType The name of the column containing sample type information (e.g., tissue or organ).
-#' @param groupColumn The name of the column in \code{colData(mae)} that defines the grouping variable for the design matrix.
-#' @return An object of class \code{ClearScatterplot}.
-#' @examples
-#' # Parameters
-#' num_genes <- 1000
-#' num_samples <- 1000  # Total number of samples
-#' conditions <- list(
-#'   Condition1 = c("Cond1A", "Cond1B"),
-#'   Condition2 = c("Cond2A", "Cond2B"),
-#'   Condition3 = c("Cond3A", "Cond3B")
-#' )
+#' Runs per-cell (timepoint × sampleType) limma DE and builds a faceted
+#' volcano scatterplot.
 #'
-#' # Function to generate expression data
-#' generate_expression_data <- function(num_genes, num_samples) {
-#'   matrix(rnorm(num_genes * num_samples, mean = 6, sd = 2), nrow = num_genes, ncol = num_samples)
-#' }
-#'
-#' # Initialize lists
-#' expression_data_list <- list()
-#' metadata_list <- list()
-#'
-#' # Generate samples for each combination of conditions
-#' all_combinations <- expand.grid(conditions)
-#' num_combinations <- nrow(all_combinations)
-#' samples_per_combination <- num_samples %/% num_combinations
-#' remaining_samples <- num_samples %% num_combinations
-#'
-#' for (i in 1:num_combinations) {
-#'   combination <- all_combinations[i, ]
-#'   combination_name <- paste(combination, collapse = "_")
-#'
-#'   # Calculate the number of samples for this combination
-#'   num_samples_for_this_combination <- samples_per_combination + ifelse(i <= remaining_samples, 1, 0)
-#'
-#'   expression_data <- generate_expression_data(num_genes, num_samples_for_this_combination)
-#'   colnames(expression_data) <- paste0(combination_name, "_Sample", 1:num_samples_for_this_combination)
-#'   rownames(expression_data) <- paste0("Gene", 1:num_genes)
-#'
-#'   sample_metadata <- data.frame(
-#'     SampleID = colnames(expression_data),
-#'     Group = rep(c("Control", "Treatment"), length.out = num_samples_for_this_combination),
-#'     stringsAsFactors = FALSE,
-#'     TimePoint = rep(c("T1", "T1", "T2", "T2"), length.out = num_samples_for_this_combination),  # Example time points
-#'     SampleType = rep(c("Tissue", "Organ"), length.out = num_samples_for_this_combination)  # Example sample types
-#'   )
-#'
-#'   for (cond in names(combination)) {
-#'     sample_metadata[[cond]] <- combination[[cond]]
-#'   }
-#'
-#'   expression_data_list[[combination_name]] <- expression_data
-#'   metadata_list[[combination_name]] <- sample_metadata
-#' }
-#'
-#' # Combine metadata into a single data frame
-#' combined_metadata <- do.call(rbind, metadata_list)
-#' rownames(combined_metadata) <- combined_metadata$SampleID
-#'
-#' # Select only the relevant columns for the final metadata
-#' final_metadata <- combined_metadata[, c("SampleID", "TimePoint", "SampleType", "Group", "Condition1", "Condition2", "Condition3")]
-#'
-#' # Create the MultiAssayExperiment object
-#' mae <- MultiAssayExperiment::MultiAssayExperiment(experiments = expression_data_list, colData = final_metadata)
-#'
-#' # Check available assay names
-#' assayNames <- names(MultiAssayExperiment::experiments(mae))
-#' assayName <- assayNames[1]
-#'
-#' # Assuming ClearScatterplot_MAE is already defined in your script
-#' scatterplotObject <- ClearScatterplot_MAE(
-#'   mae = mae,
-#'   assayName = assayName,
-#'   timepoint = "TimePoint",
-#'   sampleType = "SampleType"
-#' )
-#'
-#' # Assuming createPlot is already defined in your script
-#' # Generate and display the plot
-#' scatterplotObject <- createPlot(
-#'   scatterplotObject,
-#'   color1 = "cornflowerblue",
-#'   color2 = "grey",
-#'   color3 = "indianred",
-#'   highLog2fc = 0.585,
-#'   lowLog2fc = -0.585,
-#'   negLog10pValue = 1.301
-#' )
-#'
-#' # Show the plot
-#' print(scatterplotObject@plot)
+#' @param mae A \code{MultiAssayExperiment}.
+#' @param assayName Name of the assay (SummarizedExperiment) to use.
+#' @param logFoldChange Column name for log-FC in the result data.
+#' @param negativeLogPValue Column name for –log10(p) in the result data.
+#' @param highLog2fc Threshold for high log2-FC.
+#' @param lowLog2fc Threshold for low log2-FC.
+#' @param negLog10pValue Threshold for –log10(p).
+#' @param timepoint colData column for timepoint (facets on rows).
+#' @param sampleType colData column for sampleType (facets on cols).
+#' @param groupColumn colData column for your DE design.
+#' @return A \code{ClearScatterplot} object ready for \code{createPlot()/show()}.
 #' @export
-ClearScatterplot_MAE <- function(mae, assayName = NULL, logFoldChange = "log2fc",
-                                 negativeLogPValue = "negLog10p", highLog2fc = 0.585,
-                                 lowLog2fc = -0.585, negLog10pValue = 1.301,
-                                 timepoint = "TimePoint", sampleType = "SampleType",
-                                 groupColumn = "Group") {
-    if (!inherits(mae, "MultiAssayExperiment")) {
-    stop("Data must be a MultiAssayExperiment object.")
+ClearScatterplot_MAE <- function(
+  mae,
+  assayName           = NULL,
+  logFoldChange       = "log2fc",
+  negativeLogPValue   = "negLog10p",
+  highLog2fc          = 0.585,
+  lowLog2fc           = -0.585,
+  negLog10pValue      = 1.301,
+  timepoint           = "TimePoint",
+  sampleType          = "SampleType",
+  groupColumn         = "Group"
+) {
+  ## 1) Input validation
+  if (!inherits(mae, "MultiAssayExperiment")) {
+    stop("`mae` must be a MultiAssayExperiment.")
+  }
+  assays <- names(MultiAssayExperiment::experiments(mae))
+  if (is.null(assayName) || !assayName %in% assays) {
+    stop("Please specify a valid assayName from: ", paste(assays, collapse=", "))
+  }
+  cd <- as.data.frame(MultiAssayExperiment::colData(mae), stringsAsFactors = FALSE)
+  needed <- c(groupColumn, timepoint, sampleType)
+  missing_cols <- setdiff(needed, colnames(cd))
+  if (length(missing_cols)) {
+    stop("Missing colData columns: ", paste(missing_cols, collapse=", "))
   }
 
-  if (is.null(assayName) || !assayName %in% names(MultiAssayExperiment::experiments(mae))) {
-    stop("Please specify a valid assayName from the MultiAssayExperiment object.")
+  ## 2) Drop samples with NA in any of the three grouping columns
+  keep_samps <- rownames(cd)[stats::complete.cases(cd[, needed, drop=FALSE])]
+  if (length(keep_samps) < 2) {
+    stop("Too few samples after dropping NAs in: ", paste(needed, collapse=", "))
   }
+  mae2 <- mae[, keep_samps]
 
-  se <- MultiAssayExperiment::experiments(mae)[[assayName]]
-  col_data <- MultiAssayExperiment::colData(mae)
-  expr_data <- MultiAssayExperiment::assay(se)
+  ## 3) Extract expression matrix & metadata
+  se   <- MultiAssayExperiment::experiments(mae2)[[assayName]]
+  expr <- SummarizedExperiment::assay(se)
+  cd2  <- as.data.frame(MultiAssayExperiment::colData(mae2), stringsAsFactors = FALSE)
 
-  # Ensure columns match and are in the correct order
-  sample_names <- colnames(expr_data)
-  col_data <- col_data[rownames(col_data) %in% sample_names, ]
-  col_data <- col_data[match(sample_names, rownames(col_data)), ]
-
-  # Differential expression analysis using limma
-  design_formula <- as.formula(paste0("~", groupColumn))
-  design <- model.matrix(design_formula, data = col_data)
-
-  fit <- limma::lmFit(expr_data, design)
-  fit <- limma::eBayes(fit)
-  topTable <- limma::topTable(fit, adjust.method = "BH", number = Inf)
-
-  # Format the results
-  data <- data.frame(
-    log2fc = topTable$logFC,
-    negLog10p = -log10(topTable$P.Value),
-    regulation = ifelse (topTable$logFC > 0, "up", "down"),
-    organ = colData(mae)[[sampleType]],
-    timePoint = colData(mae)[[timepoint]],
-    reg_time_org = ifelse (topTable$logFC > 0, "up", "down"),
-    row.names = rownames(topTable)
+  ## 4) Build all combinations of timepoint × sampleType
+  cells <- expand.grid(
+    timePoint  = unique(cd2[[timepoint]]),
+    SampleType = unique(cd2[[sampleType]]),
+    stringsAsFactors = FALSE
   )
 
-  ClearScatterplot(data, logFoldChange, negativeLogPValue, highLog2fc, lowLog2fc, negLog10pValue)
-}
+  ## 5) Loop per cell: subset samples, run limma DE, collect results
+  df_list <- lapply(seq_len(nrow(cells)), function(i) {
+    tp <- cells$timePoint[i]
+    st <- cells$SampleType[i]
+    idx <- which(cd2[[timepoint]] == tp & cd2[[sampleType]] == st)
+    if (length(idx) < 2 ||
+        length(unique(cd2[[groupColumn]][idx])) < 2) return(NULL)
 
+    expr_cell <- expr[, idx, drop = FALSE]
+    cd_cell   <- cd2[idx, , drop = FALSE]
+    design    <- stats::model.matrix(~ cd_cell[[groupColumn]])
+    fit_cell  <- limma::lmFit(expr_cell, design) |> limma::eBayes()
+    tt_cell   <- limma::topTable(fit_cell, coef = 2, number = Inf)
+
+    data.frame(
+      log2fc      = tt_cell[["logFC"]],
+      negLog10p   = -log10(tt_cell[["P.Value"]]),
+      regulation  = ifelse(tt_cell[["logFC"]] > 0, "up", "down"),
+      timePoint   = tp,
+      SampleType  = st,
+      stringsAsFactors = FALSE,
+      row.names   = rownames(tt_cell)
+    )
+  })
+
+  ## 6) Combine and reset rownames
+  plotdata <- do.call(rbind, df_list)
+  rownames(plotdata) <- NULL
+
+  ## 7) Construct ClearScatterplot object
+  cs <- ClearScatterplot(
+    data               = plotdata,
+    logFoldChange      = logFoldChange,
+    negativeLogPValue  = negativeLogPValue,
+    highLog2fc         = highLog2fc,
+    lowLog2fc          = lowLog2fc,
+    negLog10pValue     = negLog10pValue,
+    timePointColumn    = "timePoint"
+  )
+  return(cs)
+}
 
 
 
