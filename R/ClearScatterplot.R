@@ -205,31 +205,36 @@ ClearScatterplot_table <- function(
 ) {
   needed <- c(groupColumn, sampleType)
   if (!is.null(timepoint)) needed <- c(needed, timepoint)
-  keep <- rownames(meta)[stats::complete.cases(meta[, needed, drop = FALSE])]
+
+  keep <- rownames(meta)[complete.cases(meta[, needed, drop=FALSE])]
   if (length(keep) < 6) stop("Too few samples after NA/matching removal.")
-  expr <- expr[, keep, drop = FALSE]
-  meta <- meta[keep, , drop = FALSE]
+  expr <- expr[, keep, drop=FALSE]
+  meta <- meta[keep, , drop=FALSE]
+
+  # explicit feature filtering added here (CRUCIAL ADDITION)
+  if (nrow(expr) > 500) {
+    high_var_genes <- matrixStats::rowVars(expr) >= quantile(matrixStats::rowVars(expr), 0.75)
+    expr <- expr[high_var_genes, , drop=FALSE]
+  }
 
   if (dataType == "auto") {
-    if (all(expr == floor(expr)) && max(expr, na.rm = TRUE) > 30) {
-      dataType <- "count"
-    } else {
-      dataType <- "continuous"
-    }
+    dataType <- if (all(expr == floor(expr)) && max(expr, na.rm=TRUE) > 30) "count" else "continuous"
   }
+
   cells <- if (!is.null(timepoint)) {
     expand.grid(
       timePoint  = unique(meta[[timepoint]]),
       SampleType = unique(meta[[sampleType]]),
-      stringsAsFactors = FALSE
+      stringsAsFactors=FALSE
     )
   } else {
     data.frame(
       SampleType = unique(meta[[sampleType]]),
       timePoint  = NA_character_,
-      stringsAsFactors = FALSE
+      stringsAsFactors=FALSE
     )
   }
+
   run_cell <- function(i) {
     tp <- cells$timePoint[i]
     st <- cells$SampleType[i]
@@ -239,29 +244,36 @@ ClearScatterplot_table <- function(
       which(meta[[sampleType]] == st)
     }
     if (length(idx) < 2 || length(unique(meta[[groupColumn]][idx])) < 2) return(NULL)
-    cell_expr <- expr[, idx, drop = FALSE]
-    cell_meta <- meta[idx, , drop = FALSE]
-    if (dataType == "continuous" && max(cell_expr, na.rm = TRUE) > 50) {
+    cell_expr <- expr[, idx, drop=FALSE]
+    cell_meta <- meta[idx, , drop=FALSE]
+
+    if (dataType == "continuous" && max(cell_expr, na.rm=TRUE) > 50) {
       cell_expr <- log2(cell_expr + 1)
     }
-    design <- stats::model.matrix(~ cell_meta[[groupColumn]])
+
+    design <- model.matrix(~ cell_meta[[groupColumn]])
     if (nrow(cell_meta) <= ncol(design)) return(NULL)
-    .run_DE(cell_expr, cell_meta, groupColumn, design, dataType, list(
-      SampleType = st,
-      timePoint  = tp
-    ))
+
+    .run_DE(cell_expr, cell_meta, groupColumn, design, dataType,
+            list(SampleType=st, timePoint=tp))
   }
-  use_parallel <- (vectorized == "vectorized" || (vectorized == "auto" && nrow(cells) > BiocParallel::bpworkers(BPPARAM)))
+
+  use_parallel <- (vectorized=="vectorized" ||
+                  (vectorized=="auto" && nrow(cells)>BiocParallel::bpworkers(BPPARAM)))
+
   df_list <- if (use_parallel) {
-    BiocParallel::bplapply(seq_len(nrow(cells)), run_cell, BPPARAM = BPPARAM)
+    BiocParallel::bplapply(seq_len(nrow(cells)), run_cell, BPPARAM=BPPARAM)
   } else {
     lapply(seq_len(nrow(cells)), run_cell)
   }
+
   plotdata <- do.call(rbind, df_list)
-  if (is.null(plotdata) || nrow(plotdata) == 0) stop("No DE results to plot.")
+  if (is.null(plotdata) || nrow(plotdata)==0) stop("No DE results to plot.")
+
   rownames(plotdata) <- NULL
   ClearScatterplot(plotdata)
 }
+
 
 #' S4 Generic: createPlot
 #'
