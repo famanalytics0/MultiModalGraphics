@@ -181,6 +181,8 @@ ClearScatterplot_MAE <- function(
 
 #' Constructor: ClearScatterplot_table
 #'
+#' @export
+#'
 #' @param expr         numeric matrix (features × samples)
 #' @param meta         data.frame with rownames matching colnames(expr)
 #' @param groupColumn  grouping column in meta
@@ -193,7 +195,6 @@ ClearScatterplot_MAE <- function(
 #' @param var_quantile variance filter quantile
 #' @importFrom matrixStats rowVars
 #' @import BiocParallel
-#' @export
 ClearScatterplot_table <- function(
   expr,
   meta,
@@ -340,6 +341,7 @@ setMethod("show", "ClearScatterplot", function(object) {
   print(object@plot)
   invisible(object)
 })
+
 
 
 
