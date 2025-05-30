@@ -144,8 +144,47 @@ ClearScatterplot_MAE <- function(
   feat <- rv >= stats::quantile(rv, var_quantile, na.rm = TRUE)
   expr_f <- expr_full[feat, , drop = FALSE]
 
+      # metadata from assay colData
   meta_f <- as.data.frame(
     SummarizedExperiment::colData(se_full),
+    stringsAsFactors = FALSE
+  )
+  # if user-requested columns are not in assay colData, merge in from primary MAE colData via sampleMap
+  cols_needed <- c(groupColumn, sampleType)
+  if (!is.null(timepoint)) cols_needed <- c(cols_needed, timepoint)
+  missing_cols <- setdiff(cols_needed, names(meta_f))
+  if (length(missing_cols) > 0) {
+    sm <- MultiAssayExperiment::sampleMap(mae)
+    sm <- sm[sm$assay == assayName, , drop = FALSE]
+    primary_meta <- as.data.frame(
+      SummarizedExperiment::colData(mae),
+      stringsAsFactors = FALSE
+    )
+    # subset and rename primary metadata to assay colnames
+    primary_meta <- primary_meta[sm$primary, missing_cols, drop = FALSE]
+    rownames(primary_meta) <- sm$colname
+    # bind missing columns to assay metadata
+    meta_f <- cbind(
+      meta_f,
+      primary_meta[rownames(meta_f), , drop = FALSE]
+    )
+  }
+  # if user-requested columns are not in assay colData, merge in from primary MAE colData via sampleMap
+  cols_needed <- c(groupColumn, sampleType)
+  if (!is.null(timepoint)) cols_needed <- c(cols_needed, timepoint)
+  missing_cols <- setdiff(cols_needed, names(meta_f))
+  if (length(missing_cols) > 0) {
+    sm <- MultiAssayExperiment::sampleMap(mae)
+    sm <- sm[sm$assay == assayName, , drop = FALSE]
+    primary_meta <- as.data.frame(MultiAssayExperiment::colData(mae), stringsAsFactors = FALSE)
+    primary_meta <- primary_meta[sm$primary, , drop = FALSE]
+    rownames(primary_meta) <- sm$colname
+    # bind only missing columns, aligning rows by assay colnames
+    meta_f <- cbind(
+      meta_f,
+      primary_meta[rownames(meta_f), missing_cols, drop = FALSE]
+    )
+  },
     stringsAsFactors = FALSE
   )
 
@@ -322,6 +361,7 @@ setMethod("show", "ClearScatterplot", function(object) {
   print(object@plot)
   invisible(object)
 })
+
 
 
 
