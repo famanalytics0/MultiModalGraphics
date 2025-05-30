@@ -78,7 +78,7 @@ ClearScatterplot <- function(
 
 #' Constructor: from MultiAssayExperiment
 #'
-#' Handles variance filtering, NA removal, sample sanity checks
+#' Handles variance filtering, NA removal, and sample sanity checks
 #'
 #' @param mae           MultiAssayExperiment
 #' @param assayName     character assay name
@@ -106,41 +106,43 @@ ClearScatterplot_MAE <- function(
   vectorized <- match.arg(vectorized)
 
   # feature filter by row variance
-  full <- SummarizedExperiment::assay(
-    MultiAssayExperiment::experiments(mae)[[assayName]]
-  )
-  rv   <- matrixStats::rowVars(full, na.rm=TRUE)
+  se_full <- MultiAssayExperiment::experiments(mae)[[assayName]]
+  expr_full <- SummarizedExperiment::assay(se_full)
+  rv   <- matrixStats::rowVars(expr_full, na.rm=TRUE)
   feat <- which(rv >= quantile(rv, var_quantile, na.rm=TRUE))
   mae_f <- subsetByRow(mae,
     IRanges::IntegerList(setNames(list(feat), assayName))
   )
 
+  se   <- MultiAssayExperiment::experiments(mae_f)[[assayName]]
+  expr <- SummarizedExperiment::assay(se)
   meta <- as.data.frame(
-    SummarizedExperiment::colData(mae_f),
+    SummarizedExperiment::colData(se),
     stringsAsFactors=FALSE
-  )
-  expr <- SummarizedExperiment::assay(
-    MultiAssayExperiment::experiments(mae_f)[[assayName]]
   )
 
   cols <- c(groupColumn, sampleType)
-  if (!is.null(timepoint)) cols <- c(cols,timepoint)
+  if (!is.null(timepoint)) cols <- c(cols, timepoint)
   md   <- meta[, cols, drop=FALSE]
-  keep <- rownames(md)[apply(md,1, function(r) all(!is.na(r)))]
-  meta <- meta[keep,,drop=FALSE]
-  expr <- expr[,keep,drop=FALSE]
+  keep <- rownames(md)[apply(md, 1, function(r) all(!is.na(r)))]
+  if (length(keep)==0) stop("No samples remain after NA filtering.")
+
+  expr <- expr[, keep, drop=FALSE]
+  meta <- meta[keep, , drop=FALSE]
 
   tab <- table(meta[[groupColumn]])
-  if (any(tab<3)) stop("Fewer than 3 samples per group after NA removal.")
-  if (length(keep) < 6) stop("Too few samples after NA removal.")
+  if (any(tab < 3)) stop("Fewer than 3 samples per group after NA removal.")
+  if (ncol(expr) < 6) stop("Too few samples after NA removal.")
 
   .ClearScatterplot_core(
-    expr, meta, groupColumn, sampleType,
-    timepoint, dataType, vectorized, BPPARAM
+    expr, meta,
+    groupColumn, sampleType,
+    timepoint, dataType,
+    vectorized, BPPARAM
   )
 }
 
-#' Constructor: from matrix + metadata
+#' Constructor: from matrix + metadata + metadata
 #' @export
 ClearScatterplot_table <- function(
   expr, meta,
@@ -311,6 +313,7 @@ setMethod("show","ClearScatterplot",function(object){
   print(object@plot)
   invisible(object)
 })
+
 
 
 
