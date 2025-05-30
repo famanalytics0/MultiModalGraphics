@@ -103,7 +103,6 @@ ClearScatterplot_MAE <- function(
   se_full   <- MultiAssayExperiment::experiments(mae)[[assayName]]
   expr_full <- SummarizedExperiment::assay(se_full)
 
-  # feature filter
   rv    <- matrixStats::rowVars(expr_full, na.rm = TRUE)
   feats <- rv >= quantile(rv, var_quantile, na.rm=TRUE)
   expr_full <- expr_full[feats,,drop=FALSE]
@@ -113,7 +112,6 @@ ClearScatterplot_MAE <- function(
     stringsAsFactors = FALSE
   )
 
-  # ensure shared samples
   shared <- intersect(colnames(expr_full), rownames(meta_full))
   if (!length(shared)) stop("No overlapping samples")
   expr  <- expr_full[,shared,drop=FALSE]
@@ -121,18 +119,13 @@ ClearScatterplot_MAE <- function(
 
   cols    <- c(groupColumn, sampleType)
   if (!is.null(timepoint)) cols <- c(cols, timepoint)
-  if (missing <- setdiff(cols, names(meta)))
-    stop("Metadata missing: ", paste(missing, collapse=","))
+  missing <- setdiff(cols, names(meta))
+  if (length(missing)) stop("Metadata missing: ", paste(missing, collapse=","))
 
   md         <- meta[,cols,drop=FALSE]
   keep_samps <- rownames(md)[rowSums(is.na(md))==0]
-  if (!all(keep_samps %in% colnames(expr)))
-    stop("Sample mismatch: ", paste(setdiff(keep_samps, colnames(expr)), collapse=","))
-
   expr <- expr[,keep_samps,drop=FALSE]
   meta <- meta[keep_samps,,drop=FALSE]
-
-  message("After filtering: expr-cols=", ncol(expr), "; meta-rows=", nrow(meta))
 
   grp_tab <- table(meta[[groupColumn]])
   if (any(grp_tab < 3)) stop("<3 samples per group")
@@ -171,14 +164,11 @@ ClearScatterplot_table <- function(
 
   cols    <- c(groupColumn, sampleType)
   if (!is.null(timepoint)) cols <- c(cols, timepoint)
-  if (missing <- setdiff(cols, names(meta)))
-    stop("Metadata missing: ", paste(missing, collapse=","))
+  missing <- setdiff(cols, names(meta))
+  if (length(missing)) stop("Metadata missing: ", paste(missing, collapse=","))
 
   md         <- meta[,cols,drop=FALSE]
   keep_samps <- rownames(md)[rowSums(is.na(md))==0]
-  if (!all(keep_samps %in% colnames(expr)))
-    stop("Sample mismatch: ", paste(setdiff(keep_samps, colnames(expr)), collapse=","))
-
   expr <- expr[,keep_samps,drop=FALSE]
   meta <- meta[keep_samps,,drop=FALSE]
 
@@ -197,7 +187,52 @@ ClearScatterplot_table <- function(
   expr, meta, groupColumn, sampleType,
   timepoint, dataType, vectorized, BPPARAM
 ) {
-  # ... existing core unchanged ...
+  cells <- if (!is.null(timepoint)) {
+    expand.grid(
+      SampleType = unique(meta[[sampleType]]),
+      timePoint  = unique(meta[[timepoint]]),
+      stringsAsFactors = FALSE
+    )
+  } else {
+    data.frame(
+      SampleType = unique(meta[[sampleType]]),
+      timePoint  = NA_character_,
+      stringsAsFactors = FALSE
+    )
+  }
+  run_cell <- function(i) {
+    cell <- cells[i,]
+    idx  <- if (!is.null(timepoint)) {
+      which(
+        meta[[sampleType]] == cell$SampleType &
+        meta[[timepoint]]  == cell$timePoint
+      )
+    } else {
+      which(meta[[sampleType]] == cell$SampleType)
+    }
+    if (length(idx) < 2 || length(unique(meta[idx,groupColumn])) < 2)
+      return(NULL)
+    expr_c <- expr[,idx,drop=FALSE]
+    meta_c <- meta[idx,,drop=FALSE]
+    if (dataType == "auto") {
+      dataType <- if (all(expr_c == floor(expr_c)) &&
+        max(expr_c, na.rm=TRUE) > 30) "count" else "continuous"
+    }
+    if (dataType == "continuous" && max(expr_c, na.rm=TRUE) > 50)
+      expr_c <- log2(expr_c + 1)
+    design <- model.matrix(~ meta_c[[groupColumn]])
+    if (nrow(meta_c) <= ncol(design)) return(NULL)
+    .run_DE(expr_c, meta_c, groupColumn, design, dataType, cell)
+  }
+  use_par <- vectorized == "vectorized" ||
+    (vectorized == "auto" && nrow(cells) > BiocParallel::bpworkers(BPPARAM))
+  df_lst <- if (use_par) BiocParallel::bplapply(seq_len(nrow(cells)), run_cell, BPPARAM=BPPARAM)
+            else            lapply(seq_len(nrow(cells)), run_cell)
+  plotdata <- do.call(rbind, df_lst)
+  if (is.null(plotdata) || nrow(plotdata)==0)
+    stop("No DE results to plot.")
+  rownames(plotdata) <- NULL
+  ClearScatterplot(plotdata)
 }
 
 #' Generic: createPlot
@@ -206,10 +241,36 @@ setGeneric("createPlot", function(object, ...) standardGeneric("createPlot"))
 
 #' Method: createPlot for ClearScatterplot
 #' @exportMethod createPlot
-setMethod("createPlot", "ClearScatterplot", function(
+setMethod("createPlot","ClearScatterplot", function(
   object, color1="cornflowerblue", color2="grey", color3="indianred"
 ) {
-  # ... existing plotting unchanged ...
+  df   <- object@data
+  xvar <- "log2fc"; yvar <- "negLog10p"
+  facet <- if (!all(is.na(df$timePoint)) && length(unique(df$timePoint))>1)
+    "timePoint ~ SampleType" else ". ~ SampleType"
+  p <- ggplot2::ggplot(df, ggplot2::aes(x=log2fc,y=negLog10p,color=factor(color_flag))) +
+    ggplot2::geom_point(alpha=0.5,size=1.75) +
+    ggplot2::geom_jitter() +
+    ggplot2::labs(x=expression(log2~fold~change),y=expression(-log10~p)) +
+    ggplot2::scale_color_manual(values=c(color1,color2,color3)) +
+    ggplot2::facet_grid(stats::as.formula(facet), space="free") +
+    ggplot2::theme_bw() +
+    ggplot2::theme(
+      panel.grid.major=ggplot2::element_line(color="grey80"),
+      panel.grid.minor=ggplot2::element_blank(),
+      strip.background=ggplot2::element_rect(fill="white",color="black"),
+      strip.text=ggplot2::element_text(size=12,face="bold"),
+      axis.title=ggplot2::element_text(size=12,face="bold"),
+      axis.text=ggplot2::element_text(size=10),
+      legend.position="bottom"
+    )
+  cnt_up <- df[df$color_flag==1,] |> dplyr::group_by(timePoint,SampleType) |> dplyr::tally(name="n1")
+  cnt_dn <- df[df$color_flag==-1,] |> dplyr::group_by(timePoint,SampleType) |> dplyr::tally(name="n2")
+  p <- p +
+    ggplot2::geom_text(data=cnt_up,ggplot2::aes(label=n1),x=Inf,y=Inf,hjust=1.1,vjust=1.1,color=color1) +
+    ggplot2::geom_text(data=cnt_dn,ggplot2::aes(label=n2),x=-Inf,y=Inf,hjust=-0.1,vjust=1.1,color=color3)
+  object@plot <- p
+  invisible(object)
 })
 
 #' Method: show for ClearScatterplot
@@ -219,6 +280,7 @@ setMethod("show","ClearScatterplot", function(object) {
   print(object@plot)
   invisible(object)
 })
+
 
 
 
