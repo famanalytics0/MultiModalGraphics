@@ -181,20 +181,30 @@ ClearScatterplot_MAE <- function(
 
 #' Constructor: ClearScatterplot_table
 #'
-#' @export
+#' Create a ClearScatterplot object from a plain expression matrix and metadata.
 #'
-#' @param expr         numeric matrix (features × samples)
-#' @param meta         data.frame with rownames matching colnames(expr)
-#' @param groupColumn  grouping column in meta
-#' @param sampleType   facet column in meta
-#' @param timepoint    optional row facet column
-#' @param dataType     one of "auto","continuous","count"
-#' @param vectorized   one of "auto","perCell","vectorized"
-#' @param parallel     logical; override automatic parallel
-#' @param BPPARAM      BiocParallelParam
-#' @param var_quantile variance filter quantile
+#' @param expr         numeric matrix of features (rows) by samples (columns)
+#' @param meta         data.frame of sample metadata; row.names must match column names of `expr`
+#' @param groupColumn  name of the grouping column in `meta` used for differential testing
+#' @param sampleType   name of the facet column in `meta` for plotting
+#' @param timepoint    optional name of an additional facet row column in `meta`; if NULL, all data is a single time point
+#' @param dataType     one of "auto", "continuous", or "count"; "auto" infers type based on integer status
+#' @param vectorized   one of "auto", "perCell", or "vectorized"; "auto" will parallelize if number of cells exceeds workers
+#' @param parallel     logical; if FALSE, disables all parallel execution regardless of `vectorized`
+#' @param BPPARAM      a BiocParallelParam object for parallel execution
+#' @param var_quantile numeric between 0 and 1; quantile threshold for filtering low-variance features
+#'
+#' @return A `ClearScatterplot` S4 object ready for plotting via `show()`
+#'
+#' @examples
+#' # expr <- matrix(rpois(1000, 10), nrow=100, ncol=10)
+#' # meta <- data.frame(Group = rep(c("A","B"), each=5), SampleType = rep(c("X","Y"), times=5), row.names = paste0("S",1:10))
+#' # cs <- ClearScatterplot_table(expr, meta)
+#' # cs
+#'
 #' @importFrom matrixStats rowVars
 #' @import BiocParallel
+#' @export ClearScatterplot_table
 ClearScatterplot_table <- function(
   expr,
   meta,
