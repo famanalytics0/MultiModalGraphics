@@ -109,7 +109,8 @@ ClearScatterplot <- function(
 #' @param BPPARAM      BiocParallelParam
 #' @param var_quantile variance filter quantile (0-1)
 #' @importFrom MultiAssayExperiment experiments sampleMap
-#' @import SummarizedExperiment BiocParallel
+#' @import SummarizedExperiment
+#' @import BiocParallel
 #' @importFrom matrixStats rowVars
 #' @importFrom stats quantile model.matrix
 #' @export
@@ -204,7 +205,7 @@ ClearScatterplot_MAE <- function(
 #'
 #' @importFrom matrixStats rowVars
 #' @import BiocParallel
-#' @export ClearScatterplot_table
+#' @export
 ClearScatterplot_table <- function(
   expr,
   meta,
