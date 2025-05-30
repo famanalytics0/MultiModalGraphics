@@ -98,7 +98,7 @@ ClearScatterplot <- function(
 
 #' Constructor: ClearScatterplot from MAE
 #'
-#' Handles filtering, NA removal, and sample checks.
+#' Handles filtering, NA removal, and merging metadata from the MAE when needed.
 #'
 #' @param mae          MultiAssayExperiment object
 #' @param assayName    assay to use (must exist in mae)
@@ -106,15 +106,14 @@ ClearScatterplot <- function(
 #' @param sampleType   facet column name in colData
 #' @param timepoint    optional facet row name in colData
 #' @param dataType     one of "auto","continuous","count"
-#' @param vectorized   one of "auto","perCell","vectorized"; in "auto" mode, the function will invoke parallel execution via BiocParallel only when the number of cells exceeds the number of available workers.
-#' @param parallel     logical; if FALSE, explicitly disables parallel execution even when `vectorized = "auto"`. (default: TRUE)
+#' @param vectorized   one of "auto","perCell","vectorized"; in "auto" mode, invokes parallel when cells > workers
+#' @param parallel     logical; if FALSE, disables parallel even if `vectorized = "auto"`
 #' @param BPPARAM      BiocParallelParam for parallel execution
 #' @param var_quantile variance filter quantile (0-1)
-#' @importFrom MultiAssayExperiment experiments
+#' @importFrom MultiAssayExperiment experiments sampleMap
 #' @import SummarizedExperiment
 #' @import BiocParallel
 #' @importFrom matrixStats rowVars
-#' @importFrom DelayedMatrixStats rowVars as_DelayedArray
 #' @importFrom stats quantile model.matrix
 #' @export
 ClearScatterplot_MAE <- function(
@@ -133,88 +132,71 @@ ClearScatterplot_MAE <- function(
   vectorized <- match.arg(vectorized)
 
   assays <- names(MultiAssayExperiment::experiments(mae))
-  if (!assayName %in% assays) {
-    stop("Assay '", assayName, "' not found in MAE. Available: ", paste(assays, collapse = ", "))
-  }
+  if (!assayName %in% assays) stop(
+    "Assay '", assayName, "' not found in MAE. Available: ",
+    paste(assays, collapse=", ")
+  )
 
   se_full   <- MultiAssayExperiment::experiments(mae)[[assayName]]
   expr_full <- SummarizedExperiment::assay(se_full)
 
   rv   <- matrixStats::rowVars(expr_full, na.rm = TRUE)
-  feat <- rv >= stats::quantile(rv, var_quantile, na.rm = TRUE)
-  expr_f <- expr_full[feat, , drop = FALSE]
+  thr  <- stats::quantile(rv, var_quantile, na.rm = TRUE)
+  expr_f <- expr_full[rv >= thr, , drop = FALSE]
 
-      # metadata from assay colData
   meta_f <- as.data.frame(
     SummarizedExperiment::colData(se_full),
     stringsAsFactors = FALSE
   )
-  # if user-requested columns are not in assay colData, merge in from primary MAE colData via sampleMap
-  cols_needed <- c(groupColumn, sampleType)
-  if (!is.null(timepoint)) cols_needed <- c(cols_needed, timepoint)
-  missing_cols <- setdiff(cols_needed, names(meta_f))
-  if (length(missing_cols) > 0) {
+  needed <- c(groupColumn, sampleType)
+  if (!is.null(timepoint)) needed <- c(needed, timepoint)
+  missing <- setdiff(needed, names(meta_f))
+  if (length(missing)) {
     sm <- MultiAssayExperiment::sampleMap(mae)
-    sm <- sm[sm$assay == assayName, , drop = FALSE]
-    primary_meta <- as.data.frame(
+    sm <- sm[sm$assay == assayName, ]
+    pm <- as.data.frame(
       SummarizedExperiment::colData(mae),
       stringsAsFactors = FALSE
     )
-    # subset and rename primary metadata to assay colnames
-    primary_meta <- primary_meta[sm$primary, missing_cols, drop = FALSE]
-    rownames(primary_meta) <- sm$colname
-    # bind missing columns to assay metadata
-    meta_f <- cbind(
-      meta_f,
-      primary_meta[rownames(meta_f), , drop = FALSE]
-    )
+    pm2 <- pm[sm$primary, missing, drop = FALSE]
+    rownames(pm2) <- sm$colname
+    meta_f <- cbind(meta_f, pm2[rownames(meta_f), , drop = FALSE])
   }
-  # if user-requested columns are not in assay colData, merge in from primary MAE colData via sampleMap
-  cols_needed <- c(groupColumn, sampleType)
-  if (!is.null(timepoint)) cols_needed <- c(cols_needed, timepoint)
-  missing_cols <- setdiff(cols_needed, names(meta_f))
-  if (length(missing_cols) > 0) {
-    sm <- MultiAssayExperiment::sampleMap(mae)
-    sm <- sm[sm$assay == assayName, , drop = FALSE]
-    primary_meta <- as.data.frame(MultiAssayExperiment::colData(mae), stringsAsFactors = FALSE)
-    primary_meta <- primary_meta[sm$primary, , drop = FALSE]
-    rownames(primary_meta) <- sm$colname
-    # bind only missing columns, aligning rows by assay colnames
-    meta_f <- cbind(
-      meta_f,
-      primary_meta[rownames(meta_f), missing_cols, drop = FALSE]
-    )
-  },
-    stringsAsFactors = FALSE
-  )
 
   shared <- intersect(colnames(expr_f), rownames(meta_f))
-  n_expr   <- ncol(expr_f)
-  n_meta   <- nrow(meta_f)
-  n_shared <- length(shared)
-  if (n_shared == 0) {
-    stop(sprintf("No overlapping samples between expression matrix (%d cols) and metadata (%d rows)", n_expr, n_meta))
-  } else if (n_shared == n_expr && n_shared == n_meta) {
-    message(sprintf("All %d samples match between expression and metadata.", n_shared))
+  n_e <- ncol(expr_f); n_m <- nrow(meta_f); n_s <- length(shared)
+  if (n_s == 0) stop(
+    sprintf("No overlapping samples: %d cols vs %d rows", n_e, n_m)
+  ) else if (n_s == n_e && n_s == n_m) {
+    message(sprintf("All %d samples match", n_s))
   } else {
-    message(sprintf("%d of %d expression columns and %d metadata rows match", n_shared, n_expr, n_meta))
+    message(sprintf(
+      "%d of %d expr cols and %d meta rows match", n_s, n_e, n_m
+    ))
   }
   expr <- expr_f[, shared, drop = FALSE]
   meta <- meta_f[shared, , drop = FALSE]
 
   cols <- c(groupColumn, sampleType)
   if (!is.null(timepoint)) cols <- c(cols, timepoint)
-  miss <- setdiff(cols, names(meta))
-  if (length(miss)) stop("Metadata missing columns: ", paste(miss, collapse = ", "))
+  missing_cols <- setdiff(cols, names(meta))
+  if (length(missing_cols)) stop(
+    "Metadata missing columns: ", paste(missing_cols, collapse=", ")
+  )
 
   keep <- rowSums(is.na(meta[, cols, drop = FALSE])) == 0
-  if (sum(!keep) / length(keep) > 0.1) warning(sum(!keep), " of ", length(keep), " samples dropped due to NA in metadata")
+  if (sum(!keep) / length(keep) > 0.1) warning(
+    sum(!keep), " of ", length(keep), " samples dropped due to NA"
+  )
   expr <- expr[, keep, drop = FALSE]
   meta <- meta[keep, , drop = FALSE]
 
-  grp <- table(meta[[groupColumn]])
-  if (any(grp < 3)) stop("Each group must have at least 3 samples; found: ", paste(names(grp)[grp < 3], grp[grp < 3], collapse = ", "))
-  if (ncol(expr) < 6) stop("Too few samples (<6) after filtering; cannot proceed")
+  tg <- table(meta[[groupColumn]])
+  if (any(tg < 3)) stop(
+    "Groups with <3 samples: ",
+    paste(names(tg)[tg < 3], tg[tg < 3], collapse=", ")
+  )
+  if (ncol(expr) < 6) stop("Too few samples after filtering")
 
   .ClearScatterplot_core(
     expr, meta, groupColumn, sampleType,
@@ -224,7 +206,7 @@ ClearScatterplot_MAE <- function(
   )
 }
 
-#' Constructor: ClearScatterplot from matrix + meta
+#' Constructor: ClearScatterplot from matrix + metadata
 #'
 #' @importFrom matrixStats rowVars
 #' @export
@@ -245,8 +227,8 @@ ClearScatterplot_table <- function(
   stopifnot(is.matrix(expr), is.data.frame(meta))
 
   rv   <- matrixStats::rowVars(expr, na.rm = TRUE)
-  feat <- rv >= stats::quantile(rv, var_quantile, na.rm = TRUE)
-  expr <- expr[feat, , drop = FALSE]
+  thr  <- stats::quantile(rv, var_quantile, na.rm = TRUE)
+  expr <- expr[rv >= thr, , drop = FALSE]
 
   cols <- c(groupColumn, sampleType)
   if (!is.null(timepoint)) cols <- c(cols, timepoint)
@@ -255,8 +237,11 @@ ClearScatterplot_table <- function(
   expr <- expr[, keep, drop = FALSE]
   meta <- meta[keep, , drop = FALSE]
 
-  grp <- table(meta[[groupColumn]])
-  if (any(grp < 3)) stop("Each group must have at least 3 samples; found: ", paste(names(grp)[grp < 3], grp[grp < 3], collapse = ", "))
+  tg <- table(meta[[groupColumn]])
+  if (any(tg < 3)) stop(
+    "Groups with <3 samples: ",
+    paste(names(tg)[tg < 3], tg[tg < 3], collapse=", ")
+  )
   if (nrow(expr) < 1) stop("No features left after filtering; cannot proceed")
 
   .ClearScatterplot_core(
@@ -298,7 +283,11 @@ ClearScatterplot_table <- function(
 
   run_cell <- function(i) {
     tp <- cells$timePoint[i]; st <- cells$SampleType[i]
-    idx <- if (!is.null(timepoint)) which(meta[[timepoint]] == tp & meta[[sampleType]] == st) else which(meta[[sampleType]] == st)
+    idx <- if (!is.null(timepoint)) {
+      which(meta[[timepoint]] == tp & meta[[sampleType]] == st)
+    } else {
+      which(meta[[sampleType]] == st)
+    }
     if (length(idx) < 2 || length(unique(meta[[groupColumn]][idx])) < 2) return(NULL)
     ce <- expr[, idx, drop = FALSE]; cm <- meta[idx, , drop = FALSE]
     if (dataType == "continuous" && max(ce, na.rm = TRUE) > 50) ce <- log2(ce + 1)
@@ -361,6 +350,7 @@ setMethod("show", "ClearScatterplot", function(object) {
   print(object@plot)
   invisible(object)
 })
+
 
 
 
