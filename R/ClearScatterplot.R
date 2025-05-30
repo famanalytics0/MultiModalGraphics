@@ -1,7 +1,5 @@
 # Only suppress check notes on old R versions
-if (getRversion() >= "2.15.1") {
-  utils::globalVariables(c(".data", "n1", "n2"))
-}
+if (getRversion() >= "2.15.1") utils::globalVariables(c(".data", "n1", "n2"))
 
 #' S4 Class: ClearScatterplot
 #'
@@ -52,12 +50,14 @@ ClearScatterplot <- function(
   miss <- setdiff(req, names(data))
   if (length(miss)) stop("Missing columns: ", paste(miss, collapse=","))
 
+  # remove NA rows
   na_idx <- is.na(data$log2fc) | is.na(data$negLog10p)
   if (any(na_idx)) {
     warning(sum(na_idx), " rows removed due to NA in log2fc or negLog10p")
     data <- data[!na_idx, , drop = FALSE]
   }
 
+  # compute color flag
   data$color_flag <- with(
     data,
     ifelse(
@@ -96,68 +96,78 @@ ClearScatterplot <- function(
 
 #' Constructor: ClearScatterplot from MAE
 #'
+#' Handles filtering, NA removal, and optional merging of top-level metadata.
+#'
 #' @param mae          MultiAssayExperiment object
 #' @param assayName    assay name within mae
 #' @param groupColumn  grouping column in colData
 #' @param sampleType   facet column in colData
-#' @param timepoint    optional row facet column
+#' @param timepoint    optional row facet column in colData
 #' @param dataType     one of "auto","continuous","count"
 #' @param vectorized   one of "auto","perCell","vectorized"
-#' @param parallel     logical; override vectorized auto
+#' @param parallel     logical; if FALSE, forces sequential
 #' @param BPPARAM      BiocParallelParam
-#' @param var_quantile variance filter quantile
+#' @param var_quantile variance filter quantile (0-1)
 #' @importFrom MultiAssayExperiment experiments sampleMap
 #' @import SummarizedExperiment BiocParallel
 #' @importFrom matrixStats rowVars
 #' @importFrom stats quantile model.matrix
 #' @export
 ClearScatterplot_MAE <- function(
-  mae, assayName,
-  groupColumn = "Group", sampleType = "SampleType",
-  timepoint = NULL,
-  dataType = c("auto","continuous","count"),
-  vectorized = c("auto","perCell","vectorized"),
-  parallel = TRUE,
-  BPPARAM = BiocParallel::bpparam(),
-  var_quantile = 0.75
+  mae,
+  assayName,
+  groupColumn = "Group",
+  sampleType  = "SampleType",
+  timepoint   = NULL,
+  dataType    = c("auto","continuous","count"),
+  vectorized  = c("auto","perCell","vectorized"),
+  parallel    = TRUE,
+  BPPARAM     = BiocParallel::bpparam(),
+  var_quantile= 0.75
 ) {
   dataType   <- match.arg(dataType)
   vectorized <- match.arg(vectorized)
 
-  # assay check
+  # assay exists
   assays <- names(MultiAssayExperiment::experiments(mae))
-  if (!assayName %in% assays) stop("Assay '", assayName, "' not found")
+  if (!assayName %in% assays) stop("Assay '", assayName, "' not found in MAE")
 
-  se  <- MultiAssayExperiment::experiments(mae)[[assayName]]
+  se   <- MultiAssayExperiment::experiments(mae)[[assayName]]
   expr <- SummarizedExperiment::assay(se)
 
+  # filter by variance
   rv  <- matrixStats::rowVars(expr, na.rm = TRUE)
   thr <- stats::quantile(rv, var_quantile, na.rm = TRUE)
   expr <- expr[rv >= thr, , drop = FALSE]
 
+  # assay-level metadata
   meta <- as.data.frame(SummarizedExperiment::colData(se), stringsAsFactors = FALSE)
-  needed <- c(groupColumn, sampleType, timepoint)
-  needed <- needed[!is.null(needed)]
+
+  # merge missing from mae top-level
+  needed <- c(groupColumn, sampleType)
+  if (!is.null(timepoint)) needed <- c(needed, timepoint)
   miss <- setdiff(needed, names(meta))
   if (length(miss)) {
-    sm   <- MultiAssayExperiment::sampleMap(mae)
-    sm   <- sm[sm$assay == assayName, ]
-    pm   <- as.data.frame(SummarizedExperiment::colData(mae), stringsAsFactors = FALSE)
-    pm2  <- pm[sm$primary, miss, drop = FALSE]
+    sm  <- MultiAssayExperiment::sampleMap(mae)
+    sm  <- sm[sm$assay == assayName, ]
+    pm  <- as.data.frame(SummarizedExperiment::colData(mae), stringsAsFactors = FALSE)
+    pm2 <- pm[sm$primary, miss, drop = FALSE]
     rownames(pm2) <- sm$colname
     meta <- cbind(meta, pm2[rownames(meta), , drop = FALSE])
   }
 
+  # match samples
   shared <- intersect(colnames(expr), rownames(meta))
-  if (!length(shared)) stop("No overlapping samples")
+  if (length(shared) == 0) stop("No overlapping samples between expr and metadata")
   expr <- expr[, shared, drop = FALSE]
   meta <- meta[shared, , drop = FALSE]
 
-  # drop NA metadata
+  # drop NA in needed fields
   keep <- rowSums(is.na(meta[needed])) == 0
   expr <- expr[, keep, drop = FALSE]
   meta <- meta[keep, , drop = FALSE]
 
+  # group sample checks
   if (any(table(meta[[groupColumn]]) < 3)) stop("Each group needs ≥3 samples")
   if (ncol(expr) < 6) stop("Too few samples after filtering")
 
@@ -171,27 +181,30 @@ ClearScatterplot_MAE <- function(
 
 #' Constructor: ClearScatterplot_table
 #'
-#' @param expr         features × samples matrix
-#' @param meta         sample metadata, rownames = colnames(expr)
-#' @param groupColumn  grouping metadata column
-#' @param sampleType   facet metadata column
-#' @param timepoint    optional row facet
+#' @param expr         numeric matrix (features × samples)
+#' @param meta         data.frame with rownames matching colnames(expr)
+#' @param groupColumn  grouping column in meta
+#' @param sampleType   facet column in meta
+#' @param timepoint    optional row facet column
 #' @param dataType     one of "auto","continuous","count"
 #' @param vectorized   one of "auto","perCell","vectorized"
-#' @param parallel     logical; override parallel auto
+#' @param parallel     logical; override automatic parallel
 #' @param BPPARAM      BiocParallelParam
-#' @param var_quantile quantile threshold
+#' @param var_quantile variance filter quantile
 #' @importFrom matrixStats rowVars
 #' @import BiocParallel
 #' @export
 ClearScatterplot_table <- function(
-  expr, meta,
-  groupColumn = "Group", sampleType = "SampleType",
-  timepoint = NULL,
-  dataType = c("auto","continuous","count"),
-  vectorized = c("auto","perCell","vectorized"),
-  parallel = TRUE, BPPARAM = BiocParallel::bpparam(),
-  var_quantile = 0.75
+  expr,
+  meta,
+  groupColumn = "Group",
+  sampleType  = "SampleType",
+  timepoint   = NULL,
+  dataType    = c("auto","continuous","count"),
+  vectorized  = c("auto","perCell","vectorized"),
+  parallel    = TRUE,
+  BPPARAM     = BiocParallel::bpparam(),
+  var_quantile= 0.75
 ) {
   dataType   <- match.arg(dataType)
   vectorized <- match.arg(vectorized)
@@ -201,8 +214,8 @@ ClearScatterplot_table <- function(
   thr  <- stats::quantile(rv, var_quantile, na.rm = TRUE)
   expr <- expr[rv >= thr, , drop = FALSE]
 
-  needed <- c(groupColumn, sampleType, timepoint)
-  needed <- needed[!is.null(needed)]
+  needed <- c(groupColumn, sampleType)
+  if (!is.null(timepoint)) needed <- c(needed, timepoint)
   meta2  <- meta[, needed, drop = FALSE]
   keep   <- rowSums(is.na(meta2)) == 0
   expr   <- expr[, keep, drop = FALSE]
@@ -243,13 +256,14 @@ ClearScatterplot_table <- function(
   } else {
     data.frame(
       SampleType = unique(meta[[sampleType]]),
-      timePoint = NA_character_,
+      timePoint  = NA_character_,
       stringsAsFactors = FALSE
     )
   }
 
   run_cell <- function(i) {
-    tp <- cells$timePoint[i]; st <- cells$SampleType[i]
+    tp <- cells$timePoint[i]
+    st <- cells$SampleType[i]
     idx <- if (!is.null(timepoint)) {
       which(meta[[timepoint]] == tp & meta[[sampleType]] == st)
     } else {
@@ -267,8 +281,8 @@ ClearScatterplot_table <- function(
   }
 
   use_par <- (vectorized == "vectorized" || (vectorized == "auto" && nrow(cells) > BiocParallel::bpworkers(BPPARAM)))
-  lst     <- if (use_par) BiocParallel::bplapply(seq_len(nrow(cells)), run_cell, BPPARAM = BPPARAM) else lapply(seq_len(nrow(cells)), run_cell)
-  pd      <- do.call(rbind, lst)
+  lst    <- if (use_par) BiocParallel::bplapply(seq_len(nrow(cells)), run_cell, BPPARAM = BPPARAM) else lapply(seq_len(nrow(cells)), run_cell)
+  pd     <- do.call(rbind, lst)
   if (!nrow(pd)) stop("No DE results to plot.")
   rownames(pd) <- NULL
   ClearScatterplot(pd)
@@ -304,7 +318,7 @@ setMethod("createPlot", "ClearScatterplot", function(object, color1 = "cornflowe
       axis.text = ggplot2::element_text(size = 10),
       legend.position = "bottom"
     )
-  if (has_tp && length(unique(df$timePoint)) > 1) {
+  if (has_tp) {
     up <- df[df$color_flag == 1, ] |> dplyr::group_by(timePoint, SampleType) |> dplyr::tally(name = "n1")
     dn <- df[df$color_flag == -1, ] |> dplyr::group_by(timePoint, SampleType) |> dplyr::tally(name = "n2")
   } else {
@@ -326,6 +340,7 @@ setMethod("show", "ClearScatterplot", function(object) {
   print(object@plot)
   invisible(object)
 })
+
 
 
 
