@@ -25,10 +25,10 @@ setGeneric("ClearScatterplot", function(data, ...) standardGeneric("ClearScatter
 
 #' Constructor: ClearScatterplot
 #'
-#' @param data            data.frame with required columns
-#' @param highLog2fc      threshold for up-regulation
-#' @param lowLog2fc       threshold for down-regulation
-#' @param negLog10pValue  threshold for significance
+#' @param data           data.frame with required columns
+#' @param highLog2fc     threshold for up-regulation
+#' @param lowLog2fc      threshold for down-regulation
+#' @param negLog10pValue threshold for significance
 #' @export
 ClearScatterplot <- function(
   data,
@@ -37,7 +37,7 @@ ClearScatterplot <- function(
   negLog10pValue = 1.301
 ) {
   stopifnot(is.data.frame(data))
-  req  <- c("log2fc","negLog10p","regulation","SampleType")
+  req <- c("log2fc","negLog10p","regulation","SampleType")
   miss <- setdiff(req, names(data))
   if (length(miss)) stop("Missing columns: ", paste(miss, collapse=","))
   data$color_flag <- with(data,
@@ -57,12 +57,12 @@ ClearScatterplot <- function(
     limma::lmFit(expr, design)
   }
   fit <- limma::eBayes(fit)
-  tt  <- limma::topTable(fit, coef = 2, number = Inf)
+  tt  <- limma::topTable(fit, coef=2, number=Inf)
   if (!nrow(tt)) return(NULL)
   data.frame(
     log2fc     = tt$logFC,
     negLog10p  = -log10(tt$P.Value),
-    regulation = ifelse(tt$logFC > 0, 'up', 'down'),
+    regulation = ifelse(tt$logFC>0,'up','down'),
     SampleType = cell$SampleType,
     timePoint  = cell$timePoint,
     stringsAsFactors = FALSE,
@@ -70,25 +70,22 @@ ClearScatterplot <- function(
   )
 }
 
-#' Constructor: ClearScatterplot_MAE
+#' Constructor: ClearScatterplot from MAE
 #'
 #' Handles filtering, NA removal, and sample checks.
 #'
-#' @param mae         MultiAssayExperiment
-#' @param assayName   character assay to use
-#' @param groupColumn character colData grouping column
-#' @param sampleType  character colData facet column
-#' @param timepoint   character colData facet row (optional)
-#' @param dataType    one of c("auto","continuous","count")
-#' @param vectorized  one of c("auto","perCell","vectorized")
-#' @param BPPARAM     BiocParallelParam
-#' @param var_quantile fraction (0-1) top variance to keep
-#' @return ClearScatterplot
-#' @importFrom IRanges IntegerList
+#' @param mae          MAE
+#' @param assayName    assay to use
+#' @param groupColumn  grouping column
+#' @param sampleType   facet column
+#' @param timepoint    optional facet row
+#' @param dataType     auto/continuous/count
+#' @param vectorized   auto/perCell/vectorized
+#' @param BPPARAM      BiocParallelParam
+#' @param var_quantile variance filter quantile
 #' @export
 ClearScatterplot_MAE <- function(
-  mae,
-  assayName,
+  mae, assayName,
   groupColumn = "Group",
   sampleType  = "SampleType",
   timepoint   = NULL,
@@ -103,33 +100,34 @@ ClearScatterplot_MAE <- function(
   se_full   <- MultiAssayExperiment::experiments(mae)[[assayName]]
   expr_full <- SummarizedExperiment::assay(se_full)
 
-  rv    <- matrixStats::rowVars(expr_full, na.rm = TRUE)
-  feats <- rv >= quantile(rv, var_quantile, na.rm=TRUE)
-  expr_full <- expr_full[feats,,drop=FALSE]
+  # feature variance filter
+  rv    <- matrixStats::rowVars(expr_full, na.rm=TRUE)
+  feat  <- rv >= quantile(rv, var_quantile, na.rm=TRUE)
+  expr_f <- expr_full[feat,,drop=FALSE]
 
-  meta_full <- as.data.frame(
+  meta_f <- as.data.frame(
     MultiAssayExperiment::colData(mae),
-    stringsAsFactors = FALSE
+    stringsAsFactors=FALSE
   )
 
-  shared <- intersect(colnames(expr_full), rownames(meta_full))
+  shared <- intersect(colnames(expr_f), rownames(meta_f))
   if (!length(shared)) stop("No overlapping samples")
-  expr  <- expr_full[,shared,drop=FALSE]
-  meta  <- meta_full[shared,,drop=FALSE]
+  expr <- expr_f[,shared,drop=FALSE]
+  meta <- meta_f[shared,,drop=FALSE]
 
-  cols    <- c(groupColumn, sampleType)
+  cols <- c(groupColumn, sampleType)
   if (!is.null(timepoint)) cols <- c(cols, timepoint)
-  missing <- setdiff(cols, names(meta))
-  if (length(missing)) stop("Metadata missing: ", paste(missing, collapse=","))
+  miss <- setdiff(cols, names(meta))
+  if (length(miss)) stop("Metadata missing: ", paste(miss,collapse=","))
 
-  md         <- meta[,cols,drop=FALSE]
-  keep_samps <- rownames(md)[rowSums(is.na(md))==0]
-  expr <- expr[,keep_samps,drop=FALSE]
-  meta <- meta[keep_samps,,drop=FALSE]
+  md <- meta[,cols,drop=FALSE]
+  keep <- rowSums(is.na(md))==0
+  expr <- expr[,keep,drop=FALSE]
+  meta <- meta[keep,,drop=FALSE]
 
-  grp_tab <- table(meta[[groupColumn]])
-  if (any(grp_tab < 3)) stop("<3 samples per group")
-  if (ncol(expr) < 6) stop("Too few samples")
+  grp <- table(meta[[groupColumn]])
+  if (any(grp<3)) stop("<3 samples per group")
+  if (ncol(expr)<6) stop("Too few samples")
 
   .ClearScatterplot_core(expr, meta,
     groupColumn, sampleType,
@@ -137,7 +135,8 @@ ClearScatterplot_MAE <- function(
     vectorized, BPPARAM)
 }
 
-#' Constructor: ClearScatterplot_table
+#' Constructor: ClearScatterplot from matrix + meta
+#'
 #' @export
 ClearScatterplot_table <- function(
   expr, meta,
@@ -154,27 +153,19 @@ ClearScatterplot_table <- function(
   stopifnot(is.matrix(expr), is.data.frame(meta))
 
   rv    <- matrixStats::rowVars(expr, na.rm=TRUE)
-  feats <- rv >= quantile(rv, var_quantile, na.rm=TRUE)
-  expr  <- expr[feats,,drop=FALSE]
+  feat  <- rv >= quantile(rv, var_quantile, na.rm=TRUE)
+  expr  <- expr[feat,,drop=FALSE]
 
-  shared <- intersect(colnames(expr), rownames(meta))
-  if (!length(shared)) stop("No overlapping samples")
-  expr <- expr[,shared,drop=FALSE]
-  meta <- meta[shared,,drop=FALSE]
-
-  cols    <- c(groupColumn, sampleType)
+  cols <- c(groupColumn, sampleType)
   if (!is.null(timepoint)) cols <- c(cols, timepoint)
-  missing <- setdiff(cols, names(meta))
-  if (length(missing)) stop("Metadata missing: ", paste(missing, collapse=","))
+  md   <- meta[,cols,drop=FALSE]
+  keep <- rowSums(is.na(md))==0
+  expr <- expr[,keep,drop=FALSE]
+  meta <- meta[keep,,drop=FALSE]
 
-  md         <- meta[,cols,drop=FALSE]
-  keep_samps <- rownames(md)[rowSums(is.na(md))==0]
-  expr <- expr[,keep_samps,drop=FALSE]
-  meta <- meta[keep_samps,,drop=FALSE]
-
-  grp_tab <- table(meta[[groupColumn]])
-  if (any(grp_tab < 3)) stop("<3 samples per group")
-  if (ncol(expr) < 6) stop("Too few samples")
+  grp <- table(meta[[groupColumn]])
+  if (any(grp<3)) stop("<3 samples per group")
+  if (nrow(expr)<1) stop("No features left")
 
   .ClearScatterplot_core(expr, meta,
     groupColumn, sampleType,
@@ -182,98 +173,116 @@ ClearScatterplot_table <- function(
     vectorized, BPPARAM)
 }
 
-#' Internal core: shared logic
+#' Internal core
 .ClearScatterplot_core <- function(
-  expr, meta, groupColumn, sampleType,
-  timepoint, dataType, vectorized, BPPARAM
+  expr, meta,
+  groupColumn, sampleType,
+  timepoint, dataType,
+  vectorized, BPPARAM
 ) {
+  cols <- c(groupColumn, sampleType)
+  if (!is.null(timepoint)) cols <- c(cols, timepoint)
+  keep <- rowSums(is.na(meta[,cols,drop=FALSE]))==0
+  expr <- expr[,keep,drop=FALSE]
+  meta <- meta[keep,,drop=FALSE]
+
+  if (dataType=="auto") {
+    dataType <- if (all(expr==floor(expr)) && max(expr,na.rm=TRUE)>30)
+      "count" else "continuous"
+  }
+
   cells <- if (!is.null(timepoint)) {
     expand.grid(
-      SampleType = unique(meta[[sampleType]]),
       timePoint  = unique(meta[[timepoint]]),
-      stringsAsFactors = FALSE
+      SampleType = unique(meta[[sampleType]]),
+      stringsAsFactors=FALSE
     )
   } else {
     data.frame(
       SampleType = unique(meta[[sampleType]]),
       timePoint  = NA_character_,
-      stringsAsFactors = FALSE
+      stringsAsFactors=FALSE
     )
   }
+
   run_cell <- function(i) {
-    cell <- cells[i,]
-    idx  <- if (!is.null(timepoint)) {
-      which(
-        meta[[sampleType]] == cell$SampleType &
-        meta[[timepoint]]  == cell$timePoint
-      )
-    } else {
-      which(meta[[sampleType]] == cell$SampleType)
-    }
-    if (length(idx) < 2 || length(unique(meta[idx,groupColumn])) < 2)
+    tp <- cells$timePoint[i]; st <- cells$SampleType[i]
+    idx <- if (!is.null(timepoint))
+      which(meta[[timepoint]]==tp & meta[[sampleType]]==st)
+    else which(meta[[sampleType]]==st)
+    if (length(idx)<2 || length(unique(meta[[groupColumn]][idx]))<2)
       return(NULL)
-    expr_c <- expr[,idx,drop=FALSE]
-    meta_c <- meta[idx,,drop=FALSE]
-    if (dataType == "auto") {
-      dataType <- if (all(expr_c == floor(expr_c)) &&
-        max(expr_c, na.rm=TRUE) > 30) "count" else "continuous"
-    }
-    if (dataType == "continuous" && max(expr_c, na.rm=TRUE) > 50)
-      expr_c <- log2(expr_c + 1)
-    design <- model.matrix(~ meta_c[[groupColumn]])
-    if (nrow(meta_c) <= ncol(design)) return(NULL)
-    .run_DE(expr_c, meta_c, groupColumn, design, dataType, cell)
+    ce <- expr[,idx,drop=FALSE]; cm <- meta[idx,,drop=FALSE]
+    if (dataType=="continuous" && max(ce,na.rm=TRUE)>50)
+      ce <- log2(ce+1)
+    design <- stats::model.matrix(~cm[[groupColumn]])
+    if (nrow(cm)<=ncol(design)) return(NULL)
+    .run_DE(ce, cm, groupColumn, design, dataType,
+            list(SampleType=st, timePoint=tp))
   }
-  use_par <- vectorized == "vectorized" ||
-    (vectorized == "auto" && nrow(cells) > BiocParallel::bpworkers(BPPARAM))
-  df_lst <- if (use_par) BiocParallel::bplapply(seq_len(nrow(cells)), run_cell, BPPARAM=BPPARAM)
-            else            lapply(seq_len(nrow(cells)), run_cell)
-  plotdata <- do.call(rbind, df_lst)
-  if (is.null(plotdata) || nrow(plotdata)==0)
-    stop("No DE results to plot.")
-  rownames(plotdata) <- NULL
-  ClearScatterplot(plotdata)
+
+  use_par <- (vectorized=="vectorized" ||
+              (vectorized=="auto" && nrow(cells)>BiocParallel::bpworkers(BPPARAM)))
+  lst <- if (use_par)
+    BiocParallel::bplapply(seq_len(nrow(cells)), run_cell,
+                           BPPARAM=BPPARAM)
+  else lapply(seq_len(nrow(cells)), run_cell)
+
+  pd <- do.call(rbind, lst)
+  if (!nrow(pd)) stop("No DE results to plot.")
+  rownames(pd) <- NULL
+
+  ClearScatterplot(pd)
 }
 
 #' Generic: createPlot
 #' @export
 setGeneric("createPlot", function(object, ...) standardGeneric("createPlot"))
 
-#' Method: createPlot for ClearScatterplot
+#' Method: createPlot
 #' @exportMethod createPlot
 setMethod("createPlot","ClearScatterplot", function(
-  object, color1="cornflowerblue", color2="grey", color3="indianred"
+  object, color1="cornflowerblue",
+  color2="grey", color3="indianred"
 ) {
-  df   <- object@data
-  xvar <- "log2fc"; yvar <- "negLog10p"
-  facet <- if (!all(is.na(df$timePoint)) && length(unique(df$timePoint))>1)
+  df <- object@data
+  facet <- if (!all(is.na(df$timePoint)) &&
+               length(unique(df$timePoint))>1)
     "timePoint ~ SampleType" else ". ~ SampleType"
-  p <- ggplot2::ggplot(df, ggplot2::aes(x=log2fc,y=negLog10p,color=factor(color_flag))) +
+  p <- ggplot2::ggplot(df,
+        ggplot2::aes(x=log2fc,y=negLog10p,
+                     color=factor(color_flag))) +
     ggplot2::geom_point(alpha=0.5,size=1.75) +
     ggplot2::geom_jitter() +
-    ggplot2::labs(x=expression(log2~fold~change),y=expression(-log10~p)) +
+    ggplot2::labs(
+      x=expression(log2~fold~change),
+      y=expression(-log10~p)
+    ) +
     ggplot2::scale_color_manual(values=c(color1,color2,color3)) +
     ggplot2::facet_grid(stats::as.formula(facet), space="free") +
     ggplot2::theme_bw() +
     ggplot2::theme(
       panel.grid.major=ggplot2::element_line(color="grey80"),
       panel.grid.minor=ggplot2::element_blank(),
-      strip.background=ggplot2::element_rect(fill="white",color="black"),
+      strip.background=ggplot2::element_rect(
+        fill="white",color="black"),
       strip.text=ggplot2::element_text(size=12,face="bold"),
       axis.title=ggplot2::element_text(size=12,face="bold"),
       axis.text=ggplot2::element_text(size=10),
       legend.position="bottom"
     )
-  cnt_up <- df[df$color_flag==1,] |> dplyr::group_by(timePoint,SampleType) |> dplyr::tally(name="n1")
-  cnt_dn <- df[df$color_flag==-1,] |> dplyr::group_by(timePoint,SampleType) |> dplyr::tally(name="n2")
+  up <- df[df$color_flag==1,] |> dplyr::group_by(timePoint,SampleType) |> dplyr::tally(name="n1")
+  dn <- df[df$color_flag==-1,] |> dplyr::group_by(timePoint,SampleType) |> dplyr::tally(name="n2")
   p <- p +
-    ggplot2::geom_text(data=cnt_up,ggplot2::aes(label=n1),x=Inf,y=Inf,hjust=1.1,vjust=1.1,color=color1) +
-    ggplot2::geom_text(data=cnt_dn,ggplot2::aes(label=n2),x=-Inf,y=Inf,hjust=-0.1,vjust=1.1,color=color3)
+    ggplot2::geom_text(data=up,ggplot2::aes(label=n1),x=Inf,y=Inf,
+                       hjust=1.1,vjust=1.1,color=color1) +
+    ggplot2::geom_text(data=dn,ggplot2::aes(label=n2),x=-Inf,y=Inf,
+                       hjust=-0.1,vjust=1.1,color=color3)
   object@plot <- p
   invisible(object)
 })
 
-#' Method: show for ClearScatterplot
+#' Method: show
 #' @exportMethod show
 setMethod("show","ClearScatterplot", function(object) {
   if (is.null(object@plot)) object <- createPlot(object)
