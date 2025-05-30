@@ -10,7 +10,7 @@ utils::globalVariables(c(".data","n1","n2"))
 #' @exportClass ClearScatterplot
 setClass(
   "ClearScatterplot",
-  slots = c(data="data.frame", plot="ANY"),
+  slots = c(data = "data.frame", plot = "ANY"),
   validity = function(object) {
     req <- c("log2fc","negLog10p","regulation","SampleType")
     miss <- setdiff(req, names(object@data))
@@ -37,7 +37,7 @@ ClearScatterplot <- function(
   negLog10pValue = 1.301
 ) {
   stopifnot(is.data.frame(data))
-  req <- c("log2fc","negLog10p","regulation","SampleType")
+  req  <- c("log2fc","negLog10p","regulation","SampleType")
   miss <- setdiff(req, names(data))
   if (length(miss)) stop("Missing columns: ", paste(miss, collapse=","))
   data$color_flag <- with(data,
@@ -84,6 +84,7 @@ ClearScatterplot <- function(
 #' @param BPPARAM     BiocParallelParam
 #' @param var_quantile fraction (0-1) top variance to keep
 #' @return ClearScatterplot
+#' @importFrom IRanges IntegerList
 #' @export
 ClearScatterplot_MAE <- function(
   mae,
@@ -113,19 +114,19 @@ ClearScatterplot_MAE <- function(
   expr      <- expr_full[,shared,drop=FALSE]
   meta      <- meta_full[shared,,drop=FALSE]
 
-  cols      <- c(groupColumn, sampleType)
+  cols    <- c(groupColumn, sampleType)
   if (!is.null(timepoint)) cols <- c(cols, timepoint)
-  missing   <- setdiff(cols, names(meta))
+  missing <- setdiff(cols, names(meta))
   if (length(missing)) stop("Metadata missing: ", paste(missing, collapse=","))
 
-  md    <- meta[,cols,drop=FALSE]
-  keep  <- rownames(md)[apply(md,1,function(r) all(!is.na(r)))]
-  meta  <- meta[keep,,drop=FALSE]
-  expr  <- expr[,keep,drop=FALSE]
+  md         <- meta[,cols,drop=FALSE]
+  keep_samps <- rownames(md)[apply(md,1,function(r) all(!is.na(r)))]
+  expr       <- expr[,keep_samps,drop=FALSE]
+  meta       <- meta[keep_samps,,drop=FALSE]
 
   grp_tab <- table(meta[[groupColumn]])
   if (any(grp_tab < 3)) stop("<3 samples per group after NA removal")
-  if (ncol(expr) < 6) stop("Too few samples after filtering")
+  if (ncol(expr)   < 6) stop("Too few samples after filtering")
 
   .ClearScatterplot_core(
     expr, meta,
@@ -151,27 +152,27 @@ ClearScatterplot_table <- function(
   vectorized <- match.arg(vectorized)
   stopifnot(is.matrix(expr), is.data.frame(meta))
 
-  rv        <- matrixStats::rowVars(expr, na.rm=TRUE)
-  feats     <- rv >= quantile(rv, var_quantile, na.rm=TRUE)
-  expr      <- expr[feats,,drop=FALSE]
+  rv    <- matrixStats::rowVars(expr, na.rm=TRUE)
+  feats <- rv >= quantile(rv, var_quantile, na.rm=TRUE)
+  expr  <- expr[feats,,drop=FALSE]
 
   shared    <- intersect(colnames(expr), rownames(meta))
   expr      <- expr[,shared,drop=FALSE]
   meta      <- meta[shared,,drop=FALSE]
 
-  cols      <- c(groupColumn, sampleType)
+  cols    <- c(groupColumn, sampleType)
   if (!is.null(timepoint)) cols <- c(cols, timepoint)
-  missing   <- setdiff(cols, names(meta))
+  missing <- setdiff(cols, names(meta))
   if (length(missing)) stop("Metadata missing: ", paste(missing, collapse=","))
 
-  md   <- meta[,cols,drop=FALSE]
-  keep <- rownames(md)[apply(md,1,function(r) all(!is.na(r)))]
-  meta <- meta[keep,,drop=FALSE]
-  expr <- expr[,keep,drop=FALSE]
+  md         <- meta[,cols,drop=FALSE]
+  keep_samps <- rownames(md)[apply(md,1,function(r) all(!is.na(r)))]
+  expr       <- expr[,keep_samps,drop=FALSE]
+  meta       <- meta[keep_samps,,drop=FALSE]
 
   grp_tab <- table(meta[[groupColumn]])
   if (any(grp_tab < 3)) stop("<3 samples per group after NA removal")
-  if (ncol(expr) < 6) stop("Too few samples after filtering")
+  if (ncol(expr)   < 6) stop("Too few samples after filtering")
 
   .ClearScatterplot_core(
     expr, meta,
@@ -271,9 +272,9 @@ setMethod("createPlot", "ClearScatterplot", function(
       legend.position="bottom"
     )
 
-  cnt_up <- df[df$color_flag==1, ] |> dplyr::group_by(.data[[x]],.data[[y]]) |
+  cnt_up <- df[df$color_flag==1, ] |> dplyr::group_by(.data[[x]],.data[[y]]) |>
     dplyr::tally(name="n1")
-  cnt_dn <- df[df$color_flag==-1, ] |> dplyr::group_by(.data[[x]],.data[[y]]) |
+  cnt_dn <- df[df$color_flag==-1, ] |> dplyr::group_by(.data[[x]],.data[[y]]) |>
     dplyr::tally(name="n2")
 
   p <- p +
@@ -293,6 +294,7 @@ setMethod("show","ClearScatterplot", function(object) {
   print(object@plot)
   invisible(object)
 })
+
 
 
 
