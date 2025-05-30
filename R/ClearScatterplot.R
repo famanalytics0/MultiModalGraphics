@@ -32,7 +32,7 @@ setGeneric(
 
 #' Constructor: ClearScatterplot
 #'
-#' @param data           data.frame with required columns
+#' @param data           data.frame with required columns: log2fc, negLog10p, regulation, SampleType
 #' @param highLog2fc     threshold for up-regulation
 #' @param lowLog2fc      threshold for down-regulation
 #' @param negLog10pValue threshold for significance
@@ -94,88 +94,71 @@ ClearScatterplot <- function(
   )
 }
 
-#' ClearScatterplot_MAE: Constructor from MAE
-#'
-#' Handles filtering, NA removal, and merging metadata from the MAE when needed.
+#' Constructor: ClearScatterplot from MAE
 #'
 #' @param mae          MultiAssayExperiment object
-#' @param assayName    assay to use (must exist in mae)
-#' @param groupColumn  grouping column name in colData
-#' @param sampleType   facet column name in colData
-#' @param timepoint    optional facet row name in colData
+#' @param assayName    assay name within mae
+#' @param groupColumn  grouping column in colData
+#' @param sampleType   facet column in colData
+#' @param timepoint    optional row facet column
 #' @param dataType     one of "auto","continuous","count"
-#' @param vectorized   one of "auto","perCell","vectorized"; in "auto" mode, invokes parallel when cells > workers
-#' @param parallel     logical; if FALSE, disables parallel even if `vectorized = "auto"`
-#' @param BPPARAM      BiocParallelParam for parallel execution
-#' @param var_quantile variance filter quantile (0-1)
+#' @param vectorized   one of "auto","perCell","vectorized"
+#' @param parallel     logical; override vectorized auto
+#' @param BPPARAM      BiocParallelParam
+#' @param var_quantile variance filter quantile
 #' @importFrom MultiAssayExperiment experiments sampleMap
-#' @import SummarizedExperiment
-#' @import BiocParallel
+#' @import SummarizedExperiment BiocParallel
 #' @importFrom matrixStats rowVars
 #' @importFrom stats quantile model.matrix
 #' @export
 ClearScatterplot_MAE <- function(
-  mae,
-  assayName,
-  groupColumn = "Group",
-  sampleType  = "SampleType",
-  timepoint   = NULL,
-  dataType    = c("auto","continuous","count"),
-  vectorized  = c("auto","perCell","vectorized"),
-  parallel    = TRUE,
-  BPPARAM     = BiocParallel::bpparam(),
+  mae, assayName,
+  groupColumn = "Group", sampleType = "SampleType",
+  timepoint = NULL,
+  dataType = c("auto","continuous","count"),
+  vectorized = c("auto","perCell","vectorized"),
+  parallel = TRUE,
+  BPPARAM = BiocParallel::bpparam(),
   var_quantile = 0.75
 ) {
   dataType   <- match.arg(dataType)
   vectorized <- match.arg(vectorized)
 
+  # assay check
   assays <- names(MultiAssayExperiment::experiments(mae))
-  if (!assayName %in% assays) stop(
-    "Assay '" , assayName , "' not found in MAE"
-  )
+  if (!assayName %in% assays) stop("Assay '", assayName, "' not found")
 
-  se_full   <- MultiAssayExperiment::experiments(mae)[[assayName]]
-  expr_full <- SummarizedExperiment::assay(se_full)
+  se  <- MultiAssayExperiment::experiments(mae)[[assayName]]
+  expr <- SummarizedExperiment::assay(se)
 
-  rv   <- matrixStats::rowVars(expr_full, na.rm = TRUE)
-  thr  <- stats::quantile(rv, var_quantile, na.rm = TRUE)
-  expr_f <- expr_full[rv >= thr, , drop = FALSE]
+  rv  <- matrixStats::rowVars(expr, na.rm = TRUE)
+  thr <- stats::quantile(rv, var_quantile, na.rm = TRUE)
+  expr <- expr[rv >= thr, , drop = FALSE]
 
-  meta_f <- as.data.frame(
-    SummarizedExperiment::colData(se_full),
-    stringsAsFactors = FALSE
-  )
-  needed <- c(groupColumn, sampleType)
-  if (!is.null(timepoint)) needed <- c(needed, timepoint)
-  miss <- setdiff(needed, names(meta_f))
+  meta <- as.data.frame(SummarizedExperiment::colData(se), stringsAsFactors = FALSE)
+  needed <- c(groupColumn, sampleType, timepoint)
+  needed <- needed[!is.null(needed)]
+  miss <- setdiff(needed, names(meta))
   if (length(miss)) {
-    sm  <- MultiAssayExperiment::sampleMap(mae)
-    sm  <- sm[sm$assay == assayName, , drop = FALSE]
-    pm  <- as.data.frame(
-      SummarizedExperiment::colData(mae),
-      stringsAsFactors = FALSE
-    )
-    pm2 <- pm[sm$primary, miss, drop = FALSE]
+    sm   <- MultiAssayExperiment::sampleMap(mae)
+    sm   <- sm[sm$assay == assayName, ]
+    pm   <- as.data.frame(SummarizedExperiment::colData(mae), stringsAsFactors = FALSE)
+    pm2  <- pm[sm$primary, miss, drop = FALSE]
     rownames(pm2) <- sm$colname
-    meta_f <- cbind(meta_f, pm2[rownames(meta_f), , drop = FALSE])
+    meta <- cbind(meta, pm2[rownames(meta), , drop = FALSE])
   }
 
-  shared <- intersect(colnames(expr_f), rownames(meta_f))
-  if (length(shared) == 0) stop("No overlapping samples")
-  expr <- expr_f[, shared, drop = FALSE]
-  meta <- meta_f[shared, , drop = FALSE]
+  shared <- intersect(colnames(expr), rownames(meta))
+  if (!length(shared)) stop("No overlapping samples")
+  expr <- expr[, shared, drop = FALSE]
+  meta <- meta[shared, , drop = FALSE]
 
-  cols <- c(groupColumn, sampleType)
-  if (!is.null(timepoint)) cols <- c(cols, timepoint)
-  bad  <- setdiff(cols, names(meta))
-  if (length(bad)) stop("Metadata missing: ", paste(bad, collapse=","))
-
-  keep <- rowSums(is.na(meta[, cols, drop = FALSE])) == 0
+  # drop NA metadata
+  keep <- rowSums(is.na(meta[needed])) == 0
   expr <- expr[, keep, drop = FALSE]
   meta <- meta[keep, , drop = FALSE]
 
-  tg <- table(meta[[groupColumn]])
-  if (any(tg < 3)) stop("Group sizes <3: ", paste(names(tg)[tg<3], tg[tg<3], collapse=","))
+  if (any(table(meta[[groupColumn]]) < 3)) stop("Each group needs ≥3 samples")
   if (ncol(expr) < 6) stop("Too few samples after filtering")
 
   .ClearScatterplot_core(
@@ -186,31 +169,28 @@ ClearScatterplot_MAE <- function(
   )
 }
 
-#' Constructor: ClearScatterplot from matrix + metadata
+#' Constructor: ClearScatterplot_table
 #'
-#' @param expr         matrix of features (rows) by samples (columns)
-#' @param meta         data.frame of sample metadata; rownames must match colnames(expr)
-#' @param groupColumn  grouping column name in meta
-#' @param sampleType   facet column name in meta
-#' @param timepoint    optional facet row column in meta
+#' @param expr         features × samples matrix
+#' @param meta         sample metadata, rownames = colnames(expr)
+#' @param groupColumn  grouping metadata column
+#' @param sampleType   facet metadata column
+#' @param timepoint    optional row facet
 #' @param dataType     one of "auto","continuous","count"
 #' @param vectorized   one of "auto","perCell","vectorized"
-#' @param parallel     logical; disable parallel if FALSE
+#' @param parallel     logical; override parallel auto
 #' @param BPPARAM      BiocParallelParam
 #' @param var_quantile quantile threshold
 #' @importFrom matrixStats rowVars
 #' @import BiocParallel
 #' @export
 ClearScatterplot_table <- function(
-  expr,
-  meta,
-  groupColumn = "Group",
-  sampleType  = "SampleType",
-  timepoint   = NULL,
-  dataType    = c("auto","continuous","count"),
-  vectorized  = c("auto","perCell","vectorized"),
-  parallel    = TRUE,
-  BPPARAM     = BiocParallel::bpparam(),
+  expr, meta,
+  groupColumn = "Group", sampleType = "SampleType",
+  timepoint = NULL,
+  dataType = c("auto","continuous","count"),
+  vectorized = c("auto","perCell","vectorized"),
+  parallel = TRUE, BPPARAM = BiocParallel::bpparam(),
   var_quantile = 0.75
 ) {
   dataType   <- match.arg(dataType)
@@ -221,19 +201,18 @@ ClearScatterplot_table <- function(
   thr  <- stats::quantile(rv, var_quantile, na.rm = TRUE)
   expr <- expr[rv >= thr, , drop = FALSE]
 
-  cols <- c(groupColumn, sampleType)
-  if (!is.null(timepoint)) cols <- c(cols, timepoint)
-  md   <- meta[, cols, drop = FALSE]
-  keep <- rowSums(is.na(md)) == 0
-  expr <- expr[, keep, drop = FALSE]
-  meta <- meta[keep, , drop = FALSE]
+  needed <- c(groupColumn, sampleType, timepoint)
+  needed <- needed[!is.null(needed)]
+  meta2  <- meta[, needed, drop = FALSE]
+  keep   <- rowSums(is.na(meta2)) == 0
+  expr   <- expr[, keep, drop = FALSE]
+  meta2  <- meta2[keep, , drop = FALSE]
 
-  tg <- table(meta[[groupColumn]])
-  if (any(tg < 3)) stop("Groups <3: ", paste(names(tg)[tg<3], tg[tg<3], collapse=","))
+  if (any(table(meta2[[groupColumn]]) < 3)) stop("Each group needs ≥3 samples")
   if (nrow(expr) < 1) stop("No features left after filtering")
 
   .ClearScatterplot_core(
-    expr, meta, groupColumn, sampleType,
+    expr, meta2, groupColumn, sampleType,
     timepoint, dataType,
     if (parallel) vectorized else "perCell",
     BPPARAM
@@ -257,14 +236,14 @@ ClearScatterplot_table <- function(
 
   cells <- if (!is.null(timepoint)) {
     expand.grid(
-      timePoint  = unique(meta[[timepoint]]),
+      timePoint = unique(meta[[timepoint]]),
       SampleType = unique(meta[[sampleType]]),
       stringsAsFactors = FALSE
     )
   } else {
     data.frame(
       SampleType = unique(meta[[sampleType]]),
-      timePoint  = NA_character_,
+      timePoint = NA_character_,
       stringsAsFactors = FALSE
     )
   }
@@ -277,22 +256,19 @@ ClearScatterplot_table <- function(
       which(meta[[sampleType]] == st)
     }
     if (length(idx) < 2 || length(unique(meta[[groupColumn]][idx])) < 2) return(NULL)
-    ce <- expr[, idx, drop = FALSE]; cm <- meta[idx, , drop = FALSE]
-    if (dataType == "continuous" && max(ce, na	rm = TRUE) > 50) ce <- log2(ce + 1)
+    ce <- expr[, idx, drop = FALSE]
+    cm <- meta[idx, , drop = FALSE]
+    if (dataType == "continuous" && max(ce, na.rm = TRUE) > 50) {
+      ce <- log2(ce + 1)
+    }
     design <- stats::model.matrix(~ cm[[groupColumn]])
     if (nrow(cm) <= ncol(design)) return(NULL)
     .run_DE(ce, cm, groupColumn, design, dataType, list(SampleType = st, timePoint = tp))
   }
 
-  use_par <- (vectorized == "vectorized" ||
-              (vectorized == "auto" && nrow(cells) > BiocParallel::bpworkers(BPPARAM)))
-  lst <- if (use_par) {
-    BiocParallel::bplapply(seq_len(nrow(cells)), run_cell, BPPARAM = BPPARAM)
-  } else {
-    lapply(seq_len(nrow(cells)), run_cell)
-  }
-
-  pd <- do.call(rbind, lst)
+  use_par <- (vectorized == "vectorized" || (vectorized == "auto" && nrow(cells) > BiocParallel::bpworkers(BPPARAM)))
+  lst     <- if (use_par) BiocParallel::bplapply(seq_len(nrow(cells)), run_cell, BPPARAM = BPPARAM) else lapply(seq_len(nrow(cells)), run_cell)
+  pd      <- do.call(rbind, lst)
   if (!nrow(pd)) stop("No DE results to plot.")
   rownames(pd) <- NULL
   ClearScatterplot(pd)
@@ -311,11 +287,7 @@ setGeneric("createPlot", function(object, ...) standardGeneric("createPlot"))
 setMethod("createPlot", "ClearScatterplot", function(object, color1 = "cornflowerblue", color2 = "grey", color3 = "indianred") {
   df <- object@data
   has_tp <- "timePoint" %in% names(df) && !all(is.na(df$timePoint))
-  facet <- if (has_tp && length(unique(df$timePoint)) > 1) {
-    "timePoint ~ SampleType"
-  } else {
-    ". ~ SampleType"
-  }
+  facet <- if (has_tp && length(unique(df$timePoint)) > 1) "timePoint ~ SampleType" else ". ~ SampleType"
   p <- ggplot2::ggplot(df, ggplot2::aes(x = log2fc, y = negLog10p, color = factor(color_flag))) +
     ggplot2::geom_point(alpha = 0.5, size = 1.75) +
     ggplot2::geom_jitter() +
@@ -326,13 +298,12 @@ setMethod("createPlot", "ClearScatterplot", function(object, color1 = "cornflowe
     ggplot2::theme(
       panel.grid.major = ggplot2::element_line(color = "grey80"),
       panel.grid.minor = ggplot2::element_blank(),
-      strip.background  = ggplot2::element_rect(fill = "white", color = "black"),
-      strip.text        = ggplot2::element_text(size = 12, face = "bold"),
-      axis.title        = ggplot2::element_text(size = 12, face = "bold"),
-      axis.text         = ggplot2::element_text(size = 10),
-      legend.position   = "bottom"
+      strip.background = ggplot2::element_rect(fill = "white", color = "black"),
+      strip.text = ggplot2::element_text(size = 12, face = "bold"),
+      axis.title = ggplot2::element_text(size = 12, face = "bold"),
+      axis.text = ggplot2::element_text(size = 10),
+      legend.position = "bottom"
     )
-  # count flags per facet
   if (has_tp && length(unique(df$timePoint)) > 1) {
     up <- df[df$color_flag == 1, ] |> dplyr::group_by(timePoint, SampleType) |> dplyr::tally(name = "n1")
     dn <- df[df$color_flag == -1, ] |> dplyr::group_by(timePoint, SampleType) |> dplyr::tally(name = "n2")
