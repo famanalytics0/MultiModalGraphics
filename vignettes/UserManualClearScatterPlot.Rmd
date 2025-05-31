@@ -1,9 +1,19 @@
+---
+title: "MultiModalGraphics User Manual"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{MultiModalGraphics User Manual}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
 # MultiModalGraphics: A Comprehensive User Manual
 
 **Version:** 0.99.5
 **Authors:** Seid Muhie
 **License:** Artistic-2.0
 
+Welcome to the MultiModalGraphics user manual. This document will walk you through…
 ---
 
 ## Table of Contents
