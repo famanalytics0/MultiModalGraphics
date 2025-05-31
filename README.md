@@ -1,6 +1,81 @@
 # MultiModalGraphics Classes
 
+*MultiModalGraphics* provides S4‐based classes for faceted volcano plots, 
+heatmaps, and multi‐feature grids for multiple types of input data.  
+
+## Installation
+
+```r
+
+# Install from GitHub repo:
+
+# (f) Install remotes/git2r if not already present
+if (!requireNamespace("git2r",   quietly=TRUE)) install.packages("git2r")
+if (!requireNamespace("remotes", quietly=TRUE)) install.packages("remotes")
+
+# (g) Re-install exactly from your GitHub branch:
+remotes::install_git(
+  "https://github.com/famanalytics0/MultiModalGraphics.git",
+  ref         = "famanalytics0-patch-1",
+  dependencies= TRUE,
+  upgrade     = "never"
+)
+
+# or from Cran if available 
+install.packages("MultiModalGraphics")
+# or Bioconductor if available
+BiocManager::install("MultiModalGraphics")
+```
+
 # 1. ClearScatterplot
+
+
+   ## Quickstart
+
+   *Here are three very brief examples; see the full manual for more details:*
+
+   1. **From MAE (miniACC)**
+
+      ```r
+      library(MultiModalGraphics)
+      library(MultiAssayExperiment)
+      data("miniACC", package="MultiAssayExperiment")
+      cs <- ClearScatterplot_MAE(
+        mae         = miniACC,
+        assayName   = "RNASeq2GeneNorm",
+        groupColumn = "C1A.C1B",
+        sampleType  = "pathologic_stage",
+        timepoint   = "MethyLevel"
+      )
+      show(createPlot(cs))
+      ```
+   2. **From matrix + metadata (Taylor PCa)**
+
+      ```r
+      library(MultiModalGraphics)
+      library(curatedPCaData)
+      … 
+      cs <- ClearScatterplot_table(expr, meta, groupColumn="DiseaseStatus", sampleType="GleasonScore", timepoint="Race")
+      show(createPlot(cs))
+      ```
+   3. **From a precomputed DE table (TCGA BRCA)**
+
+      ```r
+      library(MultiModalGraphics)
+      library(curatedTCGAData)
+      …
+      cs <- ClearScatterplot(df_de)
+      show(createPlot(cs))
+      ```
+
+   ## Full User Manual
+
+   For a **detailed, step‐by‐step guide** (installation, three real‐world examples,
+   customization options, troubleshooting, and additional classes), see the
+   [MultiModalGraphics User Manual](MANUAL.md).
+
+   
+
 
 ## Introduction
 
