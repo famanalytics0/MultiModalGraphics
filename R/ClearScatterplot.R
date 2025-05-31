@@ -5,7 +5,7 @@ if (getRversion() >= "2.15.1") utils::globalVariables(c(".data", "n1", "n2"))
 #'
 #' Encapsulates data and plotting logic for volcano plots with flexible faceting.
 #'
-#' @slot data   data.frame with plot data
+#' @slot data   data.frame with plot data (includes `category` factor: "down" / "neutral" / "up")
 #' @slot plot   ANY storing the generated ggplot object
 #' @import methods
 #' @exportClass ClearScatterplot
@@ -16,6 +16,10 @@ setClass(
     req <- c("log2fc", "negLog10p", "regulation", "SampleType")
     miss <- setdiff(req, names(object@data))
     if (length(miss)) stop("Missing required columns: ", paste(miss, collapse = ","))
+    # Also require `category` to exist (it will be created in the constructor)
+    if (!"category" %in% names(object@data)) {
+      stop("Slot `data` must contain a factor column `category` (levels: down/neutral/up).")
+    }
     TRUE
   }
 )
@@ -57,13 +61,22 @@ ClearScatterplot <- function(
     data <- data[!na_idx, , drop = FALSE]
   }
 
-  # Compute color flag
+  # Compute color_flag as before (numeric -1/0/1)
   data$color_flag <- with(
     data,
     ifelse(
-      log2fc > highLog2fc & negLog10p > negLog10pValue, 1,
+      log2fc > highLog2fc & negLog10p > negLog10pValue,  1,
       ifelse(log2fc < lowLog2fc & negLog10p > negLog10pValue, -1, 0)
     )
+  )
+
+  # Create a semantic factor column `category` with levels "down", "neutral", "up"
+  # -1 → "down", 0 → "neutral", 1 → "up"
+  data$category <- factor(
+    data$color_flag,
+    levels = c(-1L, 0L, 1L),
+    labels = c("down", "neutral", "up"),
+    ordered = TRUE
   )
 
   methods::new("ClearScatterplot", data = data, plot = NULL)
@@ -83,7 +96,7 @@ ClearScatterplot <- function(
     warning(sprintf("No DE results for %s/%s", cell$SampleType, cell$timePoint))
     return(NULL)
   }
-  data.frame(
+  df <- data.frame(
     log2fc     = tt$logFC,
     negLog10p  = -log10(tt$P.Value),
     regulation = ifelse(tt$logFC > 0, "up", "down"),
@@ -92,6 +105,7 @@ ClearScatterplot <- function(
     stringsAsFactors = FALSE,
     row.names = rownames(tt)
   )
+  return(df)
 }
 
 #' Constructor: ClearScatterplot from MAE
@@ -136,15 +150,15 @@ ClearScatterplot_MAE <- function(
   se   <- MultiAssayExperiment::experiments(mae)[[assayName]]
   expr <- SummarizedExperiment::assay(se)
 
-  # Filter by variance
+  # Feature variance filtering
   rv  <- matrixStats::rowVars(expr, na.rm = TRUE)
   thr <- stats::quantile(rv, var_quantile, na.rm = TRUE)
   expr <- expr[rv >= thr, , drop = FALSE]
 
-  # Assay‐level metadata
+  # Assay-level metadata
   meta <- as.data.frame(SummarizedExperiment::colData(se), stringsAsFactors = FALSE)
 
-  # Merge missing columns from top‐level MAE metadata if needed
+  # Merge missing metadata columns from top-level MAE if needed
   needed <- c(groupColumn, sampleType)
   if (!is.null(timepoint)) needed <- c(needed, timepoint)
   miss <- setdiff(needed, names(meta))
@@ -163,12 +177,12 @@ ClearScatterplot_MAE <- function(
   expr <- expr[, shared, drop = FALSE]
   meta <- meta[shared, , drop = FALSE]
 
-  # Remove samples with NA in required metadata
+  # Drop samples with NA in required metadata
   keep <- rowSums(is.na(meta[needed])) == 0
   expr <- expr[, keep, drop = FALSE]
   meta <- meta[keep, , drop = FALSE]
 
-  # Ensure each group has at least 3 samples and total ≥ 6 samples
+  # Ensure each group has ≥ 3 samples and total ≥ 6 samples
   if (any(table(meta[[groupColumn]]) < 3)) stop("Each group needs ≥3 samples")
   if (ncol(expr) < 6) stop("Too few samples after filtering (need ≥6)")
 
@@ -197,12 +211,6 @@ ClearScatterplot_MAE <- function(
 #'
 #' @return A `ClearScatterplot` S4 object ready for plotting via `show()`
 #'
-#' @examples
-#' # expr <- matrix(rpois(1000, 10), nrow=100, ncol=10)
-#' # meta <- data.frame(Group = rep(c("A","B"), each=5), SampleType = rep(c("X","Y"), times=5), row.names = paste0("S",1:10))
-#' # cs <- ClearScatterplot_table(expr, meta)
-#' # cs
-#'
 #' @importFrom matrixStats rowVars
 #' @import BiocParallel
 #' @export
@@ -227,7 +235,7 @@ ClearScatterplot_table <- function(
   thr  <- stats::quantile(rv, var_quantile, na.rm = TRUE)
   expr <- expr[rv >= thr, , drop = FALSE]
 
-  # Subset and drop NA in required metadata columns
+  # Subset metadata and drop NA rows
   needed <- c(groupColumn, sampleType)
   if (!is.null(timepoint)) needed <- c(needed, timepoint)
   meta2  <- meta[, needed, drop = FALSE]
@@ -235,7 +243,7 @@ ClearScatterplot_table <- function(
   expr   <- expr[, keep, drop = FALSE]
   meta2  <- meta2[keep, , drop = FALSE]
 
-  # Check group sizes and feature count
+  # Ensure each group has ≥ 3 samples and at least 1 feature remains
   if (any(table(meta2[[groupColumn]]) < 3)) stop("Each group needs ≥3 samples")
   if (nrow(expr) < 1) stop("No features left after filtering")
 
@@ -264,10 +272,10 @@ ClearScatterplot_table <- function(
     dataType <- if (all(expr == floor(expr)) && max(expr, na.rm = TRUE) > 30) "count" else "continuous"
   }
 
-  # Build cells (timePoint × SampleType combinations)
+  # Build “cells” (timePoint × SampleType combinations)
   cells <- if (!is.null(timepoint)) {
     expand.grid(
-      timePoint = unique(meta[[timepoint]]),
+      timePoint  = unique(meta[[timepoint]]),
       SampleType = unique(meta[[sampleType]]),
       stringsAsFactors = FALSE
     )
@@ -279,7 +287,7 @@ ClearScatterplot_table <- function(
     )
   }
 
-  # Function to run DE for one cell
+  # Function to run DE for a single cell
   run_cell <- function(i) {
     tp <- cells$timePoint[i]
     st <- cells$SampleType[i]
@@ -299,7 +307,7 @@ ClearScatterplot_table <- function(
     .run_DE(ce, cm, groupColumn, design, dataType, list(SampleType = st, timePoint = tp))
   }
 
-  # Decide whether to use parallel
+  # Decide whether to run in parallel
   use_par <- (vectorized == "vectorized" || (vectorized == "auto" && nrow(cells) > BiocParallel::bpworkers(BPPARAM)))
   if (use_par) {
     lst <- BiocParallel::bplapply(seq_len(nrow(cells)), run_cell, BPPARAM = BPPARAM)
@@ -310,6 +318,8 @@ ClearScatterplot_table <- function(
   pd <- do.call(rbind, lst)
   if (!nrow(pd)) stop("No DE results to plot.")
   rownames(pd) <- NULL
+
+  # Pass through the base constructor, which will add `color_flag` + `category`
   ClearScatterplot(pd)
 }
 
@@ -324,9 +334,9 @@ setGeneric("createPlot", function(object, ...) standardGeneric("createPlot"))
 #' @import ggplot2
 #' @importFrom dplyr group_by tally
 setMethod("createPlot", "ClearScatterplot", function(object,
-  color1          = "cornflowerblue",
-  color2          = "grey",
-  color3          = "indianred",
+  color1          = "cornflowerblue",  # up‐regulated color
+  color2          = "grey",            # neutral color
+  color3          = "indianred",       # down‐regulated color
   xlab            = expression(log2~fold~change),
   ylab            = expression(-log10~p),
   custom_theme    = NULL,
@@ -340,6 +350,8 @@ setMethod("createPlot", "ClearScatterplot", function(object,
   ...
 ) {
   df <- object@data
+
+  # Build faceting formula: use timePoint if it exists
   has_tp <- "timePoint" %in% names(df) && !all(is.na(df$timePoint))
   facet <- if (has_tp && length(unique(df$timePoint)) > 1) {
     "timePoint ~ SampleType"
@@ -347,38 +359,62 @@ setMethod("createPlot", "ClearScatterplot", function(object,
     ". ~ SampleType"
   }
 
-  p <- ggplot2::ggplot(df, ggplot2::aes(x = log2fc, y = negLog10p, color = factor(color_flag))) +
-    # Plot background points for density effect
-    ggplot2::geom_jitter(alpha = point_alpha, size = point_size) +
-    # Overlay exact points to control size/alpha
-    ggplot2::geom_point(alpha = point_alpha, size = point_size) +
-    ggplot2::labs(x = xlab, y = ylab, color = legend_title, ...) +
-    ggplot2::scale_color_manual(values = c(color1, color2, color3), labels = legend_labels) +
-    ggplot2::facet_grid(stats::as.formula(facet), space = "free") +
-    ggplot2::theme_bw() +
-    ggplot2::theme(
-      text             = ggplot2::element_text(family = text_family, size = text_size),
-      panel.grid.major = ggplot2::element_line(color = "grey80"),
-      panel.grid.minor = ggplot2::element_blank(),
-      strip.background = ggplot2::element_rect(fill = "white", color = "black"),
-      strip.text       = ggplot2::element_text(size = text_size + 2, face = "bold", family = text_family),
-      axis.title       = ggplot2::element_text(size = text_size + 2, face = "bold", family = text_family),
-      axis.text        = ggplot2::element_text(size = text_size, family = text_family),
-      legend.position  = legend_position,
-      legend.title     = ggplot2::element_text(size = text_size + 2, face = "bold", family = text_family),
-      legend.text      = ggplot2::element_text(size = text_size, family = text_family)
-    )
+  # 1) Base ggplot call, mapping color to semantic `category` factor
+  p <- ggplot2::ggplot(df, ggplot2::aes(
+          x = log2fc,
+          y = negLog10p,
+          color = category     # <-- no numeric magic here
+        )) +
+       ggplot2::geom_jitter(alpha = point_alpha, size = point_size) +
+       ggplot2::geom_point(alpha = point_alpha, size = point_size) +
+       ggplot2::labs(x = xlab, y = ylab, color = legend_title, ...) +
+       ggplot2::facet_grid(stats::as.formula(facet), space = "free") +
+       ggplot2::theme_bw() +
+       ggplot2::theme(
+         text             = ggplot2::element_text(family = text_family, size = text_size),
+         panel.grid.major = ggplot2::element_line(color = "grey80"),
+         panel.grid.minor = ggplot2::element_blank(),
+         strip.background = ggplot2::element_rect(fill = "white", color = "black"),
+         strip.text       = ggplot2::element_text(size = text_size + 2, face = "bold", family = text_family),
+         axis.title       = ggplot2::element_text(size = text_size + 2, face = "bold", family = text_family),
+         axis.text        = ggplot2::element_text(size = text_size, family = text_family),
+         legend.position  = legend_position,
+         legend.title     = ggplot2::element_text(size = text_size + 2, face = "bold", family = text_family),
+         legend.text      = ggplot2::element_text(size = text_size, family = text_family)
+       )
 
-  # Apply custom theme last so it overrides defaults
-  if (!is.null(custom_theme)) p <- p + custom_theme
+  # 2) Semantic color mapping: “up” → color1, “neutral” → color2, “down” → color3
+  col_map <- c(
+    "up"      = color1,   # category == "up"
+    "neutral" = color2,   # category == "neutral"
+    "down"    = color3    # category == "down"
+  )
+  p <- p + ggplot2::scale_color_manual(
+    values = col_map,
+    breaks = c("down", "neutral", "up"),  # ensures legend order is (down, neutral, up)
+    labels = legend_labels
+  )
 
-  # Add count labels
+  # 3) Apply any user‐supplied theme override last
+  if (!is.null(custom_theme)) {
+    p <- p + custom_theme
+  }
+
+  # 4) Add count labels in each facet, grouping by `category`
   if (has_tp && length(unique(df$timePoint)) > 1) {
-    up <- df[df$color_flag == 1, ] |> dplyr::group_by(timePoint, SampleType) |> dplyr::tally(name = "n1")
-    dn <- df[df$color_flag == -1, ] |> dplyr::group_by(timePoint, SampleType) |> dplyr::tally(name = "n2")
+    up <- df[df$category == "up", ] |>
+          dplyr::group_by(timePoint, SampleType) |>
+          dplyr::tally(name = "n1")
+    dn <- df[df$category == "down", ] |>
+          dplyr::group_by(timePoint, SampleType) |>
+          dplyr::tally(name = "n2")
   } else {
-    up <- df[df$color_flag == 1, ] |> dplyr::group_by(SampleType) |> dplyr::tally(name = "n1")
-    dn <- df[df$color_flag == -1, ] |> dplyr::group_by(SampleType) |> dplyr::tally(name = "n2")
+    up <- df[df$category == "up", ] |>
+          dplyr::group_by(SampleType) |>
+          dplyr::tally(name = "n1")
+    dn <- df[df$category == "down", ] |>
+          dplyr::group_by(SampleType) |>
+          dplyr::tally(name = "n2")
   }
   if (nrow(up)) {
     p <- p + ggplot2::geom_text(
@@ -386,7 +422,7 @@ setMethod("createPlot", "ClearScatterplot", function(object,
       ggplot2::aes(label = n1),
       x       = Inf, y = Inf,
       hjust   = 1.1, vjust = 1.1,
-      color   = color1,
+      color   = color1,      # “up” labels in color1
       family  = text_family,
       size    = text_size / ggplot2::.pt
     )
@@ -397,12 +433,13 @@ setMethod("createPlot", "ClearScatterplot", function(object,
       ggplot2::aes(label = n2),
       x       = -Inf, y = Inf,
       hjust   = -0.1, vjust = 1.1,
-      color   = color3,
+      color   = color3,      # “down” labels in color3
       family  = text_family,
       size    = text_size / ggplot2::.pt
     )
   }
 
+  # 5) Store and return invisibly
   object@plot <- p
   invisible(object)
 })
