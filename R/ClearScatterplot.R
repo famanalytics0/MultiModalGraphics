@@ -367,4 +367,3 @@ setMethod("show", "ClearScatterplot", function(object) {
 
 
 
-
