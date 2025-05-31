@@ -1,11 +1,3 @@
----
-title: "MultiModalGraphics User Manual"
-output: rmarkdown::html_vignette
-vignette: >
-  %\VignetteIndexEntry{MultiModalGraphics User Manual}
-  %\VignetteEngine{knitr::rmarkdown}
-  %\VignetteEncoding{UTF-8}
----
 
 # MultiModalGraphics: A Comprehensive User Manual
 
