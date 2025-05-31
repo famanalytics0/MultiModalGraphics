@@ -76,9 +76,6 @@ BiocManager::install("MultiModalGraphics")
 
    
 
-
-## Introduction
-
 Multiple examples in the linked MANUAL.md demonstrate how to use the `ClearScatterplot` class to create 
 enhanced scatterplots. The `ClearScatterplot` class provides functionalities 
 for creating scatterplots with enhanced visualization features like coloring 
