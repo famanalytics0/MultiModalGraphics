@@ -15,7 +15,7 @@ setClass(
   validity = function(object) {
     req <- c("log2fc", "negLog10p", "regulation", "SampleType")
     miss <- setdiff(req, names(object@data))
-    if (length(miss)) stop("Missing required columns: ", paste(miss, collapse=","))
+    if (length(miss)) stop("Missing required columns: ", paste(miss, collapse = ","))
     TRUE
   }
 )
@@ -48,7 +48,7 @@ ClearScatterplot <- function(
   )
   req <- c("log2fc", "negLog10p", "regulation", "SampleType")
   miss <- setdiff(req, names(data))
-  if (length(miss)) stop("Missing columns: ", paste(miss, collapse=","))
+  if (length(miss)) stop("Missing columns: ", paste(miss, collapse = ","))
 
   # Remove rows with NA in key numeric columns
   na_idx <- is.na(data$log2fc) | is.na(data$negLog10p)
@@ -86,7 +86,7 @@ ClearScatterplot <- function(
   data.frame(
     log2fc     = tt$logFC,
     negLog10p  = -log10(tt$P.Value),
-    regulation = ifelse(tt$logFC > 0, 'up', 'down'),
+    regulation = ifelse(tt$logFC > 0, "up", "down"),
     SampleType = cell$SampleType,
     timePoint  = cell$timePoint,
     stringsAsFactors = FALSE,
@@ -324,43 +324,55 @@ setGeneric("createPlot", function(object, ...) standardGeneric("createPlot"))
 #' @import ggplot2
 #' @importFrom dplyr group_by tally
 setMethod("createPlot", "ClearScatterplot", function(object,
-                                                           color1 = "cornflowerblue",
-                                                           color2 = "grey",
-                                                           color3 = "indianred",
-                                                           xlab = expression(log2~fold~change),
-                                                           ylab = expression(-log10~p),
-                                                           custom_theme = NULL,
-                                                           point_alpha = 0.5,
-                                                           point_size = 1.75,
-                                                           legend_position = "bottom",
-                                                           legend_title = NULL,
-                                                           legend_labels = NULL,
-                                                           text_family = "sans",
-                                                           text_size = 10,
-                                                           ...) {
+  color1          = "cornflowerblue",
+  color2          = "grey",
+  color3          = "indianred",
+  xlab            = expression(log2~fold~change),
+  ylab            = expression(-log10~p),
+  custom_theme    = NULL,
+  point_alpha     = 0.5,
+  point_size      = 1.75,
+  legend_position = "bottom",
+  legend_title    = NULL,
+  legend_labels   = NULL,
+  text_family     = "sans",
+  text_size       = 10,
+  ...
+) {
   df <- object@data
   has_tp <- "timePoint" %in% names(df) && !all(is.na(df$timePoint))
-  facet <- if (has_tp && length(unique(df$timePoint)) > 1) "timePoint ~ SampleType" else ". ~ SampleType"
+  facet <- if (has_tp && length(unique(df$timePoint)) > 1) {
+    "timePoint ~ SampleType"
+  } else {
+    ". ~ SampleType"
+  }
+
   p <- ggplot2::ggplot(df, ggplot2::aes(x = log2fc, y = negLog10p, color = factor(color_flag))) +
-    ggplot2::geom_point(alpha = point_alpha, size = point_size) +
+    # Plot background points for density effect
     ggplot2::geom_jitter(alpha = point_alpha, size = point_size) +
+    # Overlay exact points to control size/alpha
+    ggplot2::geom_point(alpha = point_alpha, size = point_size) +
     ggplot2::labs(x = xlab, y = ylab, color = legend_title, ...) +
     ggplot2::scale_color_manual(values = c(color1, color2, color3), labels = legend_labels) +
     ggplot2::facet_grid(stats::as.formula(facet), space = "free") +
     ggplot2::theme_bw() +
-    (if (!is.null(custom_theme)) custom_theme else ggplot2::theme()) +
     ggplot2::theme(
-      text = ggplot2::element_text(family = text_family, size = text_size),
+      text            = ggplot2::element_text(family = text_family, size = text_size),
       panel.grid.major = ggplot2::element_line(color = "grey80"),
       panel.grid.minor = ggplot2::element_blank(),
       strip.background = ggplot2::element_rect(fill = "white", color = "black"),
-      strip.text = ggplot2::element_text(size = text_size + 2, face = "bold", family = text_family),
-      axis.title = ggplot2::element_text(size = text_size + 2, face = "bold", family = text_family),
-      axis.text = ggplot2::element_text(size = text_size, family = text_family),
+      strip.text      = ggplot2::element_text(size = text_size + 2, face = "bold", family = text_family),
+      axis.title      = ggplot2::element_text(size = text_size + 2, face = "bold", family = text_family),
+      axis.text       = ggplot2::element_text(size = text_size, family = text_family),
       legend.position = legend_position,
-      legend.title = ggplot2::element_text(size = text_size + 2, face = "bold", family = text_family),
-      legend.text = ggplot2::element_text(size = text_size, family = text_family)
+      legend.title    = ggplot2::element_text(size = text_size + 2, face = "bold", family = text_family),
+      legend.text     = ggplot2::element_text(size = text_size, family = text_family)
     )
+
+  # Apply custom theme last so it overrides defaults
+  if (!is.null(custom_theme)) p <- p + custom_theme
+
+  # Add count labels
   if (has_tp && length(unique(df$timePoint)) > 1) {
     up <- df[df$color_flag == 1, ] |> dplyr::group_by(timePoint, SampleType) |> dplyr::tally(name = "n1")
     dn <- df[df$color_flag == -1, ] |> dplyr::group_by(timePoint, SampleType) |> dplyr::tally(name = "n2")
@@ -369,11 +381,28 @@ setMethod("createPlot", "ClearScatterplot", function(object,
     dn <- df[df$color_flag == -1, ] |> dplyr::group_by(SampleType) |> dplyr::tally(name = "n2")
   }
   if (nrow(up)) {
-    p <- p + ggplot2::geom_text(data = up, ggplot2::aes(label = n1), x = Inf, y = Inf, hjust = 1.1, vjust = 1.1, color = color1, family = text_family, size = text_size / ggplot2::.pt)
+    p <- p + ggplot2::geom_text(
+      data    = up,
+      ggplot2::aes(label = n1),
+      x       = Inf, y = Inf,
+      hjust   = 1.1, vjust = 1.1,
+      color   = color1,
+      family  = text_family,
+      size    = text_size / ggplot2::.pt
+    )
   }
   if (nrow(dn)) {
-    p <- p + ggplot2::geom_text(data = dn, ggplot2::aes(label = n2), x = -Inf, y = Inf, hjust = -0.1, vjust = 1.1, color = color3, family = text_family, size = text_size / ggplot2::.pt)
+    p <- p + ggplot2::geom_text(
+      data    = dn,
+      ggplot2::aes(label = n2),
+      x       = -Inf, y = Inf,
+      hjust   = -0.1, vjust = 1.1,
+      color   = color3,
+      family  = text_family,
+      size    = text_size / ggplot2::.pt
+    )
   }
+
   object@plot <- p
   invisible(object)
 })
@@ -387,9 +416,6 @@ setMethod("show", "ClearScatterplot", function(object) {
   print(object@plot)
   invisible(object)
 })
-
-
-
 
 
 
