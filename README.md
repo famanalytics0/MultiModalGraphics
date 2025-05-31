@@ -72,7 +72,7 @@ BiocManager::install("MultiModalGraphics")
 
    For a **detailed, step‐by‐step guide** (installation, three real‐world examples,
    customization options, troubleshooting, and additional classes), see the
-   [MultiModalGraphics User Manual]([MANUAL.md](https://github.com/famanalytics0/MultiModalGraphics/blob/famanalytics0-patch-1/MANUAL.md)).
+   [MultiModalGraphics User Manual](MANUAL.md)
 
    
 
