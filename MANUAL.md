@@ -1,47 +1,41 @@
 
+````markdown
 # MultiModalGraphics: A Comprehensive User Manual
 
-**Version:** 0.99.5
+**Version:** 0.99.5  
+**Authors:** Seid Muhie  
+**License:** Artistic-2.0  
 
-**Authors:** Seid Muhie
-
-**License:** Artistic-2.0
-
-Welcome to the MultiModalGraphics user manual. This document will walk you through…
----
+Welcome to the MultiModalGraphics user manual. This document will walk you through how to go from your raw data (MAE, expression matrix, or DE table) to a fully customized, faceted volcano plot, using real‐world examples.
 
 ## Table of Contents
 
-1. [Introduction](#introduction)
-2. [Installation & Setup](#installation)
-3. [Overview of Functionality](#overview)
-4. [Getting Started: Basic Workflow](#basic_workflow)
-5. [Example 1: Starting from an MAE Object (miniACC)](#example1)
-
-   1. [What Is an MAE Object?](#example1_background)
-   2. [Step-by-Step Code Walkthrough](#example1_steps)
-   3. [Customizing Your Plot](#example1_custom)
-   4. [Troubleshooting & Tips](#example1_troubleshoot)
-6. [Example 2: Starting from an Expression/Count Matrix + Metadata (curatedPCaData)](#example2)
-
-   1. [Why Use a Matrix + Metadata Workflow?](#example2_background)
-   2. [Step-by-Step Code Walkthrough](#example2_steps)
-   3. [Customizing Your Plot](#example2_custom)
-   4. [Troubleshooting & Tips](#example2_troubleshoot)
-7. [Example 3: Starting from a Ready‐Made DE Table (curatedTCGAData)](#example3)
-
-   1. [Why Use a Table‐Only Workflow?](#example3_background)
-   2. [Step-by-Step Code Walkthrough](#example3_steps)
-   3. [Customizing Your Plot](#example3_custom)
-   4. [Troubleshooting & Tips](#example3_troubleshoot)
-8. [Advanced Plotting Options](#advanced_options)
-
-   1. [Axis Labels, Titles, and Themes](#options_labels)
-   2. [Adjusting Point Size & Transparency](#options_points)
-   3. [Legend Customization](#options_legend)
-   4. [Fonts and Text Size](#options_text)
-9. [Common Pitfalls & Troubleshooting](#common_troubleshoot)
-10. [Session Information & Citation](#session)
+1. [Introduction](#introduction)  
+2. [Installation & Setup](#installation)  
+3. [Overview of Functionality](#overview)  
+4. [Getting Started: Basic Workflow](#basic_workflow)  
+5. [Example 1: Starting from an MAE Object (miniACC)](#example1)  
+   1. [What Is an MAE Object?](#example1_background)  
+   2. [Step-by-Step Code Walkthrough](#example1_steps)  
+   3. [Customizing Your Plot](#example1_custom)  
+   4. [Troubleshooting & Tips](#example1_troubleshoot)  
+6. [Example 2: Starting from an Expression/Count Matrix + Metadata (curatedPCaData)](#example2)  
+   1. [Why Use a Matrix + Metadata Workflow?](#example2_background)  
+   2. [Step-by-Step Code Walkthrough](#example2_steps)  
+   3. [Customizing Your Plot](#example2_custom)  
+   4. [Troubleshooting & Tips](#example2_troubleshoot)  
+7. [Example 3: Starting from a Ready‐Made DE Table (curatedTCGAData)](#example3)  
+   1. [Why Use a Table‐Only Workflow?](#example3_background)  
+   2. [Step-by-Step Code Walkthrough](#example3_steps)  
+   3. [Customizing Your Plot](#example3_custom)  
+   4. [Troubleshooting & Tips](#example3_troubleshoot)  
+8. [Advanced Plotting Options](#advanced_options)  
+   1. [Axis Labels, Titles, and Themes](#options_labels)  
+   2. [Adjusting Point Size & Transparency](#options_points)  
+   3. [Legend Customization](#options_legend)  
+   4. [Fonts and Text Size](#options_text)  
+9. [Common Pitfalls & Troubleshooting](#common_troubleshoot)  
+10. [Session Information & Citation](#session)  
 
 ---
 
@@ -51,18 +45,18 @@ Welcome to the MultiModalGraphics user manual. This document will walk you throu
 
 **MultiModalGraphics** is an R/Bioconductor package designed to simplify the creation of publication‐quality, faceted visualization of high‐throughput biological data. Its core offerings include:
 
-* **Faceted Volcano Plots**: Automatically generate volcano plots showing log<sub>2</sub> fold‐change versus –log<sub>10</sub> p‐value, with counts of up‐ and down‐regulated features in each facet.
-* **Heatmaps & Multi‐Feature Grids**: (Not covered in detail here, but available in the same package.)
-* **Three Distinct Constructors** depending on the user’s starting point:
+- **Faceted Volcano Plots**: Automatically generate volcano plots showing log₂ fold‐change versus –log₁₀ p‐value, with counts of up‐ and down‐regulated features in each facet.  
+- **Heatmaps & Multi‐Feature Grids**: (Not covered in detail here, but available in the same package.)  
+- **Three Distinct Constructors** depending on the user’s starting point:
 
-  1. **`ClearScatterplot_MAE(...)`**: Begin with a *MultiAssayExperiment (MAE)* object.
-  2. **`ClearScatterplot_table(...)`**: Begin with a raw *expression/count matrix* and separate *metadata* table.
-  3. **`ClearScatterplot(...)`**: Begin with a precomputed *data.frame* of DE results (log<sub>2</sub>FC, –log<sub>10</sub>p, etc.).
+  1. **`ClearScatterplot_MAE(...)`**: Begin with a *MultiAssayExperiment (MAE)* object.  
+  2. **`ClearScatterplot_table(...)`**: Begin with a raw *expression/count matrix* and separate *metadata* table.  
+  3. **`ClearScatterplot(...)`**: Begin with a precomputed *data.frame* of DE results (log₂FC, –log₁₀p, etc.).
 
 This manual will walk you through, in excruciating detail, how to go from your raw data (MAE, expression matrix, or DE table) to a fully annotated, faceted volcano plot, using real‐world datasets:
 
-1. **`miniACC`** (a small MAE from *MultiAssayExperiment*)
-2. **`curatedPCaData`** (a prostate cancer dataset from Bioconductor)
+1. **`miniACC`** (a small MAE from *MultiAssayExperiment*)  
+2. **`curatedPCaData`** (a prostate cancer dataset from Bioconductor)  
 3. **`curatedTCGAData`** (a pan‐TCGA dataset from Bioconductor)
 
 By the end of this guide, you will be comfortable installing the package, understanding all available arguments, and customizing your plots to fit your publication or presentation needs.
@@ -77,7 +71,7 @@ By the end of this guide, you will be comfortable installing the package, unders
 
 Before installing **MultiModalGraphics**, make sure you have:
 
-1. **R ≥ 4.1.0**
+1. **R ≥ 4.1.0**  
 2. **Bioconductor ≥ 3.15** (for Bioconductor‐based dependencies and data packages)
 
 ### 2.2. Install Dependencies
@@ -86,11 +80,10 @@ Before installing **MultiModalGraphics**, make sure you have:
 
 However, if you want to install Bioconductor packages for the **data examples**, you may need:
 
-* `curatedPCaData`
-* `curatedTCGAData`
-* `curatedTCGADataData`
+- `curatedPCaData`  
+- `curatedTCGAData`  
 
-These are listed under **Suggests:**, so they are *not* installed automatically. R will prompt you to install them if you run an example that uses them.
+> **Note**: Installing `curatedTCGAData` will automatically pull in any necessary data via `curatedTCGADataData`. You rarely need to install `curatedTCGADataData` manually unless you want to inspect raw assay files outside of the convenience wrapper.
 
 #### 2.2.1. Installing Bioconductor
 
@@ -100,7 +93,7 @@ If you have not already set up Bioconductor in your R installation, run:
 if (!requireNamespace("BiocManager", quietly=TRUE))
     install.packages("BiocManager")
 BiocManager::install()  # install/update Bioconductor itself
-```
+````
 
 #### 2.2.2. Install MultiModalGraphics
 
@@ -123,7 +116,7 @@ if (!requireNamespace("git2r",   quietly=TRUE)) install.packages("git2r")
 if (!requireNamespace("remotes", quietly=TRUE)) install.packages("remotes")
 remotes::install_git(
   "https://github.com/famanalytics0/MultiModalGraphics.git",
-  ref         = "master",     # or specific branch/tag
+  ref         = "master",     # or specific branch such as "famanalytics0-patch-1"
   dependencies= TRUE,
   upgrade     = "never"
 )
@@ -143,16 +136,16 @@ Once installed, open a **fresh** R session and load:
 
 ```r
 library(MultiModalGraphics)
-library(ggplot2)   # for custom themes (e.g. theme_minimal, theme_classic)
-library(dplyr)     # for data manipulation (group_by, tally)
-library(magrittr)  # for the pipe `%>%`
-library(matrixStats)# for rowVars (variance filtering)
-library(BiocParallel)# for parallel computing in constructors
+library(ggplot2)         # for custom themes (e.g. theme_minimal, theme_classic)
+library(dplyr)           # for data manipulation (group_by, tally)
+library(magrittr)        # for the pipe `%>%`
+library(matrixStats)     # for rowVars (variance filtering)
+library(BiocParallel)    # for parallel computing in constructors
 library(MultiAssayExperiment)
 library(SummarizedExperiment)
 library(limma)
-library(RColorBrewer) # for color palettes, if desired
-library(ComplexHeatmap)# if you plan to use the heatmap functions
+library(RColorBrewer)     # for color palettes, if desired
+library(ComplexHeatmap)   # if you plan to use the heatmap functions
 ```
 
 > **Note:** You only need to load the packages you will actually use. For example, if you only want volcano plots, `ggplot2`, `dplyr`, `matrixStats`, `BiocParallel`, `MultiAssayExperiment`, `SummarizedExperiment`, and `limma` are essential. The other imports (`RColorBrewer`, `ComplexHeatmap`) can remain unloaded until needed.
@@ -163,13 +156,20 @@ library(ComplexHeatmap)# if you plan to use the heatmap functions
 
 ## 3. Overview of Functionality
 
-**MultiModalGraphics** centers on one S4 class:
+This part of the **MultiModalGraphics** manual centers on the **ClearScatterplot** S4 class:
 
 ```r
 setClass(
   "ClearScatterplot",
   slots = c(data = "data.frame", plot = "ANY"),
-  validity = function(object) { … }
+  validity = function(object) {
+    req <- c("log2fc", "negLog10p", "regulation", "SampleType")
+    miss <- setdiff(req, names(object@data))
+    if (length(miss)) stop("Missing required columns: ", paste(miss, collapse = ", "))
+    # Ensure that log2fc and negLog10p are numeric
+    stopifnot(is.numeric(object@data$log2fc), is.numeric(object@data$negLog10p))
+    TRUE
+  }
 )
 ```
 
@@ -192,6 +192,7 @@ setClass(
 1. **`ClearScatterplot_MAE(mae, ...)`**
 
    * **Use‐case**: You already have a `MultiAssayExperiment` with at least one assay containing expression or count data.
+
    * **Workflow**:
 
      1. Extract a named assay (e.g. `"RNASeq2GeneNorm"`) from your MAE as a matrix.
@@ -202,6 +203,7 @@ setClass(
      6. For each cell, run `limma` (either `voom + lmFit` for counts, or `lmFit` for continuous data), then `eBayes` and `topTable` to derive DE statistics.
      7. Combine these per‐cell results into one data.frame (columns: `log2fc, negLog10p, regulation, SampleType, timePoint`).
      8. Call `ClearScatterplot()` on that combined data.frame, which populates `color_flag` and `category`.
+
    * **Signature**:
 
      ```r
@@ -218,6 +220,7 @@ setClass(
        var_quantile= 0.75
      )
      ```
+
    * **Key Arguments**:
 
      * `groupColumn`: metadata column name along which DE is performed (e.g. `"Tumor_vs_Normal"`).
@@ -231,6 +234,7 @@ setClass(
 2. **`ClearScatterplot_table(expr, meta, ...)`**
 
    * **Use‐case**: You have one matrix `expr` (features × samples) and one metadata data.frame `meta` (samples × metadata).
+
    * **Workflow**:
 
      1. Confirm `expr` and `meta` have matching sample names (`colnames(expr)` == `rownames(meta)`).
@@ -241,37 +245,39 @@ setClass(
      6. Split into “cells” by every combination of `SampleType × timePoint`.
      7. Run per‐cell DE as above.
      8. Combine results and call `ClearScatterplot()` on that combined data.frame.
+
    * **Signature**:
 
      ```r
      ClearScatterplot_table(
-       expr, 
+       expr,
        meta,
        groupColumn = "Group",
        sampleType  = "SampleType",
        timepoint   = NULL,
        dataType    = c("auto","continuous","count"),
        vectorized  = c("auto","perCell","vectorized"),
-       parallel    = TRUE,
        BPPARAM     = BiocParallel::bpparam(),
        var_quantile= 0.75
      )
      ```
+
    * **Key Differences vs. MAE version**:
 
      * You supply `expr` and `meta` separately; there is no `sampleMap` merging.
      * You still supply `groupColumn`, `sampleType`, `timepoint` for splitting and DE.
-     * Same arguments for `dataType`, `vectorized`, `parallel`, and `var_quantile`.
+     * There is no separate `parallel` argument—instead, parallelism is controlled by `vectorized` + `BPPARAM`.
 
 3. **`ClearScatterplot(data, ...)`**
 
    * **Use‐case**: You already have a **data.frame** of DE results (e.g. from limma, DESeq2, edgeR), with columns:
 
-     * `log2fc` (numeric)
-     * `negLog10p` (numeric, = –log<sub>10</sub> P‐value)
+     * `log2fc` (numeric: log₂ fold‐change)
+     * `negLog10p` (numeric: –log₁₀ P‐value)
      * `regulation` (character: “up” or “down”)
-     * `SampleType` (character: grouping/stratification column)
-     * Optional: `timePoint` (character/factor).
+     * `SampleType` (character: grouping or “contrast” identifier)
+     * Optionally, `timePoint` (character/factor).
+
    * **Workflow**:
 
      1. Check `data.frame` has the required columns.
@@ -279,6 +285,7 @@ setClass(
      3. Compute `color_flag` = 1/0/–1 based on user‐supplied thresholds (`highLog2fc`, `lowLog2fc`, `negLog10pValue`).
      4. Create an ordered factor `category` with levels `c("down","neutral","up")`.
      5. Store all of this in a new `ClearScatterplot` object.
+
    * **Signature**:
 
      ```r
@@ -289,11 +296,13 @@ setClass(
        negLog10pValue = 1.301
      )
      ```
+
    * **Key Arguments**:
 
      * `highLog2fc`: numeric threshold for calling “up” (default = 0.585, i.e. FC > 1.5).
      * `lowLog2fc`: numeric threshold for calling “down” (default = –0.585).
-     * `negLog10pValue`: numeric threshold for –log<sub>10</sub>(p) to count as significant (default = 1.301, i.e. p < 0.05).
+     * `negLog10pValue`: numeric threshold for –log₁₀(p) to count as significant (default = 1.301, i.e. p < 0.05).
+
    * **Output**: A `ClearScatterplot` S4 object with `@data` containing `log2fc, negLog10p, regulation, SampleType, timePoint (if present), color_flag, category` and `@plot = NULL` (until you call `createPlot()`).
 
 ---
@@ -305,7 +314,7 @@ setClass(
 Regardless of which constructor you use (`_MAE`, `_table`, or `ClearScatterplot`), the general pattern is:
 
 1. **Construct** a `ClearScatterplot` object using one of the three functions.
-2. **Generate/Customize** the ggplot‐based volcano by calling `createPlot(object, ...)`.
+2. **Generate/Customize** the ggplot‐based volcano by calling `createPlot(object, …)`.
 3. **Render** the plot by calling `show()` on the object returned by `createPlot()`.
 
 In pseudocode:
@@ -317,9 +326,9 @@ cs <- <one of: ClearScatterplot_MAE(...) | ClearScatterplot_table(...) | ClearSc
 # 2. Build + customize the plot
 cs <- createPlot(
   cs,
-  color1          = "steelblue",
-  color2          = "grey",
-  color3          = "tomato",
+  color1          = "indianred",     # up = red/orange by default  
+  color2          = "grey",          # neutral = grey  
+  color3          = "cornflowerblue",# down = blue by default  
   xlab            = "Log2 fold change",
   ylab            = "-Log10 p-value",
   text_family     = "sans",
@@ -328,7 +337,7 @@ cs <- createPlot(
   point_alpha     = 0.6,
   legend_position = "bottom",
   legend_title    = "Regulation",
-  legend_labels   = c("Down", "Neutral", "Up"),
+  legend_labels   = c("Up", "Neutral", "Down"),
   custom_theme    = theme_minimal(),
   title           = "Volcano Plot Example"
 )
@@ -347,11 +356,11 @@ Below, we’ll walk through three complete, **real‐world** examples, starting 
 
 ### <a name="example1_background"></a>5.1. What Is an MAE Object?
 
-A **MultiAssayExperiment (MAE)** is a Bioconductor class designed to store multi‐omics data (e.g., RNA‐seq, methylation, proteomics) for a set of samples, along with metadata. It can hold multiple assays (e.g., counts, normalized expression) and synchronize them across samples.
+A **MultiAssayExperiment (MAE)** is a Bioconductor class designed to store multi-omics data (e.g., RNA-seq, methylation, proteomics) for a set of samples, along with metadata. It can hold multiple assays (e.g., counts, normalized expression) and synchronize them across samples.
 
 In this example, we use the **miniACC** dataset, bundled with the **MultiAssayExperiment** package. It is a small example MAE containing:
 
-* An assay called `"RNASeq2GeneNorm"`, which is likely a matrix of normalized RNA‐seq expression values.
+* An assay called `"RNASeq2GeneNorm"`, which is a matrix of normalized RNA-seq expression values.
 * `colData(miniACC)`: a data.frame with sample metadata (79 samples × \~30 columns), including:
 
   * `"C1A.C1B"`: two groups (C1A vs. C1B)
@@ -360,7 +369,11 @@ In this example, we use the **miniACC** dataset, bundled with the **MultiAssayEx
 
 We want to perform differential expression (DE) for each combination of `pathologic_stage × MethyLevel` (i.e., one volcano per cell), grouping by `"C1A.C1B"`.
 
-### <a name="example1_steps"></a>5.2. Step‐by‐Step Code Walkthrough
+---
+
+<a name="example1_steps"></a>
+
+### 5.2. Step‐by‐Step Code Walkthrough
 
 #### 5.2.1. Load Required Packages
 
@@ -399,39 +412,43 @@ miniACC
 * **What to expect**: R should print information about the `miniACC` object, something like:
 
   ```
-  class: MultiAssayExperiment 
+  class: MultiAssayExperiment
   dim: 21683 79  # perhaps 21,683 features × 79 samples
   metadata(…)
   experiments: RNASeq2GeneNorm (1)  # one assay
-  colData: 79 samples × 30 columns (sample‐level metadata)
+  colData: 79 samples × 30 columns (sample-level metadata)
   sampleMap: 79 rows
   primary: 79 samples
   ```
 
-* To confirm the assay names, run:
+To confirm the assay names, run:
 
-  ```r
-  names(experiments(miniACC))
-  # [1] "RNASeq2GeneNorm"
-  ```
+```r
+names(experiments(miniACC))
+# [1] "RNASeq2GeneNorm"
+```
 
-  And to check the sample‐level columns:
+And to check the sample‐level columns:
 
-  ```r
-  colnames(colData(miniACC))
-  # [1] "patientID" "years_to_birth" "vital_status" ... "C1A.C1B" "pathologic_stage" "MethyLevel" ...
-  ```
+```r
+colnames(colData(miniACC))
+# [1] "patientID" "years_to_birth" "vital_status" ... "C1A.C1B" "pathologic_stage" "MethyLevel" ...
+```
 
 #### 5.2.3. Define a Parallel Backend (Optional)
 
 ```r
-# Use 2 CPU cores for parallel processing
+# Use 2 CPU cores for parallel processing (on Unix/macOS)
 BPPARAM <- MulticoreParam(workers = 2)
+
+# On Windows, you might need:
+# library(BiocParallel)
+# BPPARAM <- SnowParam(workers = 2)
 ```
 
 > **Why?**
 >
-> * When splitting into multiple “cells” (combinations of pathologic\_stage × MethyLevel), the function can run DE in parallel to speed up processing.
+> * When splitting into multiple “cells” (combinations of `pathologic_stage × MethyLevel`), the function can run DE in parallel to speed up processing.
 > * If you have a single‐core machine or want deterministic serial execution, set `parallel = FALSE` when you call the constructor.
 
 #### 5.2.4. Construct the `ClearScatterplot` Object
@@ -447,7 +464,7 @@ cs_mae <- ClearScatterplot_MAE(
   vectorized  = "auto",       # automatically parallelize if #cells > #workers(BPPARAM)
   parallel    = TRUE,         # respect vectorized; if FALSE, forces sequential
   BPPARAM     = BPPARAM,
-  var_quantile= 0.75          # keep top 25% highest‐variance features
+  var_quantile= 0.75          # keep top 25% highest-variance features
 )
 ```
 
@@ -456,8 +473,8 @@ cs_mae <- ClearScatterplot_MAE(
 * `mae = miniACC`: The MAE containing our assay + metadata.
 * `assayName = "RNASeq2GeneNorm"`: Exactly the name of the assay we want to retrieve.
 * `groupColumn = "C1A.C1B"`: In `colData(miniACC)`, the column “C1A.C1B” defines two clinical subgroups (C1A vs C1B). DE will be performed between these two groups within each cell.
-* `sampleType = "pathologic_stage"`: In `colData(miniACC)`, “pathologic\_stage” defines how we want to facet along columns (X‐axis facet).
-* `timepoint = "MethyLevel"`: In `colData(miniACC)`, “MethyLevel” defines how we want to facet along rows (Y‐axis facet).
+* `sampleType = "pathologic_stage"`: In `colData(miniACC)`, “pathologic\_stage” defines how we want to facet along columns (X-axis facet).
+* `timepoint = "MethyLevel"`: In `colData(miniACC)`, “MethyLevel” defines how we want to facet along rows (Y-axis facet).
 * `dataType = "auto"`: Let the function decide if the assay is integer counts or continuous. If it’s integer and some values exceed 30, it calls `voom()`. Otherwise, it calls `lmFit()` directly.
 * `vectorized = "auto"`: Use parallel if the number of “cells” (unique combinations of `pathologic_stage × MethyLevel`) is greater than the number of workers in `BPPARAM`.
 * `parallel = TRUE`: Allow use of `vectorized`. If you set `parallel = FALSE`, it will force `vectorized = "perCell"` (i.e. sequential execution).
@@ -469,11 +486,12 @@ cs_mae <- ClearScatterplot_MAE(
 1. **Assay Extraction**:
 
    ```r
-   se <- experiments(miniACC)[["RNASeq2GeneNorm"]]
+   se   <- experiments(miniACC)[["RNASeq2GeneNorm"]]
    expr <- SummarizedExperiment::assay(se)
    ```
 
    * Retrieves a matrix of genes × samples.
+
 2. **Variance Filtering**:
 
    ```r
@@ -483,6 +501,7 @@ cs_mae <- ClearScatterplot_MAE(
    ```
 
    * Drops genes whose variance is below the 75th percentile.
+
 3. **Metadata Retrieval**:
 
    ```r
@@ -490,28 +509,32 @@ cs_mae <- ClearScatterplot_MAE(
    ```
 
    * A data.frame of sample information (79 rows).
+
 4. **Merge Missing Metadata** (if needed):
 
-   * If `"pathologic_stage"` or `"C1A.C1B"` or `"MethyLevel"` were not found in the assay’s `colData`, the function would look in the *top‐level* MAE colData via `sampleMap`. In `miniACC`, these columns exist directly, so no merging is needed.
+   * If `"pathologic_stage"`, `"C1A.C1B"`, or `"MethyLevel"` were not in the assay’s `colData`, the function would consult the MAE’s top‐level `colData` via `sampleMap`. In `miniACC`, those columns are already present, so no merging is needed.
+
 5. **Align Samples**:
 
    ```r
    shared <- intersect(colnames(expr), rownames(meta))
-   expr <- expr[, shared, drop = FALSE]
-   meta <- meta[shared, , drop = FALSE]
+   expr   <- expr[, shared, drop = FALSE]
+   meta   <- meta[shared, , drop = FALSE]
    ```
 
-   * Keeps only samples that appear in both assay (columns) and metadata (rownames).
+   * Keeps only samples that appear in both assay (columns) and metadata (rows).
+
 6. **Drop NA Samples**:
 
    ```r
    needed <- c("C1A.C1B", "pathologic_stage", "MethyLevel")
-   keep <- rowSums(is.na(meta[, needed, drop = FALSE])) == 0
-   expr <- expr[, keep, drop = FALSE]
-   meta <- meta[keep, , drop = FALSE]
+   keep   <- rowSums(is.na(meta[, needed, drop = FALSE])) == 0
+   expr   <- expr[, keep, drop = FALSE]
+   meta   <- meta[keep, , drop = FALSE]
    ```
 
    * Drops any sample with `NA` in any of the three metadata columns.
+
 7. **Ensure Group Sizes**:
 
    ```r
@@ -520,6 +543,7 @@ cs_mae <- ClearScatterplot_MAE(
    ```
 
    * Each level of `"C1A.C1B"` must have ≥ 3 samples, and total samples ≥ 6.
+
 8. **Create “Cells”**:
 
    ```r
@@ -531,18 +555,18 @@ cs_mae <- ClearScatterplot_MAE(
    ```
 
    * A data.frame of all `(timePoint, SampleType)` pairs.
+
 9. **Per‐Cell DE**:
 
    ```r
    run_cell <- function(i) {
-     tp <- cells$timePoint[i]
-     st <- cells$SampleType[i]
+     tp  <- cells$timePoint[i]
+     st  <- cells$SampleType[i]
      idx <- which(meta[["MethyLevel"]] == tp & meta[["pathologic_stage"]] == st)
      if (length(idx) < 2 || length(unique(meta[["C1A.C1B"]][idx])) < 2)
        return(NULL)
      ce <- expr[, idx, drop = FALSE]
      cm <- meta[idx, , drop = FALSE]
-     # Transform if continuous but large:
      if (dataType == "continuous" && max(ce, na.rm = TRUE) > 50) {
        ce <- log2(ce + 1)
      }
@@ -552,7 +576,7 @@ cs_mae <- ClearScatterplot_MAE(
        vfit <- voom(ce, design, plot = FALSE)
        fit  <- lmFit(vfit, design)
      } else {
-       fit  <- lmFit(ce, design)
+       fit <- lmFit(ce, design)
      }
      fit <- eBayes(fit)
      tt  <- topTable(fit, coef = 2, number = Inf)
@@ -572,7 +596,8 @@ cs_mae <- ClearScatterplot_MAE(
    }
    ```
 
-   * This is executed in parallel or sequentially for each `(tp, st)`.
+   * This is executed in parallel (if `vectorized = "perCell"`) or sequentially for each `(tp, st)`.
+
 10. **Combine Results & Call `ClearScatterplot()`**:
 
     ```r
@@ -588,20 +613,25 @@ cs_mae  # A ClearScatterplot object with slots:
 # @plot: NULL
 ```
 
-#### 5.2.5. Inspecting the `ClearScatterplot` Object
+---
+
+<a name="example1_custom"></a>
+
+### 5.3. Inspecting the `ClearScatterplot` Object
 
 ```r
 # Check the structure
 cs_mae
-# A summary like: “An object of class ‘ClearScatterplot’ with X rows in @data, and @plot is NULL”
+# “An object of class ‘ClearScatterplot’ with X rows in @data, and @plot is NULL”
+
 slotNames(cs_mae)
 # [1] "data"  "plot"
 
 # View first few rows of @data
 head(cs_mae@data)
-#   log2fc negLog10p regulation    SampleType timePoint color_flag category
-# ENSG…   2.345     10.23       up     Stage I      high         1      up
-# ENSG…  -1.287      5.12     down    Stage I      high        -1     down
+#   log2fc negLog10p regulation SampleType timePoint color_flag category
+# ENSG…   2.345      10.23       up    Stage I      high         1      up
+# ENSG…  -1.287       5.12     down   Stage I      high        -1     down
 # …
 
 # Validate that ‘category’ is a factor with levels (“down”, “neutral”, “up”)
@@ -611,17 +641,21 @@ levels(cs_mae@data$category)
 
 > **Key Point**: At this moment, no plotting has occurred; `cs_mae@plot` is still `NULL`. We now need to build a `ggplot` object via `createPlot()`.
 
-#### 5.2.6. Build & Show the Volcano Plot
+---
 
-**One‐step approach** (build + show in one call):
+<a name="example1_build"></a>
+
+### 5.4. Build & Show the Volcano Plot
+
+**One‐step approach** (build + show in one line):
 
 ```r
 show(
   createPlot(
     cs_mae,
-    color1          = "steelblue",        # “up” points in steelblue
-    color2          = "lightgrey",        # “neutral” points in light grey
-    color3          = "tomato",           # “down” points in tomato
+    color1          = "tomato",       # up = tomato (red/orange family)
+    color2          = "lightgrey",    # neutral = light grey
+    color3          = "cornflowerblue",# down = cornflowerblue (blue family)
     xlab            = "Log2 Fold Change",
     ylab            = "-Log10 P-Value",
     text_family     = "Times New Roman",
@@ -630,22 +664,22 @@ show(
     point_alpha     = 0.8,
     legend_position = "right",
     legend_title    = "Regulation",
-    legend_labels   = c("Down", "Neutral", "Up"),
+    legend_labels   = c("Up", "Neutral", "Down"),
     custom_theme    = theme_minimal(),
     title           = "Faceted Volcano: miniACC (C1A vs C1B)"
   )
 )
 ```
 
-**Two‐step approach** (store, then show):
+**Two‐step approach**:
 
 ```r
 # (i) Build the ggplot object and store it inside cs_mae
 cs_mae <- createPlot(
   cs_mae,
-  color1          = "steelblue",
+  color1          = "tomato",
   color2          = "lightgrey",
-  color3          = "tomato",
+  color3          = "cornflowerblue",
   xlab            = "Log2 Fold Change",
   ylab            = "-Log10 P-Value",
   text_family     = "Times New Roman",
@@ -654,7 +688,7 @@ cs_mae <- createPlot(
   point_alpha     = 0.8,
   legend_position = "right",
   legend_title    = "Regulation",
-  legend_labels   = c("Down", "Neutral", "Up"),
+  legend_labels   = c("Up", "Neutral", "Down"),
   custom_theme    = theme_minimal(),
   title           = "Faceted Volcano: miniACC (C1A vs C1B)"
 )
@@ -665,81 +699,88 @@ show(cs_mae)
 
 **What you should see**:
 
-* A multi‐panel figure with rows = `MethyLevel` (e.g., `"high"`, `"low"`) and columns = `pathologic_stage` (e.g., `"Stage I"`, `"Stage II"`, …).
+* A multi-panel figure with rows = `MethyLevel` (e.g., “high”, “low”) and columns = `pathologic_stage` (e.g., “Stage I”, “Stage II”, …).
 * Within each facet:
 
-  * Points representing genes, positioned at `(x=log2fc, y=negLog10p)`.
-  * Colors according to `category`:
+  * Points representing genes, positioned at `(x = log2fc, y = negLog10p)`.
+  * **Colors** according to `category`:
 
-    * `"up"` (steelblue) for genes with `log2fc > 0.585` & `negLog10p > 1.301`.
-    * `"down"` (tomato) for genes with `log2fc < -0.585` & `negLog10p > 1.301`.
-    * `"neutral"` (lightgrey) for all other genes.
+    * **Up‐regulated** in **tomato** (red/orange family).
+    * **Neutral** in **light grey**.
+    * **Down‐regulated** in **cornflowerblue** (blue family).
   * Text labels in the top corners of each facet:
 
-    * A steelblue number (`n1`) for the count of up‐regulated genes.
-    * A tomato number (`n2`) for the count of down‐regulated genes.
+    * A **tomato** number (`n1`) for the count of up‐regulated genes.
+    * A **cornflowerblue** number (`n2`) for the count of down‐regulated genes.
 * Overall plot title = “Faceted Volcano: miniACC (C1A vs C1B)” using Times New Roman, size 14.
 * Axis labels = “Log2 Fold Change” (x) and “–Log10 P-Value” (y).
-* Legend on the right, titled “Regulation” with keys “Down”, “Neutral”, “Up” in that order (because we specified `breaks = c("down","neutral","up")` internally).
+* Legend on the right, titled “Regulation” with keys “Up”, “Neutral”, “Down” in that order.
 
 ---
 
 <a name="example1_custom"></a>
 
-### 5.3. Customizing Your Plot
+### 5.5. Customizing Your Plot
 
-In the above call to `createPlot()`, we passed a range of style arguments. Here's a quick reference for each:
+In the above calls to `createPlot()`, we passed a range of style arguments. Below is a reference for each:
 
-* **`color1`** (default = `"cornflowerblue"`): Color for **up‐regulated** genes (`category == "up"`).
-* **`color2`** (default = `"grey"`): Color for **neutral** genes (`category == "neutral"`).
-* **`color3`** (default = `"indianred"`): Color for **down‐regulated** genes (`category == "down"`).
-* **`xlab`** (default = `expression(log2~fold~change)`): Label for the x‐axis.
-* **`ylab`** (default = `expression(-log10~p)`): Label for the y‐axis.
-* **`custom_theme`** (default = `NULL`): A **ggplot2** theme to apply *after* `theme_bw()`. You can use any built‐in theme (e.g., `theme_minimal()`, `theme_classic()`, `theme_light()`, etc.) or create your own.
-* **`point_alpha`** (default = `0.5`): Transparency of points (0 = fully transparent, 1 = fully opaque).
-* **`point_size`** (default = `1.75`): Size of the scatter‐plot points.
-* **`legend_position`** (default = `"bottom"`): Where to place the legend (“bottom”, “top”, “left”, or “right”).
-* **`legend_title`** (default = `NULL`): Title above the color‐legend. If `NULL`, no title appears (just colored keys).
-* **`legend_labels`** (default = `NULL`): A length‐3 character vector giving labels for “down”, “neutral”, and “up”, respectively. If `NULL`, the factor labels themselves are shown.
-* **`text_family`** (default = `"sans"`): Font family for all text in the plot (axes, facet strips, legend, labels).
-* **`text_size`** (default = `10`): Base font size for text—title, axis, legend, facet strips.
-* **`...`**: Additional arguments passed to `ggplot2::labs()`, such as `title = "My Volcano"`, `subtitle = "DE results"`, or `caption = "Data from miniACC"`.
+* **`color1`** (default = `"indianred"`): Color for **up‐regulated** genes → from a red/orange family (e.g. “tomato”, “firebrick”, “maroon”).
 
-#### 5.3.1. Example: Minimal Styling
+* **`color2`** (default = `"grey"`): Color for **neutral** genes → a neutral grey (e.g. “lightgrey”).
 
-If you just want the default colors and labels, you can call:
+* **`color3`** (default = `"cornflowerblue"`): Color for **down‐regulated** genes → from a blue family (e.g. “steelblue”, “navy”, “cornflowerblue”).
+
+* **`xlab`** / **`ylab`**: Strings or expressions for axis labels.
+
+* **`custom_theme`**: A **ggplot2** theme object appended after `theme_bw()`.
+
+* **`point_alpha`**: Transparency of points (0 = fully transparent, 1 = fully opaque).
+
+* **`point_size`**: Size of the scatter‐plot points.
+
+* **`legend_position`**: “bottom”, “top”, “left”, or “right”.
+
+* **`legend_title`**: Title above the color‐legend. If `NULL`, no title appears.
+
+* **`legend_labels`**: A length‐3 character vector giving labels for `c("up", "neutral", "down")`, respectively.
+
+* **`text_family`**: Font family for all text in the plot.
+
+* **`text_size`**: Base font size for text—title, axis, legend, facet strips.
+
+* **`…`**: Additional arguments passed to `ggplot2::labs()`, such as `title`, `subtitle`, or `caption`.
+
+#### 5.5.1. Example: Minimal Styling
 
 ```r
-show(
-  createPlot(cs_mae)
-)
+show(createPlot(cs_mae))
 ```
 
-That uses:
+* Uses default values:
 
-* `color1 = "cornflowerblue"`,
-* `color2 = "grey"`,
-* `color3 = "indianred"`,
-* axis labels as expressions,
-* `legend_position = "bottom"`,
-* `text_family = "sans"`,
-* `text_size = 10`, etc.
+  * `color1 = "indianred"`,
+  * `color2 = "grey"`,
+  * `color3 = "cornflowerblue"`,
+  * axis labels as expressions,
+  * `legend_position = "bottom"`,
+  * `text_family = "sans"`,
+  * `text_size = 10`.
 
-#### 5.3.2. Example: Applying `theme_classic()` + Custom Legend
+#### 5.5.2. Example: Applying `theme_classic()` + Custom Legend
 
 ```r
 show(
   createPlot(
     cs_mae,
-    color1          = "navy",             # up = navy
-    color2          = "lightgrey",        # neutral = lightgrey
-    color3          = "firebrick",        # down = firebrick
+    color1          = "firebrick",    # up = firebrick (red family)
+    color2          = "lightgrey",    # neutral = light grey
+    color3          = "navy",         # down = navy (blue family)
     legend_position = "top",
     legend_title    = "My Regulation",
-    legend_labels   = c("↓ Genes", "No Change", "↑ Genes"),
+    legend_labels   = c("Up‐Regulated", "No Change", "Down‐Regulated"),
     custom_theme    = theme_classic(),
     title           = "Volcano Plot: miniACC (C1A vs C1B)",
-    subtitle        = "Stratified by pathologic stage & methylation level",
+    subtitle        = "Faceted by pathologic stage & methylation level",
     caption         = "Data: miniACC"
   )
 )
@@ -749,7 +790,7 @@ show(
 
 <a name="example1_troubleshoot"></a>
 
-### 5.4. Troubleshooting & Tips
+### 5.6. Troubleshooting & Tips
 
 1. **“Assay not found in MAE” error**
 
@@ -807,7 +848,7 @@ show(
    > No DE results for Stage II / high
    > ```
 
-   * **Cause**: For that particular `SampleType = "Stage II"` and `timePoint = "high"`, the DE analysis returned no rows (e.g. all p‐values were NA or there were fewer than 2 genes).
+   * **Cause**: For that particular `SampleType = "Stage II"` and `timePoint = "high"`, the DE analysis returned no rows (e.g. all p-values were NA or there were fewer than 2 genes).
    * **Fix**: It might be natural for a very small subset. You can ignore it if at least one cell has results. If *all* cells fail, you’ll see `stop("No DE results to plot.")`. In that case, you may need to relax variance thresholds or choose a different `var_quantile`.
 
 ---
@@ -830,7 +871,7 @@ In this example, we use the **“Taylor”** dataset from **curatedPCaData**. It
 * A `SummarizedExperiment` object containing:
 
   * Assay “counts” (RNA‐seq read counts for \~12,625 genes × 106 samples).
-  * `colData` with metadata columns, including `"DiseaseStatus"` (Tumor vs. Normal), `"GleasonScore"`, `"Race"`, etc.
+  * `colData` with metadata columns, including `"DiseaseStatus"` (Tumor vs Normal), `"GleasonScore"`, `"Race"`, etc.
 
 We will:
 
@@ -838,7 +879,11 @@ We will:
 2. Extract sample metadata (`meta`).
 3. Call `ClearScatterplot_table(expr, meta, …)` to build per‐cell DE results and visualize a volcano.
 
-### <a name="example2_steps"></a>6.2. Step‐by‐Step Code Walkthrough
+---
+
+<a name="example2_steps"></a>
+
+### 6.2. Step‐by‐Step Code Walkthrough
 
 #### 6.2.1. Load Required Packages
 
@@ -864,7 +909,7 @@ library(magrittr)
 > **Explanation**
 >
 > * `curatedPCaData` contains the “Taylor” dataset.
-> * `SummarizedExperiment` to extract assays + colData.
+> * `SummarizedExperiment` to extract assays + `colData`.
 > * `limma`, `matrixStats`, and `BiocParallel` for DE.
 > * `ggplot2`, `dplyr`, `magrittr` for final visualization & manipulation.
 
@@ -875,11 +920,11 @@ library(magrittr)
 pcad_list <- getPCa("Taylor")
 str(pcad_list, max.level = 1)
 # > List of length 1
-# > $ Taylor:Class 'SummarizedExperiment' ... 
+# > $ Taylor:Class 'SummarizedExperiment' ...
 
 se_taylor <- pcad_list$Taylor
 se_taylor
-# > class: SummarizedExperiment 
+# > class: SummarizedExperiment
 # > dim: 12625 106   # 12,625 genes × 106 samples
 # > assays(1): counts
 # > colData names(8): SampleID PatientID GleasonScore Race DiseaseStatus ...
@@ -900,22 +945,20 @@ all(colnames(expr_mat) == rownames(meta_df))
 # If FALSE, reorder meta_df: meta_df <- meta_df[colnames(expr_mat), ]
 ```
 
-* `expr_mat`: a `matrix` of dimensions 12625 × 106.
+* `expr_mat`: a `matrix` of dimensions 12,625 × 106.
 * `meta_df`: a `data.frame` of dimensions 106 × 8 (with columns like `"GleasonScore"`, `"Race"`, `"DiseaseStatus"`, etc.).
 
 #### 6.2.4. Inspect Metadata Columns
 
-Run:
-
 ```r
 colnames(meta_df)
-# [1] "SampleID"     "PatientID"   "GleasonScore" "Race" 
+# [1] "SampleID"     "PatientID"   "GleasonScore" "Race"
 # [5] "DiseaseStatus" "Age"        "PSA"          "pT_stage"
 ```
 
 For this walkthrough, we choose:
 
-* `groupColumn = "DiseaseStatus"` (Tumor vs. Normal).
+* `groupColumn = "DiseaseStatus"` (Tumor vs Normal).
 * `sampleType  = "GleasonScore"` (to facet by Gleason score).
 * `timepoint   = "Race"` (to facet by Race).
 
@@ -938,6 +981,7 @@ table(meta_df$Race)
 
 ```r
 BPPARAM <- MulticoreParam(workers = 2)
+# On Windows: BPPARAM <- SnowParam(workers = 2)
 ```
 
 #### 6.2.6. Call `ClearScatterplot_table` to Build the `ClearScatterplot` Object
@@ -951,7 +995,6 @@ cs_table <- ClearScatterplot_table(
   timepoint    = "Race",
   dataType     = "auto",       # auto-detect count vs continuous
   vectorized   = "auto",       # parallelize if #cells > #workers
-  parallel     = TRUE,         # use parallel if possible
   BPPARAM      = BPPARAM,
   var_quantile = 0.75          # keep top 25% variance genes
 )
@@ -959,25 +1002,23 @@ cs_table <- ClearScatterplot_table(
 
 **Detailed Explanation**:
 
-* `expr = expr_mat`: the 12,625 × 106 count matrix.
-* `meta = meta_df`: 106 × 8 data.frame.
-* `groupColumn = "DiseaseStatus"`: DE will be performed comparing Tumor vs. Normal.
+* `expr = expr_mat`: The 12,625 × 106 count matrix.
+* `meta = meta_df`: The 106 × 8 data.frame.
+* `groupColumn = "DiseaseStatus"`: DE will be performed comparing Tumor vs Normal.
 * `sampleType = "GleasonScore"`: X‐facet = Gleason score (e.g. 6, 7, 8+).
 * `timepoint = "Race"`: Y‐facet = Race (e.g. white, black, other).
 * `dataType = "auto"`: The code will see that `expr_mat` is integer counts and call `voom()`.
-* `vectorized = "auto"` and `parallel = TRUE`:
-
-  * It will count how many unique `GleasonScore × Race` combinations exist. If that number exceeds 2 workers, it runs in parallel.
-* `BPPARAM = BPPARAM`: A 2‐core backend for parallelization.
+* `vectorized = "auto"`: Automatically parallelize if # cells > #workers.
+* `BPPARAM = BPPARAM`: The 2‐core backend for parallelization.
 * `var_quantile = 0.75`: Remove genes below the 75th percentile of variance across all 106 samples.
 
 Internally, this runs:
 
-1. **Variance filter** → `expr_mat` reduces from 12,625 genes to \~3,156 genes (top 25% variance).
-2. **Metadata subsetting** → keeps only `DiseaseStatus`, `GleasonScore`, `Race` columns; drops any sample with `NA`.
-3. **Sample alignment** → confirms `colnames(expr_mat)` match `rownames(meta_df)`.
-4. **Group‐size check** → each level of `"Tumor"` and `"Normal"` must appear ≥ 3 times in each `(GleasonScore, Race)` cell. If any combination has < 2 levels or < 3 samples, that cell is skipped (returns `NULL`).
-5. **Per‐cell DE** → runs `voom()` → `lmFit()` → `eBayes()` → `topTable()`.
+1. **Variance filter** → reduces from 12,625 genes to \~3,156 genes (top 25% variance).
+2. **Metadata subsetting** → keeps only `DiseaseStatus`, `GleasonScore`, `Race`; drops NA.
+3. **Sample alignment** → ensures `colnames(expr_mat) == rownames(meta_df)`.
+4. **Group‐size check** → each level of “Tumor” vs “Normal” must appear ≥ 3 times in each `(GleasonScore, Race)` cell. If any combination has < 2 levels or < 3 samples, that cell is skipped.
+5. **Per-cell DE** → runs `voom()` → `lmFit()` → `eBayes()` → `topTable()`.
 6. **Combine** → single data.frame with columns `log2fc, negLog10p, regulation, SampleType, timePoint`.
 7. **Call** → `ClearScatterplot(pd)` to produce an S4 object.
 
@@ -985,11 +1026,12 @@ After this, check:
 
 ```r
 cs_table
-# “An object of class 'ClearScatterplot';  X rows (genes × cells) in @data; @plot = NULL”
+# “An object of class ‘ClearScatterplot’; X rows (genes × cells) in @data; @plot = NULL”
+
 head(cs_table@data)
 #   log2fc negLog10p regulation SampleType timePoint color_flag category
-# ENSG…   2.10      12.03      up         6          white         1      up
-# ENSG…  -1.85       8.74    down        6          white        -1     down
+# ENSG…   2.10      12.03       up         6          white         1      up
+# ENSG…  -1.85       8.74     down        6          white        -1     down
 # …
 ```
 
@@ -999,9 +1041,9 @@ head(cs_table@data)
 show(
   createPlot(
     cs_table,
-    color1          = "darkgreen",     # up‐regulated in dark green
-    color2          = "lightgrey",     # neutral in light grey
-    color3          = "maroon",        # down‐regulated in maroon
+    color1          = "maroon",        # up = maroon (red family)
+    color2          = "lightgrey",     # neutral = light grey
+    color3          = "cornflowerblue",# down = cornflowerblue (blue family)
     xlab            = "Log2 Fold Change",
     ylab            = "-Log10 P-Value",
     text_family     = "Helvetica",
@@ -1010,7 +1052,7 @@ show(
     point_alpha     = 0.7,
     legend_position = "bottom",
     legend_title    = "Regulation",
-    legend_labels   = c("Down", "Neutral", "Up"),
+    legend_labels   = c("Up", "Neutral", "Down"),
     custom_theme    = theme_classic(),
     title           = "Taylor Prostate Cancer: Tumor vs Normal",
     subtitle        = "Faceted by GleasonScore (X) and Race (Y)",
@@ -1023,20 +1065,20 @@ show(
 
 * **Facets**:
 
-  * Columns = unique `GleasonScore` values (e.g., “6”, “7”, “8+”).
-  * Rows = unique `Race` values (e.g., “white”, “black”, “other”).
+  * Columns = unique `GleasonScore` values (e.g. “6”, “7”, “8+”).
+  * Rows = unique `Race` values (e.g. “white”, “black”, “other”).
 * **Within each facet**:
 
   * Points colored:
 
-    * Dark green for “up” (`log2fc > 0` & `negLog10p > 0` threshold).
-    * Maroon for “down” (`log2fc < 0` & `negLog10p > 0`).
-    * Light grey for “neutral”.
-  * Top‐right corner: a dark green number (count of up‐regulated genes).
-  * Top‐left corner: a maroon number (count of down‐regulated genes).
+    * **Maroon** for “up” (`log2fc > 0` & `negLog10p > threshold`).
+    * **Cornflowerblue** for “down” (`log2fc < 0` & `negLog10p > threshold`).
+    * **Light grey** for “neutral”.
+  * Top‐right corner: a **maroon** number (count of up‐regulated genes).
+  * Top‐left corner: a **cornflowerblue** number (count of down‐regulated genes).
 * Plot title, subtitle, and caption appear as specified.
 * Font family “Helvetica”, text size 12.
-* Legend at the bottom with keys **Down / Neutral / Up**.
+* Legend at the bottom with keys “Up / Neutral / Down”.
 
 ---
 
@@ -1048,27 +1090,27 @@ Because `ClearScatterplot_table` pipelines into the same `createPlot` method, al
 
 * **`color1, color2, color3`**
 * **`xlab, ylab`**
-* **`text_family`, `text_size`**
-* **`point_size`, `point_alpha`**
+* **`text_family, text_size`**
+* **`point_size, point_alpha`**
 * **`legend_position, legend_title, legend_labels`**
 * **`custom_theme`**
-* **`...`**: e.g. `title`, `subtitle`, `caption`.
+* **`…`** (e.g. `title`, `subtitle`, `caption`).
 
 For instance, if you want a minimal theme and larger points:
 
 ```r
 plot_obj <- createPlot(
   cs_table,
-  color1          = "steelblue",
-  color2          = "grey",
-  color3          = "firebrick",
+  color1          = "tomato",        # up = tomato (red family)
+  color2          = "grey",          # neutral = grey
+  color3          = "navy",          # down = navy (blue family)
   text_family     = "Times",
   text_size       = 14,
   point_size      = 4,
   point_alpha     = 0.5,
   legend_position = "right",
   legend_title    = "DE Status",
-  legend_labels   = c("Down", "Neutral", "Up"),
+  legend_labels   = c("Up", "Neutral", "Down"),
   custom_theme    = theme_minimal(),
   title           = "PCa Tumor vs Normal Volcano",
   subtitle        = "Filtered by variance (top 25%)",
@@ -1093,7 +1135,7 @@ show(plot_obj)
    > ```
 
    * **Cause**: One of `groupColumn`, `sampleType`, or `timepoint` does not exist in `meta_df`.
-   * **Fix**: Check `colnames(meta_df)`. If you spelled `"GleasonScore"` as `"gleasonScore"`, that is case‐sensitive and will fail.
+   * **Fix**: Check `colnames(meta_df)`. They must match exactly (case‐sensitive).
 
 2. **“<3 samples per group” Error**
 
@@ -1104,11 +1146,11 @@ show(plot_obj)
    >   Each level of 'DiseaseStatus' must have ≥ 3 samples  
    > ```
 
-   * **Cause**: In at least one cell (e.g., `GleasonScore = 6` and `Race = "other"`), either “Tumor” or “Normal” has fewer than 3 samples.
+   * **Cause**: In at least one cell (e.g. `(GleasonScore = 6, Race = "other")`), either “Tumor” or “Normal” has fewer than 3 samples.
    * **Fix**:
 
-     * Choose a different `timepoint` (e.g., use `"pT_stage"` instead of `"Race"`, if that has fewer NA and more balanced groups).
-     * Or combine small categories (e.g., collapse `"other"` races into “OtherRaces”).
+     * Choose a different `timepoint` (e.g. use `"pT_stage"` instead of `"Race"`).
+     * Or combine small categories (e.g. collapse “other” races into “OtherRaces”).
 
 3. **Zero DE Results**
 
@@ -1118,8 +1160,8 @@ show(plot_obj)
    > No DE results for GleasonScore=8+ / Race=black
    > ```
 
-   * **Cause**: That cell (subset of samples) produced a `topTable` with 0 rows (e.g., no genes passed filtering). This does not stop execution unless *all* cells produce 0 rows.
-   * **Fix**: If a few cells have no DE, it’s acceptable—those facets will simply show an empty plot area. If *all* cells return 0 rows, the function will call `stop("No DE results to plot.")`. In that case, try a smaller variance threshold (e.g., `var_quantile = 0.5`) or remove the `timepoint` so fewer subsets are tested.
+   * **Cause**: That cell (subset of samples) produced a `topTable` with 0 rows (no genes passed filtering). This does not stop execution unless *all* cells produce 0 rows.
+   * **Fix**: If a few cells have no DE, it’s acceptable—those facets will simply show an empty plot area. If *all* cells return 0 rows, try a smaller variance threshold (e.g. `var_quantile = 0.5`) or remove the `timepoint` so fewer subsets are tested.
 
 4. **Performance**
 
@@ -1128,8 +1170,8 @@ show(plot_obj)
      ```r
      BPPARAM <- MulticoreParam(workers = 4)
      ```
-   * If you experience memory issues, drop the `vectorized` argument or set `parallel = FALSE` to force sequential execution.
-   * To reduce memory overhead, you can set `var_quantile` to a lower number (e.g., `0.50`) to filter out more genes early.
+   * If you experience memory issues, set `parallel = FALSE` (in `ClearScatterplot_MAE`) to force sequential execution.
+   * To reduce memory overhead, set `var_quantile` to a lower number (e.g. `0.50`) to filter out more genes early.
 
 ---
 
@@ -1139,26 +1181,31 @@ show(plot_obj)
 
 ### <a name="example3_background"></a>7.1. Why Use a Table‐Only Workflow?
 
-Sometimes you have already computed differential expression (DE) using your favorite pipeline—**DESeq2**, **edgeR**, **limma**, or even a custom script—and you simply have:
+Sometimes you have already computed differential expression (DE) using your favorite pipeline—**DESeq2**, **edgeR**, **limma**, or a custom script—and you simply have:
 
 * A `data.frame` with columns:
 
-  * `log2fc` (numeric: log2 fold‐change)
-  * `negLog10p` (numeric: –log10 of the p‐value)
+  * `log2fc` (numeric: log₂ fold‐change)
+  * `negLog10p` (numeric: –log₁₀ of the p-value)
   * `regulation` (character: “up” or “down”)
   * `SampleType` (character: grouping or “contrast” identifier)
   * Optionally, `timePoint` (additional factor for second facet).
+
 * You do *not* need to rerun DE inside **MultiModalGraphics**. You only want to visualize that table.
 
-We use the **“TCGA‐BRCA”** dataset (breast cancer) from **curatedTCGAData**. We will:
+We use the **“TCGA-BRCA”** dataset (breast cancer) from **curatedTCGAData**. We will:
 
-1. Load a SummarizedExperiment for TCGA‐BRCA
+1. Load a `SummarizedExperiment` for TCGA‐BRCA
 2. Subset to two subtypes: “Luminal A” vs. “Basal‐like” (PAM50 subtypes)
 3. Run a quick DE pipeline manually (outside of MultiModalGraphics) to produce a `data.frame` with appropriate columns
 4. Call `ClearScatterplot(df_de)` to produce a `ClearScatterplot` object
 5. Plot the volcano (no facet except by `SampleType` since we only have one “contrast”)
 
-### <a name="example3_steps"></a>7.2. Step‐by‐Step Code Walkthrough
+---
+
+<a name="example3_steps"></a>
+
+### 7.2. Step‐by‐Step Code Walkthrough
 
 #### 7.2.1. Load Required Packages
 
@@ -1201,12 +1248,11 @@ se_brca
 # > colData names(…): PAM50_subtype_PAM50 …
 ```
 
-> **Note:** This is a large dataset (≈ 1.2k samples × 20k genes). We will subset to only two subtypes to keep DE reasonable.
+> **Note**: This is a large dataset (≈ 1.2k samples × 20k genes). We will subset to only two subtypes to keep DE reasonable.
 
 #### 7.2.3. Identify PAM50 Subtypes & Subset to Two Groups
 
 ```r
-# Inspect the “PAM50_subtype_PAM50” column
 table(colData(se_brca)$PAM50_subtype_PAM50)
 # > Basal-like: 189, Her2-enriched: 56, Luminal A: 565,
 # > Luminal B: 216, Normal-like: 5, NA: 184
@@ -1244,12 +1290,19 @@ Because `expr2` is **continuous** (normalized values), we can run a simple linea
 ```r
 # Build group factor: “Luminal A” (reference) vs “Basal-like”
 group_factor <- factor(meta2$PAM50_subtype_PAM50, levels = c("Luminal A", "Basal-like"))
-design <- model.matrix(~ group_factor)
+design       <- model.matrix(~ group_factor)
 
 # Run limma::lmFit + eBayes directly (no voom needed, since these are continuous)
 fit <- limma::lmFit(expr2, design)
 fit <- limma::eBayes(fit)
-tt  <- limma::topTable(fit, coef = "group_factorBasal-like", number = Inf)
+
+# If your contrast name has a hyphen, R may encode it internally as a dot.
+# Check the column names of coefficients:
+colnames(coef(fit))
+# If you see "group_factorBasal.like", use that string; or simply:
+# tt <- topTable(fit, coef = 2, number = Inf)
+
+tt <- limma::topTable(fit, coef = 2, number = Inf)
 
 # Construct the DE table
 df_de <- data.frame(
@@ -1265,24 +1318,18 @@ df_de <- data.frame(
 # Keep only the required columns:
 df_de <- df_de[, c("log2fc", "negLog10p", "regulation", "SampleType", "timePoint")]
 head(df_de)
-#                   log2fc negLog10p regulation       SampleType timePoint
-# ENSG00000121410    2.345     25.34       up        Basal-vs-LuminalA     <NA>
-# ENSG00000163279   -1.287      8.76     down       Basal-vs-LuminalA     <NA>
+#                   log2fc negLog10p regulation        SampleType timePoint
+# ENSG00000121410    2.345     25.34       up      Basal-vs-LuminalA     <NA>
+# ENSG00000163279   -1.287      8.76     down     Basal-vs-LuminalA     <NA>
 # ...
 ```
 
-> **Explanation**
->
-> * We represented “Basal-like” vs. “Luminal A” as `group_factorBasal-like` in the design matrix.
-> * `tt` (the topTable) contains columns:
->
->   * `logFC`: log<sub>2</sub> fold‐change (Basal-like / Luminal A).
->   * `P.Value`: raw p‐values.
->   * Other columns (adj.P.Val, AveExpr, etc.)—not used here.
-> * We created `negLog10p = -log10(P.Value)`.
-> * We set `regulation = "up"` if `logFC > 0`, else `"down"`.
-> * We gave `SampleType = "Basal-vs-LuminalA"` to represent the single contrast.
-> * We set `timePoint = NA` (no second facet).
+> **Note**: Because factor levels with hyphens often become `.` in coefficient names, you may need to inspect `colnames(coef(fit))` to find the exact string. For example:
+
+```r
+coef_name <- grep("Basal", colnames(coef(fit)), value = TRUE)[1]
+tt <- topTable(fit, coef = coef_name, number = Inf)
+```
 
 Check for missing or infinite values:
 
@@ -1290,11 +1337,7 @@ Check for missing or infinite values:
 sum(is.na(df_de$log2fc))       # should be 0
 sum(is.na(df_de$negLog10p))    # should be 0
 sum(is.infinite(df_de$negLog10p))  # should be 0
-```
 
-If any are nonzero, drop those rows:
-
-```r
 bad_rows <- is.na(df_de$log2fc) | is.na(df_de$negLog10p) | is.infinite(df_de$negLog10p)
 if (any(bad_rows)) {
   warning(sum(bad_rows), " row(s) removed due to NA or infinite values")
@@ -1326,12 +1369,12 @@ Check the resulting object:
 
 ```r
 cs_tableonly
-# “An object of class 'ClearScatterplot' with, say, 20,000 rows of data”
+# “An object of class ‘ClearScatterplot’ with, say, 20,000 rows of data”
 
 head(cs_tableonly@data)
 #   log2fc negLog10p regulation        SampleType timePoint color_flag category
-# ENSG…   2.3      25.3        up       Basal-vs-LuminalA      <NA>         1      up
-# ENSG…  -1.2       8.7      down      Basal-vs-LuminalA      <NA>        -1     down
+# ENSG…   2.3      25.3        up      Basal-vs-LuminalA      <NA>         1      up
+# ENSG…  -1.2       8.7      down     Basal-vs-LuminalA      <NA>        -1     down
 # …
 ```
 
@@ -1341,9 +1384,9 @@ head(cs_tableonly@data)
 show(
   createPlot(
     cs_tableonly,
-    color1          = "purple",       # up‐regulated genes in purple
-    color2          = "grey",         # neutral genes in grey
-    color3          = "darkred",      # down‐regulated genes in dark red
+    color1          = "firebrick",      # up = firebrick (red/orange family)
+    color2          = "grey",           # neutral = grey
+    color3          = "cornflowerblue", # down = cornflowerblue (blue family)
     xlab            = "Log2 Fold Change (Basal-like vs Luminal A)",
     ylab            = "-Log10 P-Value",
     text_family     = "Arial",
@@ -1352,7 +1395,7 @@ show(
     point_alpha     = 0.6,
     legend_position = "top",
     legend_title    = "Regulation",
-    legend_labels   = c("Down", "Neutral", "Up"),
+    legend_labels   = c("Up", "Neutral", "Down"),
     custom_theme    = theme_light(),
     title           = "TCGA BRCA: Basal-like vs Luminal A Volcano",
     subtitle        = "Limma DE on top 75% variance genes",
@@ -1366,13 +1409,13 @@ show(
 * A **single** volcano plot (no facets, since `timePoint = NA`).
 * Points colored:
 
-  * **Purple** for `category == "up"`.
-  * **Grey** for `category == "neutral"`.
-  * **Dark red** for `category == "down"`.
+  * **Firebrick** for “up” (`category == "up"`).
+  * **Cornflowerblue** for “down” (`category == "down"`).
+  * **Grey** for “neutral.”
 * Text labels:
 
-  * Top‐right corner: a purple number (`n1`) for the count of up‐regulated genes.
-  * Top‐left corner: a dark red number (`n2`) for the count of down‐regulated genes.
+  * Top‐right corner: a **firebrick** number (`n1`) for the count of up‐regulated genes.
+  * Top‐left corner: a **cornflowerblue** number (`n2`) for the count of down‐regulated genes.
 * Title, subtitle, caption, and axis labels as specified.
 * Theme = `theme_light()`.
 * Text in “Arial”, size 12.
@@ -1388,9 +1431,9 @@ Again, you have the full suite of styling options from `createPlot()`. For insta
 ```r
 plot_de <- createPlot(
   cs_tableonly,
-  color1          = "#1B9E77",          # teal for up
-  color2          = "#D3D3D3",          # light grey for neutral
-  color3          = "#D95F02",          # orange for down
+  color1          = "maroon",          # up = maroon (red family)
+  color2          = "lightgrey",       # neutral = light grey
+  color3          = "navy",            # down = navy (blue family)
   xlab            = "log2 Fold Change",
   ylab            = "-log10(p-value)",
   text_family     = "Times New Roman",
@@ -1399,7 +1442,7 @@ plot_de <- createPlot(
   point_alpha     = 0.4,
   legend_position = "bottom",
   legend_title    = "DE Status",
-  legend_labels   = c("Down", "Neutral", "Up"),
+  legend_labels   = c("Up", "Neutral", "Down"),
   custom_theme    = theme_minimal(),
   title           = "BRCA (Basal vs Luminal A) Volcano Plot",
   subtitle        = "DE analysis via limma",
@@ -1424,7 +1467,7 @@ show(plot_de)
    > ```
 
    * **Cause**: The `data.frame` you passed did not have exactly those column names.
-   * **Fix**: Confirm `colnames(df_de)` includes at least `"log2fc"`, `"negLog10p"`, `"regulation"`, and `"SampleType"`. Optionally, `"timePoint"`.
+   * **Fix**: Confirm `colnames(df_de)` includes at least `"log2fc"`, `"negLog10p"`, `"regulation"`, `"SampleType"`. Optionally, `"timePoint"`.
 
 2. **“No data after dropping NAs” Warning**
 
@@ -1434,7 +1477,7 @@ show(plot_de)
    > 5 rows removed due to NA in log2fc or negLog10p  
    > ```
 
-   * **Cause**: Some DE results had `NA` (e.g., due to division by zero or missing p‐values).
+   * **Cause**: Some DE results had `NA` (e.g., due to zero counts or missing p-values).
    * **Fix**: Inspect `sum(is.na(df_de$log2fc) | is.na(df_de$negLog10p))` to see how many. You may choose to drop those prior to calling `ClearScatterplot()`, as we did.
 
 3. **No “timePoint” Column**
@@ -1472,7 +1515,7 @@ After you have successfully built and shown a basic volcano, you may want to fur
 
 * **`custom_theme`**:
 
-  * A complete **ggplot2** theme object appended after `theme_bw()`. If you want only a bare‐bones look:
+  * A complete **ggplot2** theme object appended after `theme_bw()`. If you want only a bare-bones look:
 
     ```r
     custom_theme = theme_void()
@@ -1492,7 +1535,7 @@ After you have successfully built and shown a basic volcano, you may want to fur
 
 ### 8.2. Adjusting Point Size & Transparency
 
-* **`point_size`** (default = 1.75): A numeric value controlling the size of scatter‐plot points.
+* **`point_size`** (default = 1.75): A numeric value controlling the size of scatter-plot points.
 * **`point_alpha`** (default = 0.5): Controls transparency (0 = fully transparent; 1 = fully opaque).
 
 Larger points and higher alpha increase visibility but can cause overplotting; smaller points and lower alpha increase density visualization.
@@ -1503,7 +1546,7 @@ Larger points and higher alpha increase visibility but can cause overplotting; s
 
 * **`legend_position`** (default = `"bottom"`): Allowed values are `"bottom"`, `"top"`, `"left"`, `"right"`.
 * **`legend_title`**: A string to label the legend. If `NULL`, no title is shown; the keys appear without a header.
-* **`legend_labels`**: A character vector of length three, corresponding to `c("down", "neutral", "up")` *in that order*—e.g. `c("Down-Regulated", "No Change", "Up-Regulated")`. If `NULL`, the default factor labels (`"down"`, `"neutral"`, `"up"`) are used.
+* **`legend_labels`**: A character vector of length three, corresponding to `c("up", "neutral", "down")` *in that order*—e.g. `c("Up‐Regulated", "Unchanged", "Down‐Regulated")`. If `NULL`, the default factor labels (`"up"`, `"neutral"`, `"down"`) are used.
 
 <a name="options_text"></a>
 
@@ -1522,8 +1565,9 @@ Below is a consolidated list of the most frequent errors and how to resolve them
 
 1. **S4 Object Not Found Errors**
 
-   * > *Error*: `Error in createPlot(cs, ...): no applicable method for 'createPlot' applied to an object of class "NULL"`
-   * **Symptoms**: You tried to call `createPlot()` before constructing the object (e.g., `cs <- ClearScatterplot(df)`).
+   > *Error*: `Error in createPlot(cs, …): no applicable method for 'createPlot' applied to an object of class "NULL"`
+
+   * **Symptoms**: You tried to call `createPlot()` before constructing the object (e.g. `cs <- ClearScatterplot(df)`).
    * **Fix**: Always create the `ClearScatterplot` object first. For example:
 
      ```r
@@ -1534,13 +1578,15 @@ Below is a consolidated list of the most frequent errors and how to resolve them
 
 2. **Missing Required Columns**
 
-   * > *Error*: `Error in ClearScatterplot_table(...): Missing columns: X, Y`
+   > *Error*: `Error in ClearScatterplot_table(...): Missing columns: X, Y`
+
    * **Symptoms**: The metadata you supplied to `ClearScatterplot_table` does not contain `groupColumn`, `sampleType`, or `timepoint`.
-   * **Fix**: Double-check `colnames(meta_df)` and correct the column names. They must match exactly (case‐sensitive).
+   * **Fix**: Double‐check `colnames(meta_df)`. They must match exactly (case‐sensitive).
 
 3. **No Overlapping Samples**
 
-   * > *Error*: `Error in ClearScatterplot_MAE(...): No overlapping samples between expression and metadata`
+   > *Error*: `Error in ClearScatterplot_MAE(...): No overlapping samples between expression and metadata`
+
    * **Symptoms**: Column names of the assay matrix do not match row names of the metadata.
    * **Fix**: Ensure that `colnames(expr)` equals `rownames(meta)`. If necessary, reorder:
 
@@ -1548,10 +1594,11 @@ Below is a consolidated list of the most frequent errors and how to resolve them
      meta2 <- meta[ colnames(expr), , drop = FALSE ]
      ```
 
-4. **Group‐Size Too Small**
+4. **Group-Size Too Small**
 
-   * > *Error*: `Error in ClearScatterplot_MAE(...): <3 samples per group`
-   * **Symptoms**: In at least one facet‐cell, one level of `groupColumn` has fewer than 3 samples.
+   > *Error*: `Error in ClearScatterplot_MAE(...): <3 samples per group`
+
+   * **Symptoms**: In at least one facet-cell, one level of `groupColumn` has fewer than 3 samples.
    * **Fix**:
 
      * Examine `table(meta[[groupColumn]], meta[[sampleType]], meta[[timepoint]])` to find which combination has <3.
@@ -1559,7 +1606,8 @@ Below is a consolidated list of the most frequent errors and how to resolve them
 
 5. **“No DE Results to Plot”**
 
-   * > *Error*: `Error in .ClearScatterplot_core(...): No DE results to plot.`
+   > *Error*: `Error in .ClearScatterplot_core(...): No DE results to plot.`
+
    * **Symptoms**: Every facet “cell” returned 0 DE genes (all p‐values were too large or there were too few samples).
    * **Fix**:
 
@@ -1577,15 +1625,10 @@ Below is a consolidated list of the most frequent errors and how to resolve them
      show(cs)
      ```
 
-     Or use the one‐step approach:
-
-     ```r
-     show(createPlot(cs))
-     ```
-
 7. **Missing ggplot2 or dplyr Functions**
 
-   * > *Error*: `could not find function "ggplot"` or `could not find function "group_by"`.
+   > *Error*: `could not find function "ggplot"` or `could not find function "group_by"`.
+
    * **Symptoms**: You did not load `ggplot2` or `dplyr` before calling functions that rely on them.
    * **Fix**:
 
@@ -1597,14 +1640,17 @@ Below is a consolidated list of the most frequent errors and how to resolve them
 
 8. **“Package ‘XYZ’ Not Found” for Suggested Packages**
 
-   * > *Error*: `package ‘curatedPCaData’ required to run this example`
+   > *Error*: `package ‘curatedPCaData’ required to run this example`
+
    * **Symptoms**: You ran an example code block that tries to call `curatedPCaData`, but it is not installed.
+
    * **Fix**: Install it via Bioconductor:
 
      ```r
      BiocManager::install("curatedPCaData")
      ```
-   * Similarly for `curatedTCGAData` or `curatedTCGADataData`. These are **Suggests:** for examples only; they are not needed for the core plotting functions.
+
+   * Similarly for `curatedTCGAData`. These are **Suggests:** for examples only; they are not needed for the core plotting functions.
 
 ---
 
@@ -1629,13 +1675,13 @@ sessionInfo()
 # [7] limma_3.52.0               SummarizedExperiment_1.26.0 MultiAssayExperiment_2.8.0
 
 # loaded via a namespace (and not attached):
-#  [1] XVector_0.36.0        IRanges_2.32.0        BiocGenerics_0.40.0   ...
+#  [1] XVector_0.36.0        IRanges_2.32.0        BiocGenerics_0.40.0   …
 ```
 
 If you use **MultiModalGraphics** in a publication or presentation, please cite:
 
 ```
-Your Name (2025). MultiModalGraphics: Multi‐Modal Visualization and Plotting Utilities. R package version 0.99.5.
+Muhie, S. (2025). MultiModalGraphics: Multi‐Modal Visualization and Plotting Utilities. R package version 0.99.5.
 ```
 
 You can also encourage users to visit the GitHub page for more examples, bug reports, and feature requests:
@@ -1657,15 +1703,24 @@ https://github.com/famanalytics0/MultiModalGraphics
   ```
 * **Key Functions**:
 
-  1. `ClearScatterplot_MAE(...)` for MAE‐based workflows (e.g., `miniACC`).
-  2. `ClearScatterplot_table(...)` for matrix+metadata workflows (e.g., “Taylor” via `curatedPCaData`).
-  3. `ClearScatterplot(...)` for table‐only workflows (e.g., “TCGA BRCA” via `curatedTCGAData` + manual limma).
+  1. `ClearScatterplot_MAE(...)` for MAE‐based workflows (e.g. `miniACC`).
+  2. `ClearScatterplot_table(...)` for matrix+metadata workflows (e.g. “Taylor” via `curatedPCaData`).
+  3. `ClearScatterplot(...)` for table‐only workflows (e.g. “TCGA BRCA” via `curatedTCGAData` + manual limma).
 * **Plotting**:
 
   * Use `createPlot(object, ...)` to build a `ggplot` object with customized colors, labels, themes, etc.
   * Call `show(object)` to render the plot.
 * **Styling**:
 
-  * Customize colors (`color1, color2, color3`), axis labels, fonts, point aesthetics, legend placement, and theme via `createPlot()`.
+  * **Up‐regulated** points and count labels → **red/orange family** (`color1`).
+  * **Neutral** points → **grey** (`color2`).
+  * **Down‐regulated** points and count labels → **blue family** (`color3`).
+  * Customize fonts, sizes, and themes as described above.
 
-By following the three detailed examples above, you should be able to incorporate **MultiModalGraphics** into your analysis pipeline—regardless of whether your data begins in an MAE, as a plain matrix + metadata, or already as a DE result table. This manual aims to remove any barriers to entry and guide you step‐by‐step to a clear, publication‐ready faceted volcano plot. Enjoy!
+---
+
+**End of Manual**
+
+```
+```
+
