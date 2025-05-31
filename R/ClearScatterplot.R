@@ -417,9 +417,9 @@ setGeneric("createPlot", function(object, ...) standardGeneric("createPlot"))
 #' @importFrom dplyr group_by tally
 #' @exportMethod createPlot
 setMethod("createPlot", "ClearScatterplot", function(object,
-  color1          = "cornflowerblue",  # up
+  color1          = "indianred",       # up
   color2          = "grey",            # neutral
-  color3          = "indianred",       # down
+  color3          = "cornflowerblue",  # down
   xlab            = expression(log2~fold~change),
   ylab            = expression(-log10~p),
   custom_theme    = NULL,
