@@ -31,8 +31,8 @@ setGeneric(
 #' Constructor: ClearScatterplot
 #'
 #' @param data           data.frame with required columns: log2fc, negLog10p, regulation, SampleType
-#' @param highLog2fc     threshold for up-regulation
-#' @param lowLog2fc      threshold for down-regulation
+#' @param highLog2fc     threshold for up‐regulation
+#' @param lowLog2fc      threshold for down‐regulation
 #' @param negLog10pValue threshold for significance
 #' @export
 ClearScatterplot <- function(
@@ -96,7 +96,7 @@ ClearScatterplot <- function(
 
 #' Constructor: ClearScatterplot from MAE
 #'
-#' Handles filtering, NA removal, and optional merging of top-level metadata.
+#' Handles filtering, NA removal, and optional merging of top‐level metadata.
 #'
 #' @param mae          MultiAssayExperiment object
 #' @param assayName    assay name within mae
@@ -107,7 +107,7 @@ ClearScatterplot <- function(
 #' @param vectorized   one of "auto","perCell","vectorized"
 #' @param parallel     logical; if FALSE, forces sequential
 #' @param BPPARAM      BiocParallelParam
-#' @param var_quantile variance filter quantile (0-1)
+#' @param var_quantile variance filter quantile (0–1)
 #' @importFrom MultiAssayExperiment experiments sampleMap
 #' @import SummarizedExperiment
 #' @import BiocParallel
@@ -141,10 +141,10 @@ ClearScatterplot_MAE <- function(
   thr <- stats::quantile(rv, var_quantile, na.rm = TRUE)
   expr <- expr[rv >= thr, , drop = FALSE]
 
-  # Assay-level metadata
+  # Assay‐level metadata
   meta <- as.data.frame(SummarizedExperiment::colData(se), stringsAsFactors = FALSE)
 
-  # Merge missing columns from top-level MAE metadata if needed
+  # Merge missing columns from top‐level MAE metadata if needed
   needed <- c(groupColumn, sampleType)
   if (!is.null(timepoint)) needed <- c(needed, timepoint)
   miss <- setdiff(needed, names(meta))
@@ -168,7 +168,7 @@ ClearScatterplot_MAE <- function(
   expr <- expr[, keep, drop = FALSE]
   meta <- meta[keep, , drop = FALSE]
 
-  # Ensure each group has at least 3 samples and total >= 6 samples
+  # Ensure each group has at least 3 samples and total ≥ 6 samples
   if (any(table(meta[[groupColumn]]) < 3)) stop("Each group needs ≥3 samples")
   if (ncol(expr) < 6) stop("Too few samples after filtering (need ≥6)")
 
@@ -193,7 +193,7 @@ ClearScatterplot_MAE <- function(
 #' @param vectorized   one of "auto", "perCell", or "vectorized"; "auto" will parallelize if number of cells exceeds workers
 #' @param parallel     logical; if FALSE, disables all parallel execution regardless of `vectorized`
 #' @param BPPARAM      a BiocParallelParam object for parallel execution
-#' @param var_quantile numeric between 0 and 1; quantile threshold for filtering low-variance features
+#' @param var_quantile numeric between 0 and 1; quantile threshold for filtering low‐variance features
 #'
 #' @return A `ClearScatterplot` S4 object ready for plotting via `show()`
 #'
@@ -264,7 +264,7 @@ ClearScatterplot_table <- function(
     dataType <- if (all(expr == floor(expr)) && max(expr, na.rm = TRUE) > 30) "count" else "continuous"
   }
 
-  # Build cells (timePoint x SampleType combinations)
+  # Build cells (timePoint × SampleType combinations)
   cells <- if (!is.null(timepoint)) {
     expand.grid(
       timePoint = unique(meta[[timepoint]]),
@@ -357,16 +357,16 @@ setMethod("createPlot", "ClearScatterplot", function(object,
     ggplot2::facet_grid(stats::as.formula(facet), space = "free") +
     ggplot2::theme_bw() +
     ggplot2::theme(
-      text            = ggplot2::element_text(family = text_family, size = text_size),
+      text             = ggplot2::element_text(family = text_family, size = text_size),
       panel.grid.major = ggplot2::element_line(color = "grey80"),
       panel.grid.minor = ggplot2::element_blank(),
       strip.background = ggplot2::element_rect(fill = "white", color = "black"),
-      strip.text      = ggplot2::element_text(size = text_size + 2, face = "bold", family = text_family),
-      axis.title      = ggplot2::element_text(size = text_size + 2, face = "bold", family = text_family),
-      axis.text       = ggplot2::element_text(size = text_size, family = text_family),
-      legend.position = legend_position,
-      legend.title    = ggplot2::element_text(size = text_size + 2, face = "bold", family = text_family),
-      legend.text     = ggplot2::element_text(size = text_size, family = text_family)
+      strip.text       = ggplot2::element_text(size = text_size + 2, face = "bold", family = text_family),
+      axis.title       = ggplot2::element_text(size = text_size + 2, face = "bold", family = text_family),
+      axis.text        = ggplot2::element_text(size = text_size, family = text_family),
+      legend.position  = legend_position,
+      legend.title     = ggplot2::element_text(size = text_size + 2, face = "bold", family = text_family),
+      legend.text      = ggplot2::element_text(size = text_size, family = text_family)
     )
 
   # Apply custom theme last so it overrides defaults
@@ -416,6 +416,7 @@ setMethod("show", "ClearScatterplot", function(object) {
   print(object@plot)
   invisible(object)
 })
+
 
 
 
