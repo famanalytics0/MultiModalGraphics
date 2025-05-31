@@ -50,14 +50,14 @@ ClearScatterplot <- function(
   miss <- setdiff(req, names(data))
   if (length(miss)) stop("Missing columns: ", paste(miss, collapse=","))
 
-  # remove NA rows
+  # Remove rows with NA in key numeric columns
   na_idx <- is.na(data$log2fc) | is.na(data$negLog10p)
   if (any(na_idx)) {
     warning(sum(na_idx), " rows removed due to NA in log2fc or negLog10p")
     data <- data[!na_idx, , drop = FALSE]
   }
 
-  # compute color flag
+  # Compute color flag
   data$color_flag <- with(
     data,
     ifelse(
@@ -129,22 +129,22 @@ ClearScatterplot_MAE <- function(
   dataType   <- match.arg(dataType)
   vectorized <- match.arg(vectorized)
 
-  # assay exists
+  # Check assay existence
   assays <- names(MultiAssayExperiment::experiments(mae))
   if (!assayName %in% assays) stop("Assay '", assayName, "' not found in MAE")
 
   se   <- MultiAssayExperiment::experiments(mae)[[assayName]]
   expr <- SummarizedExperiment::assay(se)
 
-  # filter by variance
+  # Filter by variance
   rv  <- matrixStats::rowVars(expr, na.rm = TRUE)
   thr <- stats::quantile(rv, var_quantile, na.rm = TRUE)
   expr <- expr[rv >= thr, , drop = FALSE]
 
-  # assay-level metadata
+  # Assay-level metadata
   meta <- as.data.frame(SummarizedExperiment::colData(se), stringsAsFactors = FALSE)
 
-  # merge missing from mae top-level
+  # Merge missing columns from top-level MAE metadata if needed
   needed <- c(groupColumn, sampleType)
   if (!is.null(timepoint)) needed <- c(needed, timepoint)
   miss <- setdiff(needed, names(meta))
@@ -157,20 +157,20 @@ ClearScatterplot_MAE <- function(
     meta <- cbind(meta, pm2[rownames(meta), , drop = FALSE])
   }
 
-  # match samples
+  # Match expression columns and metadata rows
   shared <- intersect(colnames(expr), rownames(meta))
-  if (length(shared) == 0) stop("No overlapping samples between expr and metadata")
+  if (length(shared) == 0) stop("No overlapping samples between expression and metadata")
   expr <- expr[, shared, drop = FALSE]
   meta <- meta[shared, , drop = FALSE]
 
-  # drop NA in needed fields
+  # Remove samples with NA in required metadata
   keep <- rowSums(is.na(meta[needed])) == 0
   expr <- expr[, keep, drop = FALSE]
   meta <- meta[keep, , drop = FALSE]
 
-  # group sample checks
+  # Ensure each group has at least 3 samples and total >= 6 samples
   if (any(table(meta[[groupColumn]]) < 3)) stop("Each group needs ≥3 samples")
-  if (ncol(expr) < 6) stop("Too few samples after filtering")
+  if (ncol(expr) < 6) stop("Too few samples after filtering (need ≥6)")
 
   .ClearScatterplot_core(
     expr, meta, groupColumn, sampleType,
@@ -222,10 +222,12 @@ ClearScatterplot_table <- function(
   vectorized <- match.arg(vectorized)
   stopifnot(is.matrix(expr), is.data.frame(meta))
 
+  # Filter features by variance
   rv   <- matrixStats::rowVars(expr, na.rm = TRUE)
   thr  <- stats::quantile(rv, var_quantile, na.rm = TRUE)
   expr <- expr[rv >= thr, , drop = FALSE]
 
+  # Subset and drop NA in required metadata columns
   needed <- c(groupColumn, sampleType)
   if (!is.null(timepoint)) needed <- c(needed, timepoint)
   meta2  <- meta[, needed, drop = FALSE]
@@ -233,6 +235,7 @@ ClearScatterplot_table <- function(
   expr   <- expr[, keep, drop = FALSE]
   meta2  <- meta2[keep, , drop = FALSE]
 
+  # Check group sizes and feature count
   if (any(table(meta2[[groupColumn]]) < 3)) stop("Each group needs ≥3 samples")
   if (nrow(expr) < 1) stop("No features left after filtering")
 
@@ -249,16 +252,19 @@ ClearScatterplot_table <- function(
   expr, meta, groupColumn, sampleType,
   timepoint, dataType, vectorized, BPPARAM
 ) {
+  # Drop samples with NA in required columns
   cols <- c(groupColumn, sampleType)
   if (!is.null(timepoint)) cols <- c(cols, timepoint)
   keep <- rowSums(is.na(meta[, cols, drop = FALSE])) == 0
   expr <- expr[, keep, drop = FALSE]
   meta <- meta[keep, , drop = FALSE]
 
+  # Auto-detect dataType if needed
   if (dataType == "auto") {
     dataType <- if (all(expr == floor(expr)) && max(expr, na.rm = TRUE) > 30) "count" else "continuous"
   }
 
+  # Build cells (timePoint x SampleType combinations)
   cells <- if (!is.null(timepoint)) {
     expand.grid(
       timePoint = unique(meta[[timepoint]]),
@@ -273,6 +279,7 @@ ClearScatterplot_table <- function(
     )
   }
 
+  # Function to run DE for one cell
   run_cell <- function(i) {
     tp <- cells$timePoint[i]
     st <- cells$SampleType[i]
@@ -292,9 +299,15 @@ ClearScatterplot_table <- function(
     .run_DE(ce, cm, groupColumn, design, dataType, list(SampleType = st, timePoint = tp))
   }
 
+  # Decide whether to use parallel
   use_par <- (vectorized == "vectorized" || (vectorized == "auto" && nrow(cells) > BiocParallel::bpworkers(BPPARAM)))
-  lst    <- if (use_par) BiocParallel::bplapply(seq_len(nrow(cells)), run_cell, BPPARAM = BPPARAM) else lapply(seq_len(nrow(cells)), run_cell)
-  pd     <- do.call(rbind, lst)
+  if (use_par) {
+    lst <- BiocParallel::bplapply(seq_len(nrow(cells)), run_cell, BPPARAM = BPPARAM)
+  } else {
+    lst <- lapply(seq_len(nrow(cells)), run_cell)
+  }
+
+  pd <- do.call(rbind, lst)
   if (!nrow(pd)) stop("No DE results to plot.")
   rownames(pd) <- NULL
   ClearScatterplot(pd)
@@ -310,35 +323,57 @@ setGeneric("createPlot", function(object, ...) standardGeneric("createPlot"))
 #' @exportMethod createPlot
 #' @import ggplot2
 #' @importFrom dplyr group_by tally
-setMethod("createPlot", "ClearScatterplot", function(object, color1 = "cornflowerblue", color2 = "grey", color3 = "indianred") {
+setMethod("createPlot", "ClearScatterplot", function(object,
+                                                           color1 = "cornflowerblue",
+                                                           color2 = "grey",
+                                                           color3 = "indianred",
+                                                           xlab = expression(log2~fold~change),
+                                                           ylab = expression(-log10~p),
+                                                           custom_theme = NULL,
+                                                           point_alpha = 0.5,
+                                                           point_size = 1.75,
+                                                           legend_position = "bottom",
+                                                           legend_title = NULL,
+                                                           legend_labels = NULL,
+                                                           text_family = "sans",
+                                                           text_size = 10,
+                                                           ...) {
   df <- object@data
   has_tp <- "timePoint" %in% names(df) && !all(is.na(df$timePoint))
   facet <- if (has_tp && length(unique(df$timePoint)) > 1) "timePoint ~ SampleType" else ". ~ SampleType"
   p <- ggplot2::ggplot(df, ggplot2::aes(x = log2fc, y = negLog10p, color = factor(color_flag))) +
-    ggplot2::geom_point(alpha = 0.5, size = 1.75) +
-    ggplot2::geom_jitter() +
-    ggplot2::labs(x = expression(log2~fold~change), y = expression(-log10~p)) +
-    ggplot2::scale_color_manual(values = c(color1, color2, color3)) +
+    ggplot2::geom_point(alpha = point_alpha, size = point_size) +
+    ggplot2::geom_jitter(alpha = point_alpha, size = point_size) +
+    ggplot2::labs(x = xlab, y = ylab, color = legend_title, ...) +
+    ggplot2::scale_color_manual(values = c(color1, color2, color3), labels = legend_labels) +
     ggplot2::facet_grid(stats::as.formula(facet), space = "free") +
     ggplot2::theme_bw() +
+    (if (!is.null(custom_theme)) custom_theme else ggplot2::theme()) +
     ggplot2::theme(
+      text = ggplot2::element_text(family = text_family, size = text_size),
       panel.grid.major = ggplot2::element_line(color = "grey80"),
       panel.grid.minor = ggplot2::element_blank(),
       strip.background = ggplot2::element_rect(fill = "white", color = "black"),
-      strip.text = ggplot2::element_text(size = 12, face = "bold"),
-      axis.title = ggplot2::element_text(size = 12, face = "bold"),
-      axis.text = ggplot2::element_text(size = 10),
-      legend.position = "bottom"
+      strip.text = ggplot2::element_text(size = text_size + 2, face = "bold", family = text_family),
+      axis.title = ggplot2::element_text(size = text_size + 2, face = "bold", family = text_family),
+      axis.text = ggplot2::element_text(size = text_size, family = text_family),
+      legend.position = legend_position,
+      legend.title = ggplot2::element_text(size = text_size + 2, face = "bold", family = text_family),
+      legend.text = ggplot2::element_text(size = text_size, family = text_family)
     )
-  if (has_tp) {
+  if (has_tp && length(unique(df$timePoint)) > 1) {
     up <- df[df$color_flag == 1, ] |> dplyr::group_by(timePoint, SampleType) |> dplyr::tally(name = "n1")
     dn <- df[df$color_flag == -1, ] |> dplyr::group_by(timePoint, SampleType) |> dplyr::tally(name = "n2")
   } else {
     up <- df[df$color_flag == 1, ] |> dplyr::group_by(SampleType) |> dplyr::tally(name = "n1")
     dn <- df[df$color_flag == -1, ] |> dplyr::group_by(SampleType) |> dplyr::tally(name = "n2")
   }
-  if (nrow(up)) p <- p + ggplot2::geom_text(data = up, ggplot2::aes(label = n1), x = Inf, y = Inf, hjust = 1.1, vjust = 1.1, color = color1)
-  if (nrow(dn)) p <- p + ggplot2::geom_text(data = dn, ggplot2::aes(label = n2), x = -Inf, y = Inf, hjust = -0.1, vjust = 1.1, color = color3)
+  if (nrow(up)) {
+    p <- p + ggplot2::geom_text(data = up, ggplot2::aes(label = n1), x = Inf, y = Inf, hjust = 1.1, vjust = 1.1, color = color1, family = text_family, size = text_size / ggplot2::.pt)
+  }
+  if (nrow(dn)) {
+    p <- p + ggplot2::geom_text(data = dn, ggplot2::aes(label = n2), x = -Inf, y = Inf, hjust = -0.1, vjust = 1.1, color = color3, family = text_family, size = text_size / ggplot2::.pt)
+  }
   object@plot <- p
   invisible(object)
 })
@@ -352,6 +387,7 @@ setMethod("show", "ClearScatterplot", function(object) {
   print(object@plot)
   invisible(object)
 })
+
 
 
 
