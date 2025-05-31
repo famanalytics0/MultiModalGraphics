@@ -2,7 +2,9 @@
 # MultiModalGraphics: A Comprehensive User Manual
 
 **Version:** 0.99.5
+
 **Authors:** Seid Muhie
+
 **License:** Artistic-2.0
 
 Welcome to the MultiModalGraphics user manual. This document will walk you through…
