@@ -1,408 +1,495 @@
-# Suppress warnings for global variables
+# Suppress notes about global variables
 utils::globalVariables(c("assays", "setNames", "iClusterPlus"))
 
-#' InformativeHeatmap: A Class for Enhanced Heatmaps
-#'
-#' This class encapsulates the ComplexHeatmap package's Heatmap object,
-#' allowing for extended functionality and customizations.
-#'
-#' @slot heatmap Heatmap object from ComplexHeatmap package.
-#' @slot params List of parameters used to construct the heatmap.
-#' @name InformativeHeatmap
-#' @docType class
-#' @importFrom ComplexHeatmap Heatmap
-#' @export InformativeHeatmap
-#' @exportMethod InformativeHeatmap
-#' @exportMethod updateLayerFun
-#' @exportMethod getHeatmapObject
+#’ InformativeHeatmap: A Class for Enhanced Heatmaps
+#’
+#’ This class encapsulates a ComplexHeatmap::Heatmap object, allowing for extended
+#’ functionality and customizations (e.g., overlaying points colored by p-value).
+#’
+#’ @slot heatmap Heatmap object from ComplexHeatmap package.
+#’ @slot params List of parameters used to construct the heatmap.
+#’ @name InformativeHeatmap
+#’ @docType class
+#’ @importFrom ComplexHeatmap Heatmap restore_matrix
+#’ @importFrom grid grid.points gpar unit
+#’ @importFrom stats model.matrix lm
+#’ @exportClass InformativeHeatmap
 
-setClass("InformativeHeatmap",
-         slots = c(
-           heatmap = "Heatmap",  # The actual heatmap object
-           params = "list"  # Slot to store the constructor parameters
-         ))
-
-setGeneric("InformativeHeatmap", function(data, ...) {
-  standardGeneric("InformativeHeatmap")
-})
-
-#' @rdname InformativeHeatmap
-#' @description
-#' Constructor for the `InformativeHeatmap` class. This function initializes
-#' an `InformativeHeatmap` object with the given data and additional parameters
-#' for heatmap customization, including visual customization based on significance levels.
-#'
-#' @param data A numeric matrix or data frame to be visualized as a heatmap.
-#' @param pch_val Plotting character (pch) value for points in the heatmap.
-#'   Default is 16.
-#' @param unit_val Size of the points in the heatmap. Specified in 'mm'.
-#'   Default is 1.
-#' @param significant_color Color to be used for points representing significant values.
-#'   Default is "black".
-#' @param trending_color Color to be used for points representing trending values
-#'   (significant but less so than those meeting the `significant_pvalue` criterion).
-#'   Default is "yellow".
-#' @param significant_pvalue P-value threshold for significance.
-#'   Points with p-values below this threshold will be colored with `significant_color`.
-#'   Default is 0.05.
-#' @param trending_pvalue P-value threshold for trending significance.
-#'   Points with p-values above `significant_pvalue` and below this threshold
-#'   will be colored with `trending_color`. Default is 0.1.
-#' @param ... Additional parameters passed to `ComplexHeatmap::Heatmap`.
-#' @return An object of class `InformativeHeatmap` with the heatmap initialized
-#'   and customized according to the provided parameters.
-#' @examples
-#'   data <- matrix(rnorm(100), ncol = 10)
-#'   heatmap <- InformativeHeatmap(data, pch_val = 20, unit_val = 2,
-#'                                 significant_color = "red",
-#'                                 trending_color = "blue",
-#'                                 significant_pvalue = 0.05,
-#'                                 trending_pvalue = 0.1)
-#' @export
-
-setMethod("InformativeHeatmap", "ANY", function(data,
-                                                pch_val = 16,
-                                                unit_val = 4,
-                                                significant_color = "black",
-                                                trending_color = "yellow",
-                                                significant_pvalue = 0.05,
-                                                trending_pvalue = 0.1,
-                                                ...) {
-  # First, check if 'data' is a matrix
-  if (!is.matrix(data)) {
-    stop("Data must be a matrix.")
+setClass(
+  "InformativeHeatmap",
+  slots = c(
+    heatmap = "Heatmap",
+    params  = "list"
+  ),
+  validity = function(object) {
+    if (!inherits(object@heatmap, "Heatmap")) {
+      return("Slot ‘heatmap’ must be a ComplexHeatmap::Heatmap object.")
+    }
+    if (!is.list(object@params)) {
+      return("Slot ‘params’ must be a list.")
+    }
+    TRUE
   }
+)
 
-  # Second, check if the matrix contains only numeric values
-  if (!all(is.numeric(data))) {
-    stop("Data matrix must contain only numeric values.")
-  }
+#’ @rdname InformativeHeatmap
+#’ @exportMethod InformativeHeatmap
+#’ @export
+setGeneric("InformativeHeatmap", function(data, ...) standardGeneric("InformativeHeatmap"))
 
-  if (!requireNamespace("ComplexHeatmap", quietly = TRUE)) {
-    stop(
-      "ComplexHeatmap is required for creating an InformativeHeatmap object. ",
-      "Please install it using BiocManager::install('ComplexHeatmap')."
-    )
-  }
-  # Capture all additional arguments passed to the function
-  params_list <- list(...)
+#’ Constructor for InformativeHeatmap
+#’
+#’ Builds an InformativeHeatmap object from a numeric matrix, with optional overlay
+#’ of points colored by significance/trending thresholds.
+#’
+#’ @param data A numeric matrix (rows = features, columns = samples).
+#’ @param pch_val Integer or single‐length numeric. Plotting character for overlay points (default = 16).
+#’ @param unit_val Numeric. Size of overlay points in mm (default = 4).
+#’ @param significant_color Color for points with p < significant_pvalue (default = "black").
+#’ @param trending_color Color for points with significant_pvalue ≤ p < trending_pvalue (default = "yellow").
+#’ @param significant_pvalue Numeric ∈ (0,1). Threshold for “significant” (default = 0.05).
+#’ @param trending_pvalue Numeric ∈ (0,1). Threshold for “trending” (default = 0.1).
+#’ @param ... Additional arguments passed to ComplexHeatmap::Heatmap (e.g. name, col, cluster_rows, etc.).
+#’
+#’ @return An object of class InformativeHeatmap.
+#’ @examples
+#’ \dontrun{
+#’   mat <- matrix(rnorm(200), nrow = 20, ncol = 10)
+#’   # Create a matrix of random p‐values (same dims as mat)
+#’   pmat <- matrix(runif(200), nrow = 20, ncol = 10)
+#’   ih <- InformativeHeatmap(
+#’     mat,
+#’     significance_level = pmat,
+#’     pch_val            = 20,
+#’     unit_val           = 2,
+#’     significant_color  = "red",
+#’     trending_color     = "blue",
+#’     significant_pvalue = 0.01,
+#’     trending_pvalue    = 0.05,
+#’     name               = "Expression",
+#’     cluster_rows       = TRUE,
+#’     cluster_columns    = TRUE
+#’   )
+#’   hm_obj <- getHeatmapObject(ih)
+#’   draw(hm_obj)
+#’ }
+#’ @export
+setMethod(
+  "InformativeHeatmap", "ANY",
+  function(data,
+           pch_val = 16,
+           unit_val = 4,
+           significant_color = "black",
+           trending_color = "yellow",
+           significant_pvalue = 0.05,
+           trending_pvalue = 0.1,
+           ...) 
+  {
+    ## 1. INPUT VALIDATION
 
-  # Initialize var for potential custom layer function based on small_map_pv
-  custom_layer_fun <- NULL
+    # Must be a numeric matrix
+    if (!is.matrix(data)) {
+      stop("`data` must be a matrix.")
+    }
+    if (!is.numeric(data)) {
+      stop("`data` must contain only numeric values.")
+    }
+    # Dimensions
+    n_rows <- nrow(data)
+    n_cols <- ncol(data)
+    if (n_rows < 1 || n_cols < 1) {
+      stop("`data` must have at least one row and one column.")
+    }
 
-  # Now include layer_fun directly in the params, if not already provided
-  if (!is.null(params_list$significance_level)) {
-    # Store the small_map_pv data
-    significance_level <- params_list$significance_level
+    # Validate overlay p‐value matrix (if provided via ...$significance_level)
+    dots <- list(...)
+    significance_level <- NULL
+    if ("significance_level" %in% names(dots)) {
+      significance_level <- dots$significance_level
+      if (!is.matrix(significance_level) || !is.numeric(significance_level)) {
+        stop("`significance_level` must be a numeric matrix.")
+      }
+      if (!identical(dim(significance_level), dim(data))) {
+        stop(
+          "`significance_level` dimensions (",
+          paste(dim(significance_level), collapse = "×"),
+          ") do not match `data` dimensions (",
+          paste(dim(data), collapse = "×"),
+          ")."
+        )
+      }
+      # Remove it from dots so we don't pass it to Heatmap()
+      dots$significance_level <- NULL
+    }
 
-    custom_layer_fun <- function(j, i, x, y, w, h, fill) {
-      ind_mat <- ComplexHeatmap::restore_matrix(j, i, x, y)
-      for (ir in seq_len(nrow(ind_mat))) {
-        for (ic in seq_len(ncol(ind_mat))) {
-          ind <- ind_mat[ir, ic]  # previous column
-          v <- significance_level[i[ind], j[ind]]
-          grid::grid.points(x[ind],
-                      y[ind],
-                      pch = pch_val,
-                      gp = grid::gpar(col = ifelse(
-                        v < significant_pvalue,
-                        significant_color,
-                        ifelse(
-                          v >= significant_pvalue && v < trending_pvalue,
-                          trending_color,
-                          NA
-                        )
-                      )),
-                      size <- grid::unit(unit_val, "mm"))
+    # Validate p‐value thresholds
+    if (!is.numeric(significant_pvalue) || length(significant_pvalue) != 1 ||
+        significant_pvalue <= 0 || significant_pvalue >= 1) {
+      stop("`significant_pvalue` must be a single number in (0,1).")
+    }
+    if (!is.numeric(trending_pvalue) || length(trending_pvalue) != 1 ||
+        trending_pvalue <= significant_pvalue || trending_pvalue >= 1) {
+      stop("`trending_pvalue` must be a single number in (significant_pvalue, 1).")
+    }
+
+    # Validate pch_val and unit_val
+    if (!is.numeric(pch_val) || length(pch_val) != 1) {
+      stop("`pch_val` must be a single numeric or integer.")
+    }
+    if (!is.numeric(unit_val) || length(unit_val) != 1 || unit_val <= 0) {
+      stop("`unit_val` must be a positive numeric (mm).")
+    }
+
+    # Check ComplexHeatmap availability
+    if (!requireNamespace("ComplexHeatmap", quietly = TRUE)) {
+      stop(
+        "ComplexHeatmap is required. Install via BiocManager::install('ComplexHeatmap')."
+      )
+    }
+
+    ## 2. BUILD CUSTOM LAYER FUNCTION (if p‐values provided)
+    custom_layer_fun <- NULL
+    if (!is.null(significance_level)) {
+      # Pre‐cache locals for speed
+      sig_p         <- significant_pvalue
+      tr_p          <- trending_pvalue
+      sig_col       <- significant_color
+      tr_col        <- trending_color
+      pmat_local    <- significance_level
+      pch_local     <- pch_val
+      unit_local    <- unit_val
+
+      custom_layer_fun <- function(j, i, x, y, w, h, fill) {
+        # j, i are integer vectors of column/row indices of each cell
+        # restore_matrix returns a matrix of linear indices
+        ind_mat <- ComplexHeatmap::restore_matrix(j, i, x, y)
+        # ind_mat has same dims as the heatmap viewport; each element is linear index
+
+        # Flatten once
+        lin_idx <- as.vector(ind_mat)
+        # Compute row/col indices
+        # Given linear index k: row = ((k-1) %% n_rows) + 1, col = floor((k-1)/n_rows) + 1
+        rows <- ((lin_idx - 1) %% n_rows) + 1
+        cols <- floor((lin_idx - 1) / n_rows) + 1
+
+        # Extract p‐values
+        pv <- pmat_local[cbind(rows, cols)]
+
+        # Determine colors: vectorized
+        col_vec <- rep(NA_character_, length(pv))
+        sig_idx <- which(pv < sig_p)
+        tr_idx  <- which(pv >= sig_p & pv < tr_p)
+        if (length(sig_idx) > 0) col_vec[sig_idx] <- sig_col
+        if (length(tr_idx)  > 0) col_vec[tr_idx]  <- tr_col
+
+        # Only draw points where col_vec is not NA
+        keep <- which(!is.na(col_vec))
+        if (length(keep) > 0) {
+          grid::grid.points(
+            x = x[lin_idx[keep]],
+            y = y[lin_idx[keep]],
+            pch = pch_local,
+            gp = grid::gpar(col = col_vec[keep]),
+            size = grid::unit(unit_local, "mm")
+          )
         }
       }
+
+      # Supply to Heatmap arguments
+      dots$layer_fun <- custom_layer_fun
     }
-    # Remove small_map_pv from params_list to prevent the unused argument error
-    params_list$significance_level <- NULL
-  }
 
-  # If custom_layer_fun is defined, update layer_fun in params_list
-  if (!is.null(custom_layer_fun)) {
-    params_list$layer_fun <- custom_layer_fun
-  }
+    ## 3. CREATE COMPLEXHEATMAP OBJECT
 
-  # Create the heatmap object with the remaining and possibly modified parameters
-  heatmap_obj <- do.call(ComplexHeatmap::Heatmap, c(list(data), params_list))
+    # Ensure data is passed as first argument
+    hm_args <- c(list(matrix = data), dots)
+    hm_obj  <- do.call(ComplexHeatmap::Heatmap, hm_args)
 
-  # Construct and return the InformativeHeatmap object
-  methods::new("InformativeHeatmap", heatmap = heatmap_obj, params = params_list)
+    ## 4. CONSTRUCT S4 OBJECT
 
-})
-
-
-#' Define a Generic Method 'updateLayerFun'
-#'
-#' This generic function is for updating the layer function of an existing
-#' InformativeHeatmap objects.
-#'
-#' @param x An `InformativeHeatmap` object whose layer function is to be updated.
-#' @param layer_fun A function that defines the new layer to be applied to the heatmap.
-#'   The class of this object will determine which specific method is used.
-#'
-#' @return Returns an updated `InformativeHeatmap` object with the new layer function applied.
-#' @rdname updateLayerFun
-#' @export
-setGeneric("updateLayerFun", function(x, layer_fun) {
-  standardGeneric("updateLayerFun")
-})
-
-#' Update Layer Function of an InformativeHeatmap
-#'
-#' This method allows updating the layer function of an existing `InformativeHeatmap` object.
-#' It requires the `ComplexHeatmap` package to recreate the heatmap with the new layer function.
-#' If `ComplexHeatmap` is not installed, it will stop and prompt the user to install `ComplexHeatmap`.
-#'
-#' @param x An `InformativeHeatmap` object whose layer function is to be updated.
-#' @param layer_fun A function that defines the new layer to be applied to the heatmap.
-#'   This function should be compatible with the layering system of `ComplexHeatmap`.
-#' @return Returns an updated `InformativeHeatmap` object with the new layer function applied.
-#' @rdname updateLayerFun
-#' @examples
-#'   # Assume `ih` is an existing InformativeHeatmap object
-#'   # Define a new layer function
-#'   data <- matrix(rnorm(100), ncol = 10)
-#'   ih <- InformativeHeatmap(data, pch_val = 20, unit_val = 2,
-#'                                 significant_color = "red",
-#'                                 trending_color = "blue",
-#'                                 significant_pvalue = 0.05,
-#'                                 trending_pvalue = 0.1)
-#'   new_layer_fun <- function(j, i, x, y, w, h, fill) {
-#'     grid::grid.points(x, y, pch = 16, size = unit(2, "mm"), gp = grid::gpar(col = "red"))
-#'   }
-#'
-#'   # Update the layer function of the heatmap
-#'   ih <- updateLayerFun(ih, new_layer_fun)
-#' @export
-setMethod("updateLayerFun", "InformativeHeatmap", function(x, layer_fun) {
-  if (!requireNamespace("ComplexHeatmap", quietly <- TRUE)) {
-    stop(
-      "ComplexHeatmap is required to update the layer function in an InformativeHeatmap object. ",
-      "Please install it using BiocManager::install('ComplexHeatmap')."
+    new(
+      "InformativeHeatmap",
+      heatmap = hm_obj,
+      params  = list(
+        pch_val             = pch_val,
+        unit_val            = unit_val,
+        significant_color   = significant_color,
+        trending_color      = trending_color,
+        significant_pvalue  = significant_pvalue,
+        trending_pvalue     = trending_pvalue,
+        extra_args          = dots
+      )
     )
   }
-  # Retrieve the stored parameters
-  params <- x@params
+)
 
-  # Update or add the layer_fun parameter
-  params$layer_fun <- layer_fun
+#’ Define a Generic Method ‘updateLayerFun’
+#’
+#’ Update the overlay layer function of an existing InformativeHeatmap.
+#’
+#’ @param x An `InformativeHeatmap` object.
+#’ @param layer_fun A function compatible with ComplexHeatmap’s layering system.
+#’ @return Updated `InformativeHeatmap` object.
+#’ @rdname updateLayerFun
+#’ @export
+setGeneric("updateLayerFun", function(x, layer_fun) standardGeneric("updateLayerFun"))
 
-  # Ensure the matrix data is passed as the first argument to Heatmap
-  # and the rest of the parameters are correctly structured for do.call
-  args <- c(list(x@heatmap@matrix), params)
+#’ @rdname updateLayerFun
+#’ @export
+setMethod(
+  "updateLayerFun", "InformativeHeatmap",
+  function(x, layer_fun) {
+    if (!inherits(x, "InformativeHeatmap")) {
+      stop("`x` must be an InformativeHeatmap object.")
+    }
+    if (!is.function(layer_fun)) {
+      stop("`layer_fun` must be a function.")
+    }
+    if (!requireNamespace("ComplexHeatmap", quietly = TRUE)) {
+      stop(
+        "ComplexHeatmap is required. Install via BiocManager::install('ComplexHeatmap')."
+      )
+    }
 
-  # Recreate the heatmap with the updated parameters
-  new_heatmap <- do.call(ComplexHeatmap::Heatmap, args)
+    # Retrieve stored parameters
+    old_args <- x@params$extra_args
+    # Overwrite layer_fun
+    old_args$layer_fun <- layer_fun
 
-  # Update the InformativeHeatmap object with the new heatmap
-  x@heatmap <- new_heatmap
+    # Recreate Heatmap with the same data
+    mat_data <- x@heatmap@matrix
+    hm_args   <- c(list(matrix = mat_data), old_args)
+    new_hm    <- do.call(ComplexHeatmap::Heatmap, hm_args)
 
-  # Also, update the stored parameters in case of further modifications
-  x@params <- params
+    x@heatmap <- new_hm
+    x@params$extra_args <- old_args
+    x
+  }
+)
 
-  return(x)
-})
+#’ Create an InformativeHeatmap from a MultiAssayExperiment Object
+#’
+#’ Clusters samples using iClusterPlus, runs limma for each assay, combines logFCs,
+#’ and overlays points colored by p‐value significance/trending.
+#’
+#’ @param mae A `MultiAssayExperiment` object containing ≥1 assay.
+#’ @param significant_pvalue Numeric in (0,1) (default = 0.05).
+#’ @param trending_pvalue Numeric in (significant_pvalue,1) (default = 0.1).
+#’ @param significant_color Color for p < significant_pvalue (default = "black").
+#’ @param trending_color Color for significant_pvalue ≤ p < trending_pvalue (default = "yellow").
+#’ @param pch_val Integer or numeric pch for overlay (default = 16).
+#’ @param unit_val Numeric point size in mm (default = 4).
+#’ @param K Integer ≥2: number of clusters for iClusterPlus (default = 3).
+#’ @param lambda Numeric in (0,∞): regularization for iClusterPlus (default = 0.2).
+#’ @param coef Integer ≥1: which coefficient/contrast in limma to use (default = 2).
+#’ @param ... Additional arguments passed to ComplexHeatmap::Heatmap.
+#’
+#’ @return An InformativeHeatmap object.
+#’ @importFrom MultiAssayExperiment assays
+#’ @importFrom stats model.matrix lmFit
+#’ @importFrom limma eBayes topTable
+#’ @export
+InformativeHeatmapFromMAE <- function(
+  mae,
+  significant_pvalue = 0.05,
+  trending_pvalue    = 0.1,
+  significant_color  = "black",
+  trending_color     = "yellow",
+  pch_val            = 16,
+  unit_val           = 4,
+  K                  = 3,
+  lambda             = 0.2,
+  coef               = 2,
+  ...
+) {
+  ## 1. INPUT VALIDATION
 
-# setGeneric("InformativeHeatmapFromMAE", function(mae, ...) {
-#   standardGeneric("InformativeHeatmapFromMAE")
-# })
+  # Check MultiAssayExperiment availability
+  if (!requireNamespace("MultiAssayExperiment", quietly = TRUE)) {
+    stop("MultiAssayExperiment package is required.")
+  }
+  # Check that mae is a MultiAssayExperiment
+  if (!inherits(mae, "MultiAssayExperiment")) {
+    stop("`mae` must be a MultiAssayExperiment.")
+  }
 
-
-#' Create an InformativeHeatmap from a MultiAssayExperiment Object
-#'
-#' This method takes a `MultiAssayExperiment` object, clusters the samples using `iClusterPlus`,
-#' compares the clusters using `limma`, and creates an `InformativeHeatmap` with a custom `layer_fun`
-#' based on significance levels from the cluster comparison.
-#'
-#' @param mae A `MultiAssayExperiment` object containing multiple assays.
-#' @param significant_pvalue P-value threshold for significance.
-#'   Points with p-values below this threshold will be colored with `significant_color`.
-#'   Default is 0.05.
-#' @param trending_pvalue P-value threshold for trending significance.
-#'   Points with p-values above `significant_pvalue` and below this threshold
-#'   will be colored with `trending_color`. Default is 0.1.
-#' @param significant_color Color to be used for points representing significant values.
-#'   Default is "black".
-#' @param trending_color Color to be used for points representing trending values.
-#'   Default is "yellow".
-#' @param pch_val Plotting character (pch) value for points in the heatmap. Default is 16.
-#' @param unit_val Size of the points in the heatmap. Specified in 'mm'. Default is 1.
-#' @param K Number of clusters for `iClusterPlus`. Default is 3.
-#' @param lambda Regularization parameter for `iClusterPlus`. Default is 0.2.
-#' @param coef Compare cluster group to be used as a contrast for `limma` analysis.
-#' @param ... Additional parameters passed to `ComplexHeatmap::Heatmap`.
-#' @return An object of class `InformativeHeatmap`.
-#' @export
-InformativeHeatmapFromMAE <- function(mae,
-                                      significant_pvalue = 0.05,
-                                      trending_pvalue = 0.1,
-                                      significant_color = "black",
-                                      trending_color = "yellow",
-                                      pch_val = 16,
-                                      unit_val = 4,
-                                      K = 3,  # Number of clusters for iClusterPlus
-                                      lambda = 0.2,  # Regularization for iClusterPlus
-                                      coef = 2,  # Contrast to compare cluster groups in limma
-                                      ...) {
-
-  # Convert MultiAssayExperiment to a list of matrices for iClusterPlus
-  data_list <- lapply(assays(mae), function(assay) {
-    assay_matrix <- as.matrix(assay)
-    mode(assay_matrix) <- "numeric"
-    return(t(assay_matrix))  # Transpose so that samples are rows and features are columns
+  # Extract list of assay matrices (as numeric matrices)
+  assay_list <- MultiAssayExperiment::assays(mae)
+  if (length(assay_list) < 1) {
+    stop("`mae` must contain at least one assay.")
+  }
+  # Convert each assay to numeric matrix and transpose (samples as rows)
+  data_list <- lapply(assay_list, function(se) {
+    mat <- as.matrix(se)
+    if (!is.numeric(mat)) mode(mat) <- "numeric"
+    t(mat)
   })
+  # Name the list: dt1, dt2, …
+  names(data_list) <- paste0("dt", seq_along(data_list))
 
-  # Run iClusterPlus clustering
-  dt_list <- stats::setNames(data_list, paste0("dt", seq_along(data_list)))
+  # Validate clustering parameters
+  if (!requireNamespace("iClusterPlus", quietly = TRUE)) {
+    stop("iClusterPlus is required. Install via BiocManager::install('iClusterPlus').")
+  }
+  if (!is.numeric(K) || length(K) != 1 || K < 2) {
+    stop("`K` must be a single integer ≥ 2.")
+  }
+  if (!is.numeric(lambda) || length(lambda) != 1 || lambda <= 0) {
+    stop("`lambda` must be a single positive number.")
+  }
 
-  fit <- do.call(iClusterPlus, c(dt_list, list(
-    type = rep("gaussian", length(data_list)),
-    K = K,  # Number of clusters
+  # Validate p-value thresholds
+  if (!is.numeric(significant_pvalue) || length(significant_pvalue) != 1 ||
+      significant_pvalue <= 0 || significant_pvalue >= 1) {
+    stop("`significant_pvalue` must be a single number in (0,1).")
+  }
+  if (!is.numeric(trending_pvalue) || length(trending_pvalue) != 1 ||
+      trending_pvalue <= significant_pvalue || trending_pvalue >= 1) {
+    stop("`trending_pvalue` must be in (significant_pvalue, 1).")
+  }
+  if (!is.numeric(pch_val) || length(pch_val) != 1) {
+    stop("`pch_val` must be a single numeric or integer.")
+  }
+  if (!is.numeric(unit_val) || length(unit_val) != 1 || unit_val <= 0) {
+    stop("`unit_val` must be a positive numeric.")
+  }
+  if (!is.numeric(coef) || length(coef) != 1 || coef < 1) {
+    stop("`coef` must be a single integer ≥ 1.")
+  }
+
+  ## 2. RUN iClusterPlus CLUSTERING
+
+  # Prepare arguments
+  icolist <- c(data_list, list(
+    type   = rep("gaussian", length(data_list)),
+    K      = as.integer(K),
     lambda = rep(lambda, length(data_list)),
-    maxiter = 20
-  )))
+    maxiter = as.integer(20)
+  ))
+  fit <- do.call(iClusterPlus::iClusterPlus, icolist)
 
-  # Get the clustering results
   clusters <- factor(fit$clusters)
+  if (length(clusters) != nrow(data_list[[1]])) {
+    stop("Mismatch between number of samples in clusters and data.")
+  }
 
-  # Create design matrix for limma analysis based on clusters
-  design <- model.matrix(~ 0 + clusters)
+  ## 3. DESIGN MATRIX FOR LIMMA
+
+  design <- stats::model.matrix(~ 0 + clusters)
   colnames(design) <- levels(clusters)
 
-  # Perform limma analysis on each assay to compare the cluster groups
-  limma_results <- lapply(names(assays(mae)), function(assay_name) {
-    assay_data <- assays(mae)[[assay_name]]
-    fit_limma <- lmFit(assay_data, design)
-    fit_limma <- eBayes(fit_limma)
-    topTable_limma <- topTable(fit_limma, coef = coef, number = Inf)
+  ## 4. RUN LIMMA FOR EACH ASSAY → STORE logFC AND p‐VALUES
 
-    # Extract logFC and p-values
-    logFC <- topTable_limma$logFC
-    p_values <- topTable_limma$P.Value
-
-    return(list(logFC = logFC, p_values = p_values))
+  if (!requireNamespace("limma", quietly = TRUE)) {
+    stop("limma is required. Install via BiocManager::install('limma').")
+  }
+  limma_results <- lapply(names(data_list), function(aname) {
+    mat   <- data_list[[aname]]      # samples × features
+    fitlm <- limma::lmFit(t(mat), design)  # transpose: features × samples
+    fitlm <- limma::eBayes(fitlm)
+    tt    <- limma::topTable(fitlm, coef = coef, number = Inf, sort.by = "none")
+    if (!all(c("logFC", "P.Value") %in% colnames(tt))) {
+      stop("topTable did not return logFC or P.Value.")
+    }
+    list(
+      logFC    = tt$logFC,
+      p_values = tt$P.Value
+    )
   })
-  names(limma_results) <- names(assays(mae))
+  names(limma_results) <- names(data_list)
 
-  # Combine logFCs across assays for heatmap
-  combined_logFC <- do.call(rbind, lapply(limma_results, function(result) {
-    return(result$logFC)
-  }))
+  ## 5. COMBINE logFC & p‐VALUES ACROSS ASSAYS
 
-  # Combine p-values across assays
-  combined_pvalues <- do.call(rbind, lapply(limma_results, function(result) {
-    return(result$p_values)
-  }))
+  # Each element is a vector of length = number of rows in original assay
+  logfc_list <- lapply(limma_results, function(res) res$logFC)
+  pval_list  <- lapply(limma_results, function(res) res$p_values)
 
-  # Ensure that combined_pvalues and combined_logFC have the same number of rows
-  if (nrow(combined_logFC) != nrow(combined_pvalues)) {
-    stop("Mismatch between the number of rows in logFC and p-values")
+  # Combine by rbind → matrix assays × features
+  combined_logFC    <- do.call(rbind, logfc_list)
+  combined_pvalues  <- do.call(rbind, pval_list)
+
+  if (!identical(dim(combined_logFC), dim(combined_pvalues))) {
+    stop("Combined logFC and p-value matrices have mismatched dimensions.")
   }
 
-  # Transpose combined data matrix for heatmap
-  heatmap_data <- t(combined_logFC)
+  # Transpose → features × assays (rows × columns)
+  heatmap_data     <- t(combined_logFC)
+  pmat_for_overlay <- t(combined_pvalues)
 
-  # Define a custom layer_fun based on p-values
+  ## 6. BUILD CUSTOM LAYER FUNCTION FOR OVERLAY
+
+  n_rows <- nrow(heatmap_data)
+  n_cols <- ncol(heatmap_data)
+
   custom_layer_fun <- function(j, i, x, y, w, h, fill) {
     ind_mat <- ComplexHeatmap::restore_matrix(j, i, x, y)
-    n_rows <- nrow(combined_pvalues)
-    n_cols <- ncol(combined_pvalues)
+    lin_idx <- as.vector(ind_mat)
+    rows <- ((lin_idx - 1) %% n_rows) + 1
+    cols <- floor((lin_idx - 1) / n_rows) + 1
 
-    for (ir in seq_len(nrow(ind_mat))) {
-      for (ic in seq_len(ncol(ind_mat))) {
-        ind <- ind_mat[ir, ic]
-        # Make sure to use the right index to access combined_pvalues and combined_logFC
-        if (ir <= n_rows && ic <= n_cols) {
-          p_value <- combined_pvalues[ir, ic]
+    pv_vals <- pmat_for_overlay[cbind(rows, cols)]
+    col_vec <- rep(NA_character_, length(pv_vals))
+    sig_idx <- which(pv_vals < significant_pvalue)
+    tr_idx  <- which(pv_vals >= significant_pvalue & pv_vals < trending_pvalue)
+    if (length(sig_idx) > 0) col_vec[sig_idx] <- significant_color
+    if (length(tr_idx) > 0) col_vec[tr_idx] <- trending_color
 
-          # Determine color based on p-value
-          col_value <- ifelse(
-            p_value < significant_pvalue,
-            significant_color,
-            ifelse(
-              p_value >= significant_pvalue && p_value < trending_pvalue,
-              trending_color,
-              NA
-            )
-          )
-
-          # Only draw points for non-NA values
-          if (!is.na(col_value)) {
-            grid::grid.points(
-              x[ind], y[ind],
-              pch = pch_val,
-              gp = grid::gpar(col = col_value),
-              size = grid::unit(unit_val, "mm")
-            )
-          }
-        } else {
-          warning("Index out of bounds in combined_pvalues")
-        }
-      }
+    keep <- which(!is.na(col_vec))
+    if (length(keep) > 0) {
+      grid::grid.points(
+        x    = x[lin_idx[keep]],
+        y    = y[lin_idx[keep]],
+        pch  = pch_val,
+        gp   = grid::gpar(col = col_vec[keep]),
+        size = grid::unit(unit_val, "mm")
+      )
     }
   }
 
-  # Create and return the InformativeHeatmap object with the custom layer_fun
-  return(InformativeHeatmap(heatmap_data, layer_fun = custom_layer_fun, ...))
+  ## 7. CALL InformativeHeatmap CONSTRUCTOR
+
+  ih <- InformativeHeatmap(
+    heatmap_data,
+    layer_fun           = custom_layer_fun,
+    pch_val             = pch_val,
+    unit_val            = unit_val,
+    significant_color   = significant_color,
+    trending_color      = trending_color,
+    significant_pvalue  = significant_pvalue,
+    trending_pvalue     = trending_pvalue,
+    ...
+  )
+  return(ih)
 }
 
-#' Define a Generic Method 'getHeatmapObject'
-#'
-#' This generic function is designed to retrieve the Heatmap object from
-#' InformativeHeatmap objects. Specific methods should be defined for
-#' different classes to extract the Heatmap object as needed.
-#'
-#' @param x The object from which the Heatmap object is to be retrieved.
-#'   The class of this object will determine which specific method is used.
-#'
-#' @return The result of the specific method for retrieving the Heatmap object,
-#'   typically a Heatmap object.
-#' @rdname getHeatmapObject
-#' @export
-setGeneric("getHeatmapObject", function(x) {
-  standardGeneric("getHeatmapObject")
-})
+#’ Generic to retrieve the underlying Heatmap object
+#’
+#’ @param x An InformativeHeatmap object.
+#’ @return A ComplexHeatmap::Heatmap object.
+#’ @rdname getHeatmapObject
+#’ @export
+setGeneric("getHeatmapObject", function(x) standardGeneric("getHeatmapObject"))
 
-#' Retrieve the Heatmap Object from an InformativeHeatmap
-#'
-#' This method extracts the underlying Heatmap object stored within an
-#' `InformativeHeatmap` object. It allows direct access to the `Heatmap` object
-#'  for further manipulation or inspection using `ComplexHeatmap` package
-#'  functionalities. Note that the `ComplexHeatmap` package is required
-#' to fully utilize the returned Heatmap object.
-#'
-#' @param x An `InformativeHeatmap` object from which the Heatmap object is to
-#' be retrieved.
-#'
-#' @return A Heatmap object from the `ComplexHeatmap` package.
-#'
-#' @examples
-#'   data <- matrix(rnorm(100), ncol = 10)
-#'   ih <- InformativeHeatmap(data, pch_val = 20, unit_val = 2,
-#'                                 significant_color = "red",
-#'                                 trending_color = "blue",
-#'                                 significant_pvalue = 0.05,
-#'                                 trending_pvalue = 0.1)
-#'   # Assume `ih` is an existing InformativeHeatmap object
-#'   heatmap_obj <- getHeatmapObject(ih)
-#'   # Now `heatmap_obj` can be used directly with ComplexHeatmap functions
-#'
-#' @rdname getHeatmapObject
-#' @export
-setMethod("getHeatmapObject", "InformativeHeatmap", function(x) {
-  if (!requireNamespace("ComplexHeatmap", quietly = TRUE)) {
-    stop(
-      "ComplexHeatmap is required to retrieve the Heatmap object from an
-      InformativeHeatmap object. ",
-      "Please install it using BiocManager::install('ComplexHeatmap')."
-    )
+#’ Retrieve the Heatmap from InformativeHeatmap
+#’
+#’ @param x An InformativeHeatmap object.
+#’ @return A ComplexHeatmap::Heatmap object.
+#’ @export
+setMethod(
+  "getHeatmapObject", "InformativeHeatmap",
+  function(x) {
+    if (!inherits(x, "InformativeHeatmap")) {
+      stop("`x` must be an InformativeHeatmap object.")
+    }
+    if (!requireNamespace("ComplexHeatmap", quietly = TRUE)) {
+      stop(
+        "ComplexHeatmap is required. Install via BiocManager::install('ComplexHeatmap')."
+      )
+    }
+    return(x@heatmap)
   }
-  return(x@heatmap)
-})
+)
+
 
 
 
