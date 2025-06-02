@@ -24,42 +24,53 @@ Description: The MultimodalGraphics R package provides rich functionalities for 
             a comprehensible presentation of multimodal and multidimensional datasets.
             We demonstrate the utility of MultimodalGraphics to easily reveal patterns and correlations 
             among multiple sources of information with three different sets of actual multimodal datasets.
+            
+
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
-Imports:
-    ComplexHeatmap,
-    MultiAssayExperiment,
-    limma,
-    dplyr,
-    ggplot2,
-    RColorBrewer,
-    methods,
-    magrittr,
-    matrixStats,
-    SummarizedExperiment,
-    stats,
-    BiocParallel,
-    IRanges,
-    S4Vectors
+LazyData: true
 
+Imports:
+    methods,
+    ggplot2 (>= 3.0.0),
+    dplyr (>= 1.0.0),
+    magrittr (>= 1.5),
+    matrixStats (>= 0.56.0),
+    BiocParallel (>= 1.30.0),
+    MultiAssayExperiment (>= 2.8.0),
+    SummarizedExperiment (>= 1.18.0),
+    limma (>= 3.48.0),
+    stats,
+    ComplexHeatmap (>= 2.6.0),
+    RColorBrewer (>= 1.1-3),
+    patchwork (>= 1.0.0),
+    circlize (>= 0.4.0),
+    grid
 Suggests:
     knitr,
     testthat,
     rmarkdown,
     GetoptLong,
-    circlize,
     ggthemes,
     gridtext,
     paletteer,
     reshape,
     seriation,
     wesanderson,
-    curatedPCaData,        # for prostate‐cancer examples
-    curatedTCGAData,       # for TCGA‐based examples
-    curatedTCGADataData    # sometimes required by curatedTCGAData
-biocViews: Software, Visualization
+    circlize,
+    curatedPCaData,
+    curatedTCGAData,
+    curatedTCGADataData,
+    shiny
+VignetteBuilder: knitr
+biocViews: 
+    DifferentialExpression,
+    Heatmaps,
+    Visualization,
+    MultiAssayExperiment,
+    Software
 URL: https://github.com/famanalytics0/MultiModalGraphics
 BugReports: https://github.com/famanalytics0/MultiModalGraphics/issues
-VignetteBuilder: knitr
+
