@@ -28,7 +28,7 @@ License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
-Imports: 
+Imports:
     ComplexHeatmap,
     MultiAssayExperiment,
     limma,
@@ -36,7 +36,14 @@ Imports:
     ggplot2,
     RColorBrewer,
     methods,
-    magrittr
+    magrittr,
+    matrixStats,
+    SummarizedExperiment,
+    stats,
+    BiocParallel,
+    IRanges,
+    S4Vectors
+
 Suggests:
     knitr,
     testthat,
@@ -48,7 +55,10 @@ Suggests:
     paletteer,
     reshape,
     seriation,
-    wesanderson
+    wesanderson,
+    curatedPCaData,        # for prostate‐cancer examples
+    curatedTCGAData,       # for TCGA‐based examples
+    curatedTCGADataData    # sometimes required by curatedTCGAData
 biocViews: Software, Visualization
 URL: https://github.com/famanalytics0/MultiModalGraphics
 BugReports: https://github.com/famanalytics0/MultiModalGraphics/issues
