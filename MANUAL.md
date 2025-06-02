@@ -1,7 +1,9 @@
 # MultiModalGraphics User Manual
 
 **Version:** 0.99.5
+
 **Authors:** Foziya Ahmed Mohammed, Malick Fall, Rasha Hammieh, Seid Muhie
+
 **License:** MIT
 
 ---
