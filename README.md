@@ -1,4 +1,4 @@
-````markdown
+
 # MultiModalGraphics
 
 **Version:** 0.99.5  
@@ -21,7 +21,7 @@ This README guides you through installation, per-class usage (ClearScatterplot, 
 
 ---
 
-````markdown
+
 ## Quick Start
 
 Welcome to **MultiModalGraphics**. This section gives you a rapid, hands-on introduction to installing the package and producing your first plots. For full details, see the [User Manual](MANUAL.md).
