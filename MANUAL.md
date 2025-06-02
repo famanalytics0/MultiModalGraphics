@@ -1,7 +1,7 @@
 # MultiModalGraphics User Manual
 
 **Version:** 0.99.5
-**Authors:** Seid Muhie, Malick Fall, Foziya Ahmed Mohammed
+**Authors:** Foziya Ahmed Mohammed, Malick Fall, Rasha Hammieh, Seid Muhie
 **License:** Artistic-2.0
 
 ---
@@ -2795,7 +2795,7 @@ sessionInfo()
 If you use **MultiModalGraphics** in a publication, please cite:
 
 ```
-Muhie S (2025). MultiModalGraphics: Multi‐Modal Visualization & Plotting Utilities. R package version 0.99.5.
+Mohammed FA, Fall M, Hammamieh R, Muhie S (2025). MultiModalGraphics: Multi‐Modal Visualization & Plotting Utilities. R package version 0.99.5.
 ```
 
 Visit the GitHub repository for more examples, bug reports, and feature requests:
