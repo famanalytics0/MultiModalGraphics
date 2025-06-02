@@ -1,4 +1,3 @@
-
 # MultiModalGraphics
 
 **Version:** 0.99.5  
