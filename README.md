@@ -21,6 +21,414 @@ This README guides you through installation, per-class usage (ClearScatterplot, 
 
 ---
 
+````markdown
+## Quick Start
+
+Welcome to **MultiModalGraphics**. This section gives you a rapid, hands-on introduction to installing the package and producing your first plots. For full details, see the [User Manual](MANUAL.md).
+
+---
+
+### 1. Installation
+
+```r
+# (1) Install BiocManager if needed
+if (!requireNamespace("BiocManager", quietly=TRUE))
+    install.packages("BiocManager")
+
+# (2) Install MultiModalGraphics from Bioconductor
+BiocManager::install("MultiModalGraphics")
+
+# (3) Load the package
+library(MultiModalGraphics)
+
+# (4) (Optional) Install suggested data packages for examples:
+BiocManager::install(c("curatedPCaData", "curatedTCGAData", "curatedTCGADataData"))
+````
+
+---
+
+### 2. Core Dependencies
+
+```r
+library(ggplot2)             # for plotting
+library(dplyr)               # for data handling
+library(matrixStats)         # for variance filtering
+library(BiocParallel)        # for parallel DE
+library(MultiAssayExperiment) 
+library(SummarizedExperiment)
+library(limma)               # for differential expression
+library(RColorBrewer)        # for palettes
+library(ComplexHeatmap)      # for heatmaps
+```
+
+---
+
+### 3. Volcano Plots with **ClearScatterplot**
+
+#### 3.1. From a Precomputed DE Table
+
+```r
+# (a) Simulate a small DE table
+set.seed(101)
+df_de <- data.frame(
+  log2fc     = rnorm(200, sd=1),
+  negLog10p  = -log10(runif(200, 0, 0.1)),
+  regulation = sample(c("up","down"), 200, replace=TRUE),
+  SampleType = rep(c("Group1","Group2"), each=100),
+  timePoint  = rep(c("T1","T2"), times=100),
+  stringsAsFactors = FALSE
+)
+
+# (b) Construct a ClearScatterplot object
+cs1 <- ClearScatterplot(
+  data           = df_de,
+  highLog2fc     = 1.0,      # log2FC > 1 → “up”
+  lowLog2fc      = -1.0,     # log2FC < -1 → “down”
+  negLog10pValue = 1.301     # –log10(p) > 1.301 → p < 0.05
+)
+
+# (c) Build and display the ggplot
+cs1 <- createPlot(
+  cs1,
+  color1 = "steelblue",      # color for “down”
+  color2 = "grey50",         # color for “neutral”
+  color3 = "tomato",         # color for “up”
+  title  = "Example Volcano (Precomputed DE)",
+  subtitle = "Faceted by SampleType (X) and timePoint (Y)"
+)
+show(cs1)
+```
+
+> **Result:** A faceted volcano plot with up/down/neutral points colored as specified, and counts of “up” and “down” annotated in each facet.
+
+---
+
+#### 3.2. From an Expression Matrix + Metadata
+
+```r
+# (a) Simulate a small counts matrix: 100 genes × 20 samples
+set.seed(102)
+expr <- matrix(rpois(100*20, lambda=10), nrow=100, ncol=20)
+rownames(expr) <- paste0("Gene", 1:100)
+colnames(expr) <- paste0("Sample", 1:20)
+
+# (b) Simulate sample metadata
+meta <- data.frame(
+  Group      = rep(c("A","B"), each=10),
+  SampleType = rep(c("X","Y"), times=10),
+  timePoint  = rep(c("T1","T2"), each=5, times=2),
+  row.names  = paste0("Sample", 1:20),
+  stringsAsFactors = FALSE
+)
+
+# (c) Create a ClearScatterplot_table object (runs limma DE under the hood)
+cs2 <- ClearScatterplot_table(
+  expr         = expr,
+  meta         = meta,
+  groupColumn  = "Group",
+  sampleType   = "SampleType",
+  timepoint    = "timePoint",
+  dataType     = "auto",       # automatically detects “count”
+  var_quantile = 0.75,         # filters out lowest 25% variance genes
+  parallel     = TRUE,
+  BPPARAM      = MulticoreParam(workers = 2)
+)
+
+# (d) Build and display the volcano
+cs2 <- createPlot(
+  cs2,
+  color1 = "navy", color2 = "grey80", color3 = "firebrick",
+  title  = "Matrix + Metadata Volcano"
+)
+show(cs2)
+```
+
+> **Result:** The package performs variance filtering, runs voom+limma per SampleType–timePoint cell, then stitches all DE results into a single faceted volcano plot.
+
+---
+
+#### 3.3. From a **MultiAssayExperiment** Object
+
+```r
+# (a) Load a small example MAE (miniACC)
+data("miniACC", package="MultiAssayExperiment")
+
+# (b) Set up parallel workers
+BPPARAM <- MulticoreParam(workers = 2)
+
+# (c) Create a ClearScatterplot_MAE object
+cs3 <- ClearScatterplot_MAE(
+  mae            = miniACC,
+  assayName      = "RNASeq2GeneNorm",
+  groupColumn    = "C1A.C1B",
+  sampleType     = "pathologic_stage",
+  timepoint      = "MethyLevel",
+  dataType       = "auto",
+  vectorized     = "auto",
+  parallel       = TRUE,
+  BPPARAM        = BPPARAM,
+  var_quantile   = 0.75
+)
+
+# (d) Build and display
+cs3 <- createPlot(
+  cs3,
+  color1 = "darkblue",
+  color2 = "grey70",
+  color3 = "darkred",
+  title  = "miniACC Volcano: C1A vs C1B"
+)
+show(cs3)
+```
+
+> **Result:** DE is run per facet (Stage × Methylation) using the chosen assay in the MAE. The final output is a publication-ready faceted volcano.
+
+---
+
+### 4. Custom Heatmaps with **InformativeHeatmap**
+
+#### 4.1. From a Fold-Change + P-Value Matrix
+
+```r
+# (a) Simulate logFC and p-value matrices
+set.seed(103)
+logFC_mat <- matrix(rnorm(50*4, mean=0, sd=1), nrow=50, ncol=4)
+pval_mat  <- matrix(runif(50*4, 0, 0.2), nrow=50, ncol=4)
+rownames(logFC_mat) <- paste0("Gene", 1:50)
+colnames(logFC_mat) <- paste0("Cond", 1:4)
+rownames(pval_mat)  <- rownames(logFC_mat)
+colnames(pval_mat)  <- colnames(logFC_mat)
+
+# (b) Build InformativeHeatmap directly from matrices
+ih1 <- InformativeHeatmapFromMAT(
+  logFC_matrix     = logFC_mat,
+  pvalue_matrix    = pval_mat,
+  pvalue_cutoff    = 0.05,
+  trending_cutoff  = 0.1,
+  pch_val          = 16,
+  unit_val         = 4,
+  significant_color= "black",
+  trending_color   = "yellow",
+  col              = circlize::colorRamp2(c(-2,0,2), c("blue","white","red")),
+  cluster_rows     = TRUE,
+  cluster_columns  = TRUE,
+  show_row_names   = FALSE,
+  show_column_names= TRUE,
+  name             = "log2FC"
+)
+
+# (c) Extract and draw
+ht1 <- getHeatmapObject(ih1)
+ComplexHeatmap::draw(ht1, heatmap_legend_side = "right")
+```
+
+> **Result:** A 50×4 heatmap of log₂FC with colored points overlayed where p < 0.05 (black) or 0.05 ≤ p < 0.1 (yellow).
+
+---
+
+#### 4.2. From a Matrix + Metadata (DE‐Based Heatmap)
+
+```r
+# (a) Reuse expr (100×20) and meta from Section 3.2
+# (b) Create InformativeHeatmap (performs DE per SampleType as columns)
+ih2 <- InformativeHeatmap(
+  data             = expr,
+  meta             = meta,
+  groupColumn      = "Group",
+  sampleType       = "SampleType",
+  timepoint        = NULL,
+  dataType         = "continuous",
+  var_quantile     = 0.5,
+  pvalue_cutoff    = 0.05,
+  trending_cutoff  = 0.1,
+  fc_cutoff        = 0.585,
+  min_samples      = 3,
+  max_features     = 30,
+  runClustering    = FALSE,
+  pch_val          = 16,
+  unit_val         = 3,
+  significant_color= "darkred",
+  trending_color   = "orange",
+  heatmap_scale    = "logFC",
+  col              = circlize::colorRamp2(c(-2,0,2), c("navy","white","firebrick")),
+  cluster_rows     = TRUE,
+  cluster_columns  = TRUE,
+  show_row_names   = FALSE,
+  show_column_names= TRUE,
+  name             = "log2FC"
+)
+
+# (c) Extract and draw
+ht2 <- getHeatmapObject(ih2)
+ComplexHeatmap::draw(ht2, heatmap_legend_side = "right")
+```
+
+> **Result:** DE is run per SampleType, the top 30 features by variance are displayed as log₂FC, and significant/trending points are overlaid.
+
+---
+
+#### 4.3. From a **MultiAssayExperiment** + **iClusterPlus**
+
+```r
+# (a) Assume you have a small MAE named `tiny_mae` with two assays
+#     (see the Manual for how to build tiny_mae from curatedTCGAData)
+
+# (b) Build InformativeHeatmapFromMAE (runs iClusterPlus → limma)
+ih3 <- InformativeHeatmapFromMAE(
+  mae                = tiny_mae,
+  significant_pvalue = 0.05,
+  trending_pvalue    = 0.1,
+  pch_val            = 16,
+  unit_val           = 3,
+  significant_color  = "darkred",
+  trending_color     = "darkorange",
+  K                  = 2,
+  lambda             = 0.1,
+  coef               = 2,
+  heatmap_scale      = "logFC",
+  col                = circlize::colorRamp2(c(-2,0,2), c("blue","white","red")),
+  cluster_rows       = TRUE,
+  cluster_columns    = TRUE,
+  show_row_names     = FALSE,
+  show_column_names  = TRUE,
+  name               = "log2FC"
+)
+
+# (c) Extract and draw
+ht3 <- getHeatmapObject(ih3)
+ComplexHeatmap::draw(ht3, heatmap_legend_side = "right")
+```
+
+> **Result:** Samples are clustered via iClusterPlus, DE is run per cluster vs. cluster, and the combined log₂FC matrix is shown with significant/trending overlays.
+
+---
+
+### 5. 2D Tile-and-Point Heatmaps with **MultifeatureGrid**
+
+#### 5.1. Using Built-In Demo Data
+
+```r
+# (a) Fetch the demo data frame
+demo_df <- get_multifeature_grid_df()
+str(demo_df)
+# 'data.frame': 16 rows × 6 columns:
+#  $ tissue             : Factor
+#  $ signaling          : Factor
+#  $ Activation_z_score : num
+#  $ p                  : num
+#  $ number_of_genes    : int
+#  $ timePoint          : Factor
+
+# (b) Construct the MultifeatureGrid object
+mg <- MultifeatureGrid(
+  data           = demo_df,
+  title          = "Demo Multifeature Grid",
+  x_label        = "Tissue",
+  y_label        = "Pathway",
+  logpval_label  = "-Log10(P-Value)",
+  zscore_label   = "Activation Z-Score",
+  numitems_label = "Gene Count",
+  color_palette  = "RdYlBu",
+  breaks         = seq(-2, 2, 0.5)
+)
+
+# (c) Plot the heatmap
+plot_heatmap(
+  mg,
+  pValueColumn       = "p",
+  lowColor           = "lightblue",
+  highColor          = "darkblue",
+  borderColor        = "grey50",
+  columnForNumber    = "number_of_genes",
+  independantVariable= "timePoint"
+)
+```
+
+> **Result:** A tile-and-point grid: tiles show z-scores, colored points show –log₁₀(p), and point size reflects gene count, faceted by `timePoint`.
+
+---
+
+### 6. Unified Interface with `MultiModalPlot`
+
+When you have **multiple modalities** to display (e.g., both a volcano and a heatmap side by side, or two different assays), you can call a single function, **`MultiModalPlot()`**, which auto-detects input types and stitches panels together.
+
+```r
+# Example: Volcano (MAE) + Heatmap (precomputed)
+volcano_panel <- ClearScatterplot_MAE(
+  mae          = miniACC,
+  assayName    = "RNASeq2GeneNorm",
+  groupColumn  = "C1A.C1B",
+  sampleType   = "pathologic_stage",
+  timepoint    = "MethyLevel",
+  parallel     = FALSE
+)
+
+# Simulate simple logFC + p-value matrices
+set.seed(104)
+lfc  <- matrix(rnorm(20*3, sd=1), nrow=20, ncol=3)
+pmat <- matrix(runif(20*3, 0, 0.2), nrow=20, ncol=3)
+rownames(lfc)  <- paste0("Gene", 1:20)
+rownames(pmat) <- rownames(lfc)
+colnames(lfc)  <- paste0("Cond", 1:3)
+colnames(pmat) <- colnames(lfc)
+
+# Wrap in a named list
+inputs <- list(
+  Volcano = miniACC,
+  Heatmap = list(logFC = lfc, pval = pmat)
+)
+
+# Call MultiModalPlot()
+mm_plot <- MultiModalPlot(
+  inputs,
+  assayNames    = c(Volcano = "RNASeq2GeneNorm"),
+  groupColumns  = c(Volcano = "C1A.C1B"),
+  sampleTypes   = c(Volcano = "pathologic_stage"),
+  timepoints    = c(Volcano = "MethyLevel"),
+  panel_type    = "volcano",       # “volcano” for volcano panels
+  color1        = "navy",
+  color3        = "firebrick"
+)
+
+print(mm_plot)
+
+# To request a heatmap instead:
+mm_heat <- MultiModalPlot(
+  inputs,
+  assayNames    = c(Volcano = "RNASeq2GeneNorm"),
+  groupColumns  = c(Volcano = "C1A.C1B"),
+  sampleTypes   = c(Volcano = "pathologic_stage"),
+  timepoints    = c(Volcano = "MethyLevel"),
+  panel_type    = "heatmap",
+  col_Volcano   = circlize::colorRamp2(c(-2,0,2), c("blue","white","red")),
+  cluster_rows  = TRUE,
+  cluster_columns = TRUE
+)
+
+ComplexHeatmap::draw(mm_heat, heatmap_legend_side = "right")
+```
+
+> **Note:** When `MultiModalPlot()` sees a `MultiAssayExperiment` it dispatches to `ClearScatterplot_MAE` or `InformativeHeatmapFromMAE`. If it sees a **list** with `expr` & `meta`, it dispatches to “table” constructors. If it sees precomputed matrices or DE tables, it uses the direct-from-mat constructors.
+
+---
+
+### 7. Linking the Manual
+
+For **in-depth guidance**, step-by-step walkthroughs, and advanced customization, please consult the **User Manual**:
+
+**→ [MANUAL.md](MANUAL.md) ←**
+
+The Manual provides:
+
+* Detailed explanations of every function and argument
+* Real-world, lightweight examples (TCGA, prostate cancer, miniACC)
+* Advanced tips for parallelization, custom layer functions, color theming, and troubleshooting
+
+---
+
+With these few lines of code, you can generate publication-ready volcano plots, custom heatmaps, or integrated multimodal displays. For more examples and explanations, see the User Manual linked above.
+
+---
 ## Table of Contents
 
 1. [Installation](#installation)  
