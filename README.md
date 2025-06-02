@@ -1253,7 +1253,7 @@ sessionInfo()
 
 Please cite:
 
-> Muhie S (2025). **MultiModalGraphics: Multi-Modal Visualization & Plotting Utilities**. R package version 0.99.5.
+> Mohammed FA, Fall M, Hammamieh H, Muhie S (2025). **MultiModalGraphics: Multi-Modal Visualization & Plotting Utilities**. R package version 0.99.5.
 
 ---
 
