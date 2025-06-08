@@ -22,7 +22,7 @@ export(getHeatmapObject)
 export(updateLayerFun)
 export(show)
 
-## === Helper Data Getters (if you have them) ===
+## === Helper Data Getters (if present) ===
 export(get_clear_scatterplot_df)
 export(get_informative_heatmap_df)
 export(get_multifeature_grid_df)
@@ -89,6 +89,7 @@ importFrom(grid, unit, gpar, grid.points)
 
 ## RColorBrewer for palettes
 importFrom(RColorBrewer, brewer.pal)
+
 
 
 
