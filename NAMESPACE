@@ -10,7 +10,7 @@ export(ClearScatterplot)
 export(ClearScatterplot_MAE)
 export(ClearScatterplot_table)
 export(InformativeHeatmap)
-export(InformativeHeatmapFromMAE)
+# export(InformativeHeatmapFromMAE)
 export(MultifeatureGrid)
 export(MultiModalPlot)
 
@@ -28,9 +28,9 @@ exportMethods(getHeatmapObject)
 exportMethods(updateLayerFun)
 
 ## ---- Helper getters ----
-export(get_clear_scatterplot_df)
-export(get_informative_heatmap_df)
-export(get_multifeature_grid_df)
+#export(get_clear_scatterplot_df)
+#export(get_informative_heatmap_df)
+#export(get_multifeature_grid_df)
 
 ## ---- Imports: base & stats ----
 import(methods)
