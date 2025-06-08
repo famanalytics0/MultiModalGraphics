@@ -385,6 +385,7 @@ setGeneric(
   function(fc_matrix, pval_matrix, ...) standardGeneric("InformativeHeatmap_table")
 )
 #’ @rdname InformativeHeatmap
+#' @export
 setMethod(
   "InformativeHeatmap_table",
   signature(fc_matrix = "matrix", pval_matrix = "matrix"),
