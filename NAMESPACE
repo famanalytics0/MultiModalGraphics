@@ -20,7 +20,7 @@ export(getHeatmapObject)
 export(updateLayerFun)
 export(MultiModalPlot)
 
-## Helper data getters (exported for completeness)
+## Helper data getters
 export(get_clear_scatterplot_df)
 export(get_informative_heatmap_df)
 export(get_multifeature_grid_df)
@@ -37,54 +37,53 @@ exportMethods(updateLayerFun)
 ## Imports
 import(methods)
 
-## ggplot2 for volcano & grid plotting
+## ggplot2 for plotting
 importFrom(ggplot2,
-           ggplot, aes,
-           geom_jitter, geom_point, geom_text, geom_tile,
-           facet_grid,
-           labs, scale_color_manual, scale_color_gradient,
-           scale_fill_gradientn, scale_fill_hue, scale_size,
-           theme_bw, theme,
-           element_text, element_rect, element_line, element_blank)
+  ggplot, aes,
+  geom_jitter, geom_point, geom_text, geom_tile,
+  facet_grid,
+  labs, scale_color_manual, scale_color_gradient,
+  scale_fill_gradientn, scale_fill_hue, scale_size,
+  theme_bw, theme,
+  element_text, element_rect, element_line, element_blank
+)
 
-## dplyr/tibble for grouping & tallying
+## dplyr for grouping & tallying
 importFrom(dplyr, group_by, summarize, tally)
 
-## magrittr pipes
+## magrittr for pipes
 importFrom(magrittr, `%>%`)
 
-## stats for modelling & quantiles
+## stats for model.matrix & quantile
 importFrom(stats, model.matrix, quantile)
 
 ## matrixStats for variance filtering
 importFrom(matrixStats, rowVars)
 
-## BiocParallel for parallel execution
+## BiocParallel for parallel DE
 importFrom(BiocParallel, bplapply, bpworkers)
 
-## MultiAssayExperiment for MAE workflows
-importFrom(MultiAssayExperiment,
-           experiments, colData, sampleMap)
-
-## SummarizedExperiment for assay extraction
+## MultiAssayExperiment & SummarizedExperiment for MAE workflows
+importFrom(MultiAssayExperiment, experiments, colData, sampleMap)
 importFrom(SummarizedExperiment, assay)
 
-## limma for DE analysis
+## limma for differential expression
 importFrom(limma, voom, lmFit, eBayes, topTable)
 
 ## ComplexHeatmap for heatmaps
 importFrom(ComplexHeatmap, Heatmap, restore_matrix)
 
-## circlize for heatmap color scales
+## circlize for color scales
 importFrom(circlize, colorRamp2)
 
-## patchwork for combining ggplots
-importFrom(patchwork, `+`)
+## patchwork for ggplot combining
+import(patchwork)
 
-## grid for low-level heatmap layer drawing
+## grid for low‐level drawing in InformativeHeatmap
 importFrom(grid, unit, gpar, grid.points)
 
 ## RColorBrewer for palettes
 importFrom(RColorBrewer, brewer.pal)
+
 
 
