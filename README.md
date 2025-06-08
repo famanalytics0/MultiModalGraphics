@@ -89,9 +89,9 @@ cs1 <- ClearScatterplot(
 # (c) Build and display the ggplot
 cs1 <- createPlot(
   cs1,
-  color1 = "steelblue",      # color for “down”
+  color1 = "tomato",      # color for “down”
   color2 = "grey50",         # color for “neutral”
-  color3 = "tomato",         # color for “up”
+  color3 = "steelblue",         # color for “up”
   title  = "Example Volcano (Precomputed DE)",
   subtitle = "Faceted by SampleType (X) and timePoint (Y)"
 )
