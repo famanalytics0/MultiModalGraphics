@@ -173,7 +173,7 @@ cs2 <- ClearScatterplot_table(
 # (d) Build and display the volcano
 cs2 <- createPlot(
   cs2,
-  color1 = "navy", color2 = "grey80", color3 = "firebrick",
+  color1 = "firebrick", color2 = "grey80", color3 = "navy",
   title  = "Matrix + Metadata Volcano"
 )
 show(cs2)
@@ -209,9 +209,9 @@ cs3 <- ClearScatterplot_MAE(
 # (d) Build and display
 cs3 <- createPlot(
   cs3,
-  color1 = "darkblue",
+  color1 = "darkred",
   color2 = "grey70",
-  color3 = "darkred",
+  color3 = "darkblue",
   title  = "miniACC Volcano: C1A vs C1B"
 )
 show(cs3)
