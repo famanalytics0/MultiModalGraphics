@@ -245,7 +245,7 @@ ih1 <- InformativeHeatmapFromMAT(
   unit_val         = 4,
   significant_color= "black",
   trending_color   = "yellow",
-  col              = circlize::colorRamp2(c(-2,0,2), c("red", "white", "blue")),
+  col              = circlize::colorRamp2(c(-2,0,2), c("blue", "white", "red")),
   cluster_rows     = TRUE,
   cluster_columns  = TRUE,
   show_row_names   = FALSE,
