@@ -98,6 +98,43 @@ cs1 <- createPlot(
 show(cs1)
 ```
 
+# Tiny smoke‐test dataset
+
+```r
+set.seed(42)
+df <- data.frame(
+  log2fc     = rnorm(100),
+  negLog10p  = runif(100, 0, 5),
+  regulation = sample(c("up","down"), 100, TRUE),
+  SampleType = sample(c("A","B"), 100, TRUE),
+  stringsAsFactors = FALSE
+)
+
+# This line must appear first, or you’ll see “object 'cs' not found”
+cs <- ClearScatterplot(df)
+
+# Now build + draw in one step
+show(
+  createPlot(
+    cs,
+    color1          = "tomato",     # up = steelblue
+    color2          = "lightgrey",     # neutral = lightgrey
+    color3          = "steelblue",        # down = tomato
+    xlab            = "Custom X-Axis",
+    ylab            = "Custom Y-Axis",
+    text_family     = "Times New Roman",
+    text_size       = 14,
+    point_size      = 3,
+    point_alpha     = 0.8,
+    legend_position = "right",
+    legend_title    = "My Legend",
+    legend_labels   = c("Down","Neutral","Up"),
+    custom_theme    = theme_minimal(),
+    title           = "Volcano Plot—No Hard‐Coded Numeric Flags"
+  )
+)
+```
+
 > **Result:** A faceted volcano plot with up/down/neutral points colored as specified, and counts of “up” and “down” annotated in each facet.
 
 ---
