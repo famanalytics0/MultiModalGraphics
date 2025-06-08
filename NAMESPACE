@@ -21,10 +21,11 @@ export(getHeatmapObject)
 export(updateLayerFun)
 
 ## ---- S4 method exports ----
-exportMethods("createPlot", "show")
-exportMethods("plot_heatmap")
-exportMethods("getHeatmapObject")
-exportMethods("updateLayerFun")
+exportMethods(createPlot)
+exportMethods(show)
+exportMethods(plot_heatmap)
+exportMethods(getHeatmapObject)
+exportMethods(updateLayerFun)
 
 ## ---- Helper getters ----
 export(get_clear_scatterplot_df)
