@@ -29,7 +29,11 @@ setClass(
 #’ Generic Constructor: InformativeHeatmap
 #’ @param ... Arguments passed to specific methods
 #’ @export
-setGeneric("InformativeHeatmap", function(...) standardGeneric("InformativeHeatmap"))
+
+setGeneric(
+  "InformativeHeatmap",
+  function(data, ...) standardGeneric("InformativeHeatmap")
+)
 
 #’ -----------------------------------------------------------------------------
 #’ Constructor Method: Single‐Modality (Matrix + Metadata / MAE)
@@ -829,3 +833,20 @@ setMethod(
   }
 )
 
+#’ -----------------------------------------------------------------------------
+#’ Show method for InformativeHeatmap
+#’
+#’ Draws the ComplexHeatmap object stored in the S4 slot.
+#’
+#’ @param object  An InformativeHeatmap S4 object
+#’ @exportMethod show
+setMethod(
+  "show",
+  signature(object = "InformativeHeatmap"),
+  function(object) {
+    ht <- object@heatmap
+    # if it’s a HeatmapList, draw them all
+    ComplexHeatmap::draw(ht)
+    invisible(object)
+  }
+)
