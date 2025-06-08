@@ -47,8 +47,7 @@ Imports:
     RColorBrewer (>= 1.1-3),
     patchwork (>= 1.0.0),
     circlize (>= 0.4.0),
-    grid,
-    patchwork
+    grid
 Suggests:
     knitr,
     testthat,
