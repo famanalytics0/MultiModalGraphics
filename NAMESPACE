@@ -26,46 +26,48 @@ export(get_informative_heatmap_df)
 export(get_multifeature_grid_df)
 
 ## ---- S4 Methods ----
-exportMethods(createPlot, show, plot_heatmap, getHeatmapObject, updateLayerFun)
+exportMethods(ClearScatterplot, InformativeHeatmap, MultifeatureGrid,
+              createPlot, show, plot_heatmap, getHeatmapObject, updateLayerFun)
 
-## ---- Base / Stats ----
+## ---- Imports: base & stats ----
 import(methods)
 importFrom(stats, model.matrix, quantile, as.formula)
 
-## ---- ggplot2 / dplyr / magrittr ----
+## ---- Imports: ggplot2 / dplyr / magrittr ----
 importFrom(ggplot2,
-  ggplot, aes,
+  ggplot, aes, aes_string,
   geom_jitter, geom_point, geom_text, geom_tile,
-  facet_grid,
-  labs, scale_color_manual, scale_color_gradient,
+  facet_grid, labs,
+  scale_color_manual, scale_color_gradient,
   scale_fill_gradientn, scale_fill_hue, scale_size,
   theme_bw, theme,
   element_text, element_rect, element_line, element_blank
 )
 importFrom(dplyr, group_by, summarize, tally)
-importFrom(magrittr, `%>%`)
+importFrom(magrittr, "%>%")
 
-## ---- Variance Filtering & Parallelism ----
+## ---- Imports: variance filtering & parallel ----
 importFrom(matrixStats, rowVars)
 importFrom(BiocParallel, bplapply, bpworkers)
 
-## ---- MAE Support ----
+## ---- Imports: MAE support ----
 importFrom(MultiAssayExperiment, experiments, colData, sampleMap)
 importFrom(SummarizedExperiment, assay)
 
-## ---- DE Analysis (limma) ----
+## ---- Imports: differential expression (limma) ----
 importFrom(limma, voom, lmFit, eBayes, topTable)
 
-## ---- Heatmaps ----
+## ---- Imports: ComplexHeatmap & layering ----
 importFrom(ComplexHeatmap, Heatmap, restore_matrix)
 importFrom(circlize, colorRamp2)
-import(patchwork)                            # bring in its '+' for combining ggplots
+import(patchwork)                      # for combining ggplots via '+'
 importFrom(grid, unit, gpar, grid.points)
-importFrom(RColorBrewer, brewer.pal)
 
-## ---- Utilities ----
+## ---- Imports: palettes & scales ----
+importFrom(RColorBrewer, brewer.pal)
 importFrom(scales, comma_format)
 importFrom(grDevices, colorRampPalette)
+
 
 
 
