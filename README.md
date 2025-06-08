@@ -235,10 +235,11 @@ colnames(logFC_mat) <- paste0("Cond", 1:4)
 rownames(pval_mat)  <- rownames(logFC_mat)
 colnames(pval_mat)  <- colnames(logFC_mat)
 
+
 # (b) Build InformativeHeatmap directly from matrices
-ih1 <- InformativeHeatmapFromMAT(
-  logFC_matrix     = logFC_mat,
-  pvalue_matrix    = pval_mat,
+ih1 <- InformativeHeatmap_table(
+  fc_matrix        = logFC_mat,
+  pval_matrix      = pval_mat,
   pvalue_cutoff    = 0.05,
   trending_cutoff  = 0.1,
   pch_val          = 16,
@@ -253,9 +254,12 @@ ih1 <- InformativeHeatmapFromMAT(
   name             = "log2FC"
 )
 
+
+
 # (c) Extract and draw
 ht1 <- getHeatmapObject(ih1)
 ComplexHeatmap::draw(ht1, heatmap_legend_side = "right")
+
 ```
 
 > **Result:** A 50×4 heatmap of log₂FC with colored points overlayed where p < 0.05 (black) or 0.05 ≤ p < 0.1 (yellow).
