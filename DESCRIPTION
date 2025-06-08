@@ -46,8 +46,8 @@ Imports:
     ComplexHeatmap (>= 2.6.0),
     RColorBrewer (>= 1.1-3),
     patchwork (>= 1.0.0),
-    circlize (>= 0.4.0),
-    grid
+    circlize (>= 0.4.0)
+
 Suggests:
     knitr,
     testthat,
@@ -59,11 +59,11 @@ Suggests:
     reshape,
     seriation,
     wesanderson,
-    circlize,
     curatedPCaData,
     curatedTCGAData,
     curatedTCGADataData,
     shiny
+
 VignetteBuilder: knitr
 biocViews: 
     DifferentialExpression,
@@ -71,6 +71,8 @@ biocViews:
     Visualization,
     MultiAssayExperiment,
     Software
+
 URL: https://github.com/famanalytics0/MultiModalGraphics
 BugReports: https://github.com/famanalytics0/MultiModalGraphics/issues
+
 
