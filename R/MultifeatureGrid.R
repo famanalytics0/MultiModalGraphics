@@ -31,6 +31,7 @@ utils::globalVariables(c("Activation_z_score", "neglog10p"))
 #’ @importFrom ggplot2 ggplot aes_string geom_tile scale_fill_gradientn geom_point scale_color_gradient scale_size labs facet_grid theme_bw theme element_text element_rect
 #’ @importFrom RColorBrewer brewer.pal
 #’ @importFrom grDevices colorRampPalette
+#’ @importFrom scales comma_format
 #’ @exportClass MultifeatureGrid
 #’ @export plot_heatmap
 setClass(
@@ -172,28 +173,6 @@ setGeneric("plot_heatmap", function(object, ...) standardGeneric("plot_heatmap")
 #’   If that column is absent, no faceting is applied. Default `"timePoint"`.
 #’
 #’ @return Invisibly returns the ggplot object, and prints it to the current device.
-#’ @examples
-#’ \dontrun{
-#’ df <- data.frame(
-#’   tissue = factor(rep(c("T1","T2"), each = 4)),
-#’   signaling = factor(rep(c("P1","P2","P3","P4"), 2)),
-#’   Activation_z_score = runif(8, -2, 2),
-#’   p   = runif(8, 0, 0.05),
-#’   number_of_genes = sample(1:100, 8),
-#’   timePoint = rep(c("Early","Late"), 4),
-#’   stringsAsFactors = FALSE
-#’ )
-#’ mg <- MultifeatureGrid(df, title = "Test Heatmap")
-#’ plot_heatmap(
-#’   mg,
-#’   pValueColumn       = "p",
-#’   lowColor           = "yellow",
-#’   highColor          = "red",
-#’   borderColor        = "grey60",
-#’   columnForNumber    = "number_of_genes",
-#’   independantVariable = "timePoint"
-#’ )
-#’ }
 #’ @export
 setMethod("plot_heatmap", signature(object = "MultifeatureGrid"),
           function(object,
@@ -215,11 +194,9 @@ setMethod("plot_heatmap", signature(object = "MultifeatureGrid"),
   breaks_vec    <- object@breaks
 
   ## 2) Validate data frame columns
-  # 2a) tissue & signaling must exist
   if (!all(c("tissue", "signaling", "Activation_z_score") %in% colnames(data_df))) {
     stop("`data` must contain columns `tissue`, `signaling`, and `Activation_z_score`.")
   }
-  # 2b) pValueColumn must exist and be numeric, and > 0
   if (!is.character(pValueColumn) || length(pValueColumn) != 1) {
     stop("`pValueColumn` must be a single string naming a column in data.")
   }
@@ -232,7 +209,6 @@ setMethod("plot_heatmap", signature(object = "MultifeatureGrid"),
   if (any(data_df[[pValueColumn]] <= 0, na.rm = TRUE)) {
     stop("All p-values in `", pValueColumn, "` must be strictly > 0 (no zeros or negatives).")
   }
-  # 2c) columnForNumber must exist and be numeric ≥ 0
   if (!is.character(columnForNumber) || length(columnForNumber) != 1) {
     stop("`columnForNumber` must be a single string naming a column in data.")
   }
@@ -245,43 +221,34 @@ setMethod("plot_heatmap", signature(object = "MultifeatureGrid"),
   if (any(data_df[[columnForNumber]] < 0, na.rm = TRUE)) {
     stop("All values in `", columnForNumber, "` must be ≥ 0.")
   }
-  # 2d) independantVariable: if present, must be in data; else, we set it to NULL
   if (!is.character(independantVariable) || length(independantVariable) != 1) {
     stop("`independantVariable` must be a single string naming a column in data (or NA).")
   }
   facet_formula <- NULL
   if (independantVariable %in% colnames(data_df)) {
-    # At least one non-NA entry so facet makes sense
     if (all(is.na(data_df[[independantVariable]]))) {
       warning("`", independantVariable, "` exists but is all NA; facet will be skipped.")
     } else {
       facet_formula <- stats::as.formula(paste(". ~", independantVariable))
     }
-  } else {
-    facet_formula <- NULL
   }
-  ## 3) Compute –log10(p)
-  #    Avoid loops: vectorized transform
-  neg_log10p <- -log10(data_df[[pValueColumn]])
-  #    Append to a copy of the data frame
+
+  ## 3) Compute –log10(p) and attach
   plot_df <- data_df
-  plot_df[["neglog10p"]] <- neg_log10p
+  plot_df[["neglog10p"]] <- -log10(data_df[[pValueColumn]])
 
   ## 4) Build color ramp for Activation_z_score
   brewer_info <- RColorBrewer::brewer.pal.info
-  if (!(palette_name %in% rownames(brewer_info))) {
-    stop("`color_palette` '", palette_name, "' is not a valid RColorBrewer palette.")
-  }
-  max_colors <- brewer_info[palette_name, "maxcolors"]
-  base_cols  <- RColorBrewer::brewer.pal(max_colors, palette_name)
-  color_vec  <- grDevices::colorRampPalette(rev(base_cols))(100)
+  max_colors  <- brewer_info[palette_name, "maxcolors"]
+  base_cols   <- RColorBrewer::brewer.pal(max_colors, palette_name)
+  color_vec   <- grDevices::colorRampPalette(rev(base_cols))(100)
 
-  ## 5) Build ggplot call (fully vectorized, no loops)
+  ## 5) Build ggplot call
   p <- ggplot2::ggplot(
     plot_df,
     ggplot2::aes_string(
-      x   = "tissue",
-      y   = "signaling",
+      x    = "tissue",
+      y    = "signaling",
       fill = "Activation_z_score"
     )
   ) +
@@ -314,12 +281,12 @@ setMethod("plot_heatmap", signature(object = "MultifeatureGrid"),
     ) +
     ggplot2::theme_bw() +
     ggplot2::theme(
-      axis.text.x   = ggplot2::element_text(angle = 90, hjust = 1),
-      panel.border  = ggplot2::element_rect(fill = NA, colour = "grey80", size = 0.6),
-      axis.text     = ggplot2::element_text(size = 14, face = "bold"),
-      axis.title    = ggplot2::element_text(size = 18, face = "bold"),
-      plot.title    = ggplot2::element_text(size = 18, face = "bold", hjust = 0.5),
-      strip.text.x  = ggplot2::element_text(size = 14, face = "bold", colour = "black")
+      axis.text.x  = ggplot2::element_text(angle = 90, hjust = 1),
+      panel.border = ggplot2::element_rect(fill = NA, colour = "grey80", size = 0.6),
+      axis.text    = ggplot2::element_text(size = 14, face = "bold"),
+      axis.title   = ggplot2::element_text(size = 18, face = "bold"),
+      plot.title   = ggplot2::element_text(size = 18, face = "bold", hjust = 0.5),
+      strip.text.x = ggplot2::element_text(size = 14, face = "bold", colour = "black")
     )
 
   ## 6) Add faceting if requested
