@@ -48,7 +48,6 @@ Imports:
     patchwork (>= 1.0.0),
     circlize (>= 0.4.0),
     rlang,
-    MultiModalGraphics,
     grid
     
 Suggests:
