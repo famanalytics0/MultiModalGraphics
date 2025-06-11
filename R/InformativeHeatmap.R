@@ -35,8 +35,9 @@ setClass(
 #' @rdname InformativeHeatmap
 #' @export
 setGeneric("InformativeHeatmap",
-   function(data, meta = NULL, ...) standardGeneric("InformativeHeatmap")
- )
+  function(data, meta = NULL, pval_list = NULL, ...) standardGeneric("InformativeHeatmap")
+)
+
 #' @rdname InformativeHeatmap
 #' @export
 setGeneric("InformativeHeatmap_table", function(fc_matrix, pval_matrix, ...) standardGeneric("InformativeHeatmap_table"))
