@@ -4,55 +4,40 @@ if (getRversion() >= "2.15.1") utils::globalVariables(c(".data", "n1", "n2"))
 #' @importFrom magrittr %>%
 #' @importFrom rlang .data
 #' @importFrom dplyr group_by tally
-
-#' S4 Class: ClearScatterplot
-#'
-#' Encapsulates data and plotting logic for volcano plots with flexible faceting.
-#'
-#' @slot data   data.frame with plot data (must include `category` factor: "down"/"neutral"/"up")
-#' @slot plot   ANY storing the generated ggplot object
-#' @import methods
+#' @importFrom methods setClass new setGeneric setMethod
+#' @importFrom limma voom lmFit eBayes topTable
+#' @importFrom BiocParallel bpparam bpworkers bplapply
+#' @importFrom MultiAssayExperiment experiments sampleMap
+#' @importFrom SummarizedExperiment assay colData
+#' @importFrom matrixStats rowVars
+#' @importFrom stats quantile model.matrix
+#' @importFrom grid unit gpar grid.points
+#' @importFrom ggplot2 ggplot aes geom_jitter geom_point labs facet_grid theme_bw theme element_text element_rect scale_color_manual
 #' @exportClass ClearScatterplot
+
 setClass(
   "ClearScatterplot",
   slots   = c(data = "data.frame", plot = "ANY"),
   validity = function(object) {
-    # Required columns
     req <- c("log2fc", "negLog10p", "regulation", "SampleType")
     miss <- setdiff(req, names(object@data))
     if (length(miss)) {
       stop("Missing required columns in @data: ", paste(miss, collapse = ", "))
     }
-    # We also require a semantic factor column `category`
     if (!"category" %in% names(object@data)) {
-      stop("Slot `data` must contain a factor column `category` with levels 'down','neutral','up'.")
+      stop("Slot `data` must contain factor column `category` with levels 'down','neutral','up'.")
     }
-    # Check exact levels
     levs <- levels(object@data$category)
     if (!identical(levs, c("down","neutral","up"))) {
-      stop("`category` must have levels exactly: 'down', 'neutral', 'up'.")
+      stop("`category` levels must be exactly: 'down','neutral','up'.")
     }
     TRUE
   }
 )
 
-#' Generic: ClearScatterplot
-#'
 #' @export
-setGeneric(
-  "ClearScatterplot",
-  function(data, ...) standardGeneric("ClearScatterplot")
-)
+setGeneric("ClearScatterplot", function(data, ...) standardGeneric("ClearScatterplot"))
 
-#' Constructor: ClearScatterplot
-#'
-#' Create a ClearScatterplot object from a plain data.frame of DE‐style results.
-#'
-#' @param data           data.frame with required columns: log2fc, negLog10p, regulation, SampleType
-#' @param highLog2fc     threshold for up‐regulation (default = 0.585)
-#' @param lowLog2fc      threshold for down‐regulation (default = –0.585)
-#' @param negLog10pValue threshold for significance (default = 1.301)
-#' @return An S4 ClearScatterplot object whose `@data` slot contains a new `category` factor
 #' @export
 ClearScatterplot <- function(
   data,
@@ -63,15 +48,14 @@ ClearScatterplot <- function(
   stopifnot(is.data.frame(data))
   req <- c("log2fc", "negLog10p", "regulation", "SampleType")
   miss <- setdiff(req, names(data))
-  if (length(miss)) {
-    stop("Missing columns: ", paste(miss, collapse = ", "))
+  if (length(miss)) stop("Missing columns: ", paste(miss, collapse = ", "))
+  if (!is.numeric(data$log2fc) || !is.numeric(data$negLog10p)) {
+    stop("`log2fc` and `negLog10p` must be numeric")
   }
-  if (!is.numeric(data$log2fc))   stop("`log2fc` must be numeric")
-  if (!is.numeric(data$negLog10p)) stop("`negLog10p` must be numeric")
 
   na_idx <- is.na(data$log2fc) | is.na(data$negLog10p)
   if (any(na_idx)) {
-    warning(sum(na_idx), " row(s) removed due to NA in `log2fc` or `negLog10p`")
+    warning(sum(na_idx), " row(s) removed due to NA")
     data <- data[!na_idx, , drop = FALSE]
   }
 
@@ -92,8 +76,6 @@ ClearScatterplot <- function(
   methods::new("ClearScatterplot", data = data, plot = NULL)
 }
 
-#' Internal: run DE per “cell”
-#'
 #' @noRd
 .run_DE <- function(expr, meta, groupColumn, design, dataType, cell) {
   fit <- if (dataType == "count") {
@@ -119,13 +101,7 @@ ClearScatterplot <- function(
   )
 }
 
-#' Constructor: ClearScatterplot from MAE
-#'
 #' @export
-#' @importFrom MultiAssayExperiment experiments sampleMap
-#' @importFrom SummarizedExperiment assay colData
-#' @importFrom matrixStats rowVars
-#' @importFrom stats quantile model.matrix
 ClearScatterplot_MAE <- function(
   mae,
   assayName,
@@ -141,11 +117,11 @@ ClearScatterplot_MAE <- function(
   dataType   <- match.arg(dataType)
   vectorized <- match.arg(vectorized)
 
-  assays <- names(MultiAssayExperiment::experiments(mae))
-  if (!assayName %in% assays) {
+  assays <- MultiAssayExperiment::experiments(mae)
+  if (!assayName %in% names(assays)) {
     stop("Assay '", assayName, "' not found in this MAE.")
   }
-  se   <- MultiAssayExperiment::experiments(mae)[[assayName]]
+  se   <- assays[[assayName]]
   expr <- SummarizedExperiment::assay(se)
 
   rv  <- matrixStats::rowVars(expr, na.rm = TRUE)
@@ -175,8 +151,10 @@ ClearScatterplot_MAE <- function(
   meta <- meta[keep, , drop = FALSE]
 
   grp_counts <- table(meta[[groupColumn]])
-  if (any(grp_counts < 3)) stop("Each level of '", groupColumn, "' must have ≥ 3 samples.")
-  if (ncol(expr) < 6)       stop("Too few samples (<6) remain after filtering.")
+  if (any(grp_counts < 3)) stop(
+    sprintf("Each level of '%s' must have ≥ 3 samples.", groupColumn)
+  )
+  if (ncol(expr) < 6) stop("Too few samples (<6) remain after filtering.")
 
   .ClearScatterplot_core(
     expr, meta, groupColumn, sampleType,
@@ -186,11 +164,7 @@ ClearScatterplot_MAE <- function(
   )
 }
 
-#' Constructor: ClearScatterplot_table
-#'
 #' @export
-#' @importFrom matrixStats rowVars
-#' @importFrom stats quantile
 ClearScatterplot_table <- function(
   expr,
   meta,
@@ -219,8 +193,12 @@ ClearScatterplot_table <- function(
   meta2 <- meta2[keep, , drop = FALSE]
 
   grp_counts <- table(meta2[[groupColumn]])
-  if (any(grp_counts < 3)) stop("Each level of '", groupColumn, "' must have ≥ 3 samples.")
-  if (nrow(expr) < 1)     stop("No features remain after variance filtering.")
+  if (any(grp_counts < 3)) {
+    stop(sprintf("Each level of '%s' must have ≥ 3 samples.", groupColumn))
+  }
+  if (nrow(expr) < 1) {
+    stop("No features remain after variance filtering.")
+  }
 
   .ClearScatterplot_core(
     expr, meta2, groupColumn, sampleType,
@@ -230,8 +208,6 @@ ClearScatterplot_table <- function(
   )
 }
 
-#' Internal core for both MAE‐ and matrix‐based constructors
-#'
 #' @noRd
 .ClearScatterplot_core <- function(
   expr, meta, groupColumn, sampleType,
@@ -269,17 +245,21 @@ ClearScatterplot_table <- function(
     tp <- cells$timePoint[i]
     st <- cells$SampleType[i]
     idx <- if (!is.null(timepoint)) {
-      which(meta[[timepoint]]  == tp & meta[[sampleType]] == st)
+      which(meta[[timepoint]] == tp & meta[[sampleType]] == st)
     } else {
       which(meta[[sampleType]] == st)
     }
     if (length(idx) < 2 || length(unique(meta[[groupColumn]][idx])) < 2) return(NULL)
     ce <- expr[, idx, drop = FALSE]
     cm <- meta[idx, , drop = FALSE]
-    if (dataType == "continuous" && max(ce, na.rm = TRUE) > 50) ce <- log2(ce + 1)
+    if (dataType == "continuous" && max(ce, na.rm = TRUE) > 50) {
+      ce <- log2(ce + 1)
+    }
     design <- stats::model.matrix(~ cm[[groupColumn]])
     if (nrow(cm) <= ncol(design)) return(NULL)
-    .run_DE(ce, cm, groupColumn, design, dataType, list(SampleType = st, timePoint = tp))
+    .run_DE(ce, cm, groupColumn, design, dataType, list(
+      SampleType = st, timePoint = tp
+    ))
   }
 
   use_par <- (vectorized == "vectorized" ||
@@ -296,14 +276,10 @@ ClearScatterplot_table <- function(
   ClearScatterplot(pd)
 }
 
-#' Generic: createPlot
-#'
-#' @export
+#' @exportMethod createPlot
 setGeneric("createPlot", function(object, ...) standardGeneric("createPlot"))
 
-#' Method: createPlot for ClearScatterplot
-#'
-#' @import ggplot2
+#' @describeIn createPlot Render the volcano ggplot
 #' @exportMethod createPlot
 setMethod("createPlot", "ClearScatterplot", function(object,
   color1          = "cornflowerblue",
@@ -355,28 +331,33 @@ setMethod("createPlot", "ClearScatterplot", function(object,
        )
 
   # add count labels
-  if (has_tp && length(unique(df$timePoint))>1) {
-    up <- df %>% dplyr::filter(.data$category=="up")    %>% dplyr::group_by(.data$timePoint,.data$SampleType) %>% dplyr::tally(name="n1")
-    dn <- df %>% dplyr::filter(.data$category=="down")  %>% dplyr::group_by(.data$timePoint,.data$SampleType) %>% dplyr::tally(name="n2")
-  } else {
-    up <- df %>% dplyr::filter(.data$category=="up")    %>% dplyr::group_by(.data$SampleType) %>% dplyr::tally(name="n1")
-    dn <- df %>% dplyr::filter(.data$category=="down")  %>% dplyr::group_by(.data$SampleType) %>% dplyr::tally(name="n2")
-  }
-  if (nrow(up)) p <- p + ggplot2::geom_text(data=up, ggplot2::aes(label=n1),
-        x=Inf,y=Inf,hjust=1.1,vjust=1.1,color=color1,family=text_family,size=text_size/ggplot2::.pt)
-  if (nrow(dn)) p <- p + ggplot2::geom_text(data=dn, ggplot2::aes(label=n2),
-        x=-Inf,y=Inf,hjust=-0.1,vjust=1.1,color=color3,family=text_family,size=text_size/ggplot2::.pt)
+  up <- df %>%
+    dplyr::filter(.data$category == "up") %>%
+    dplyr::group_by(.data$SampleType, .data$timePoint) %>%
+    dplyr::tally(name = "n1")
+  dn <- df %>%
+    dplyr::filter(.data$category == "down") %>%
+    dplyr::group_by(.data$SampleType, .data$timePoint) %>%
+    dplyr::tally(name = "n2")
+
+  if (nrow(up)) p <- p + ggplot2::geom_text(
+    data = up, ggplot2::aes(label = n1),
+    x = Inf, y = Inf, hjust = 1.1, vjust = 1.1,
+    color = color1, family = text_family, size = text_size/ggplot2::.pt
+  )
+  if (nrow(dn)) p <- p + ggplot2::geom_text(
+    data = dn, ggplot2::aes(label = n2),
+    x = -Inf, y = Inf, hjust = -0.1, vjust = 1.1,
+    color = color3, family = text_family, size = text_size/ggplot2::.pt
+  )
 
   object@plot <- p
   invisible(object)
 })
 
-#' Method: show
-#'
 #' @exportMethod show
 setMethod("show", "ClearScatterplot", function(object) {
   if (is.null(object@plot)) object <- createPlot(object)
   print(object@plot)
   invisible(object)
 })
-
