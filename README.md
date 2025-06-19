@@ -150,6 +150,24 @@ Supports:
 
 ---
 
+#### ** Code Design for Efficiency**
+
+| Aspect             | Implementation in Code                                                    |
+| ------------------ | ------------------------------------------------------------------------- |
+| Vectorization      | Use of `matrixStats`, `vapply`, vectorized ggplot2 calls                  |
+| Parallelization    | `BiocParallel::bplapply` in core computations, user-customizable backends |
+| Modularization     | S4 classes, atomic functions, helper methods                              |
+| Real Data Examples | Shipped and demonstrated with airway, pasilla, TCGA, scNMT, miniACC, etc. |
+| User Controls      | Thresholding, filtering, parallel toggles, and backend selection          |
+| Benchmarking       | Documented with microbenchmark, empirical timings in vignette             |
+
+---
+
+### **Summary**
+
+The MultiModalGraphics package is engineered for high performance and scalability, utilizing advanced R/Bioconductor practices—vectorization, modularization, and parallel computing. Comprehensive, real-world examples and explicit benchmarks are provided in the documentation and vignette to demonstrate efficiency and to guide users in applying the package to large-scale omics data.
+
+---
 ## Volcano Plots
 
 ### 3. Volcano Plots with **ClearScatterplot**
@@ -851,6 +869,7 @@ mbm <- microbenchmark(
 print(mbm)
 ```
 
+
 ### 10. Linking the Manual
 
 For **in-depth guidance**, step-by-step walkthroughs, and advanced customization, please consult the **User Manual**:
@@ -896,50 +915,6 @@ With these few lines of code, you can generate publication-ready volcano plots, 
 7. [Session Info & Citation](#session)  
 
 ---
-
-
-Certainly! Here is an **extremely careful, accurate, and clearly structured split** of your content into two parts: (1) **for inclusion in the manuscript itself**, and (2) **as a concise summary for the reviewer's response**. This is organized to meet the standards of a collaborative team of expert engineers, machine learning scientists, and bioinformaticians.
-
----
-
-#### ** Code Design for Efficiency**
-
-| Aspect             | Implementation in Code                                                    |
-| ------------------ | ------------------------------------------------------------------------- |
-| Vectorization      | Use of `matrixStats`, `vapply`, vectorized ggplot2 calls                  |
-| Parallelization    | `BiocParallel::bplapply` in core computations, user-customizable backends |
-| Modularization     | S4 classes, atomic functions, helper methods                              |
-| Real Data Examples | Shipped and demonstrated with airway, pasilla, TCGA, scNMT, miniACC, etc. |
-| User Controls      | Thresholding, filtering, parallel toggles, and backend selection          |
-| Benchmarking       | Documented with microbenchmark, empirical timings in vignette             |
-
----
-
-### **Summary**
-
-The MultiModalGraphics package is engineered for high performance and scalability, utilizing advanced R/Bioconductor practices—vectorization, modularization, and parallel computing. Comprehensive, real-world examples and explicit benchmarks are provided in the documentation and vignette to demonstrate efficiency and to guide users in applying the package to large-scale omics data.
-
-#### **Benchmarking and Empirical Performance**
-
-We include code and timing benchmarks in the package vignette to empirically evaluate performance:
-
-```r
-library(microbenchmark)
-mbm <- microbenchmark(
-  volcano = ClearScatterplot_MAE(
-    mae = mae,
-    assayName = "RNASeq2GeneNorm-20160128",
-    groupColumn = "BRCA_Subtype_PAM50",
-    sampleType = "sample_type",
-    parallel = TRUE,
-    BPPARAM = BiocParallel::MulticoreParam(4)
-  ),
-  times = 5
-)
-print(mbm)
-```
-
-Timing results are summarized for different dataset sizes and levels of parallelization, helping users optimize runtime for their computational environments.
 
 <a name="installation"></a>
 ## 1. Installation (See Quick Sart above for more detailed instruction)
