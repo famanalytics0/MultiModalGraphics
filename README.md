@@ -62,6 +62,83 @@ library(ComplexHeatmap)      # for heatmaps
 
 ---
 
+
+# MultiModalGraphics: Quick Start Guide
+
+> **Unified Visualization Toolkit for Multi-Modal Data**
+
+**Includes: installation, all core and advanced functions, real-world and toy examples, customization, troubleshooting, and best practices.**
+
+---
+
+## Table of Contents
+
+1. [Installation & Core Dependencies](#installation--core-dependencies)
+2. [Customization & Flexibility Tips](#customization--flexibility-tips)
+3. [Data Structures & Input Types](#data-structures--input-types)
+4. [Volcano Plots](#volcano-plots)
+
+   * 4.1 [From DE Table](#from-de-table)
+   * 4.2 [From Matrix + Metadata](#from-matrix--metadata)
+   * 4.3 [From MultiAssayExperiment](#from-multiassayexperiment)
+   * 4.4 [From Lists (multi-cohort/time)](#from-lists-multi-cohorttime)
+5. [Heatmaps](#heatmaps)
+
+   * 5.1 [From FC/P-value Matrix](#from-fcp-value-matrix)
+   * 5.2 [From Matrix + Metadata](#from-matrix--metadata-1)
+   * 5.3 [From MultiAssayExperiment / iClusterPlus](#from-multiassayexperiment--iclusterplus)
+   * 5.4 [From Lists](#from-lists)
+6. [2D Grid Heatmaps](#2d-grid-heatmaps)
+7. [Unified MultiModalPlot](#unified-multimodalplot)
+8. [Advanced: Shiny, Layers, Trajectories](#advanced-shiny-layers-trajectories)
+9. [Best Practices & Troubleshooting](#best-practices--troubleshooting)
+10. [References & Example Data](#references--example-data)
+
+---
+
+## Installation & Core Dependencies
+
+```r
+# Bioconductor core and data
+if (!requireNamespace("BiocManager", quietly=TRUE)) install.packages("BiocManager")
+BiocManager::install(c(
+  "MultiModalGraphics", "MultiAssayExperiment", "SummarizedExperiment",
+  "ComplexHeatmap", "limma", "DESeq2", "BiocParallel", "matrixStats",
+  # Example datasets:
+  "airway", "pasilla", "miniACC", "TCGAbiolinks", "curatedTCGAData", "curatedPCaData", "scNMT", "msigdbr", "fgsea"
+))
+install.packages(c("ggplot2", "magrittr", "rlang", "dplyr", "RColorBrewer", "patchwork", "grid", "shiny"))
+# Load all at once for a frictionless session
+library(MultiModalGraphics); library(MultiAssayExperiment); library(SummarizedExperiment)
+library(ComplexHeatmap); library(ggplot2); library(dplyr); library(BiocParallel)
+```
+
+---
+
+## Customization & Flexibility Tips
+
+* **Thresholds & Colors:** All main plotting functions let you set `highLog2fc`, `lowLog2fc`, `negLog10pValue`, `pvalue_cutoff`, `fc_cutoff`, and color ramps for stringency and visualization.
+* **Parallelization:** Use `parallel=TRUE`, supply `BPPARAM` (e.g. `MulticoreParam(workers=4)`) for large datasets.
+* **Themes & Overlays:** Pass `theme_*` objects (e.g. `theme_minimal()`) or `layer_fun` to all major plot functions for advanced theming or custom feature highlighting.
+* **Exporting & Reporting:** Wrap plot calls with `pdf()`/`png()` for file export; extract ggplot or ComplexHeatmap objects for RMarkdown and annotation.
+* **Extensibility:** All major classes and methods work with lists, MAE, and S4 objects—compose arbitrarily complex visualizations.
+
+---
+
+## Data Structures & Input Types
+
+Supports:
+
+* **Precomputed DE tables:** (log2FC, –log10 p, regulation, sampleType, \[optional timepoint])
+* **Raw/normalized matrices + metadata:** (`expr`, `meta`)
+* **MultiAssayExperiment/SummarizedExperiment** objects (multi-omics or time-course)
+* **Lists:** (multi-cohort, multi-timepoint, or any mix above)
+* **Pathway/feature grid tables** (for 2D/3D heatmaps)
+
+---
+
+## Volcano Plots
+
 ### 3. Volcano Plots with **ClearScatterplot**
 
 #### 3.1. From a Precomputed DE Table
@@ -221,9 +298,72 @@ show(cs3)
 
 ---
 
-### 4. Custom Heatmaps with **InformativeHeatmap**
+### 4.1 From DE Table
 
-#### 4.1. From a Fold-Change + P-Value Matrix
+```r
+set.seed(101)
+de_df <- data.frame(
+  log2fc     = rnorm(200, sd=1),
+  negLog10p  = -log10(runif(200, 0, 0.1)),
+  regulation = sample(c("up","down"), 200, TRUE),
+  SampleType = rep(c("Group1","Group2"), each=100),
+  timePoint  = rep(c("T1","T2"), times=100),
+  stringsAsFactors = FALSE
+)
+cs <- ClearScatterplot(de_df, highLog2fc=1, lowLog2fc=-1, negLog10pValue=2)
+createPlot(cs, color1="tomato", color3="steelblue", legend_labels=c("Down","Neutral","Up"), title="Example Volcano")
+```
+
+**Real Example: airway RNA-seq**
+
+```r
+library(airway)
+data(airway)
+expr <- assay(airway, "counts"); meta <- as.data.frame(colData(airway))
+cs_airway <- ClearScatterplot_table(expr, meta, groupColumn="dex", sampleType="cell", dataType="count")
+createPlot(cs_airway, legend_title="Gene Regulation")
+```
+
+### 4.2 From Matrix + Metadata
+
+```r
+set.seed(102)
+expr <- matrix(rpois(100*20, lambda=10), nrow=100, ncol=20)
+meta <- data.frame(
+  Group=rep(c("A","B"), each=10), SampleType=rep(c("X","Y"), times=10), timePoint=rep(c("T1","T2"), each=5, times=2),
+  row.names=paste0("Sample",1:20)
+)
+cs2 <- ClearScatterplot_table(expr, meta, groupColumn="Group", sampleType="SampleType", timepoint="timePoint", dataType="auto", var_quantile=0.75, parallel=TRUE, BPPARAM=MulticoreParam(2))
+createPlot(cs2, color1="firebrick", color3="navy", title="Matrix + Metadata Volcano")
+```
+
+### 4.3 From MultiAssayExperiment
+
+```r
+library(curatedTCGAData)
+mae_brca <- curatedTCGAData("BRCA", assays = "RNASeq2GeneNorm", dry.run=FALSE)
+cs_brca <- ClearScatterplot_MAE(mae=mae_brca, assayName="RNASeq2GeneNorm", groupColumn="PAM50.mRNA", sampleType="histological_type", dataType="continuous", var_quantile=0.5)
+createPlot(cs_brca)
+```
+
+### 4.4 From Lists (multi-cohort/time)
+
+```r
+expr_list <- list(T0=expr, T1=expr+rpois(100*20,5))
+meta_list <- list(T0=meta, T1=meta)
+cs_list <- ClearScatterplot(expr_list, meta_list, top_n=10)
+createPlot(cs_list)
+```
+
+**Special: scNMT & curatedPCaData—see Supplement at end for full examples.**
+
+---
+
+## Heatmaps
+
+### 5. Custom Heatmaps with **InformativeHeatmap**
+
+#### 5.1. From a Fold-Change + P-Value Matrix
 
 ```r
 # (a) Simulate logFC and p-value matrices
@@ -266,7 +406,7 @@ ComplexHeatmap::draw(ht1, heatmap_legend_side = "right")
 
 ---
 
-#### 4.2. From a Matrix + Metadata (DE‐Based Heatmap)
+#### 5.2. From a Matrix + Metadata (DE‐Based Heatmap)
 
 ```r
 # (a) Reuse expr (100×20) and meta from Section 3.2
@@ -307,7 +447,7 @@ ComplexHeatmap::draw(ht2, heatmap_legend_side = "right")
 
 ---
 
-#### 4.3. From a **MultiAssayExperiment** + **iClusterPlus**
+#### 5.3. From a **MultiAssayExperiment** + **iClusterPlus**
 
 ```r
 # (a) Assume you have a small MAE named `tiny_mae` with two assays
@@ -342,10 +482,60 @@ ComplexHeatmap::draw(ht3, heatmap_legend_side = "right")
 > **Result:** Samples are clustered via iClusterPlus, DE is run per cluster vs. cluster, and the combined log₂FC matrix is shown with significant/trending overlays.
 
 ---
+### 6.1 From FC/P-value Matrix
 
-### 5. 2D Tile-and-Point Heatmaps with **MultifeatureGrid**
+```r
+set.seed(103)
+logFC_mat <- matrix(rnorm(50*4, 0, 1), nrow=50); pval_mat  <- matrix(runif(50*4, 0, 0.2), nrow=50)
+rownames(logFC_mat) <- paste0("Gene",1:50); colnames(logFC_mat) <- paste0("Cond",1:4)
+ih1 <- InformativeHeatmap_table(fc_matrix=logFC_mat, pval_matrix=pval_mat, pvalue_cutoff=0.05, col=circlize::colorRamp2(c(-2,0,2),c("blue","white","red")))
+draw(getHeatmapObject(ih1))
+```
 
-#### 5.1. Using Built-In Demo Data
+### 6.2 From Matrix + Metadata
+
+```r
+ih2 <- InformativeHeatmap(
+  data=expr, meta=meta, groupColumn="Group", sampleType="SampleType", dataType="continuous",
+  var_quantile=0.5, pvalue_cutoff=0.05, fc_cutoff=0.585, max_features=30,
+  col=circlize::colorRamp2(c(-2,0,2),c("navy","white","firebrick"))
+)
+draw(getHeatmapObject(ih2))
+```
+
+**Real Example: airway**
+
+```r
+ih_airway <- InformativeHeatmap(
+  data=assay(airway,"counts"), meta=as.data.frame(colData(airway)), groupColumn="dex",
+  var_quantile=0.6, pvalue_cutoff=0.01, col=circlize::colorRamp2(c(0,5,10),c("navy","white","firebrick"))
+)
+draw(getHeatmapObject(ih_airway))
+```
+
+### 6.3 From MultiAssayExperiment / iClusterPlus
+
+```r
+ih3 <- InformativeHeatmapFromMAE(
+  mae=mae_brca, assayName="RNASeq2GeneNorm", groupColumn="PAM50.mRNA", significant_pvalue=0.05, trending_pvalue=0.1, K=2, lambda=0.1, coef=2,
+  col=circlize::colorRamp2(c(-2,0,2),c("blue","white","red"))
+)
+draw(getHeatmapObject(ih3))
+```
+
+### 6.4 From Lists
+
+```r
+ih4 <- InformativeHeatmap(expr_list, meta_list, groupColumn="Group", top_n=8)
+draw(getHeatmapObject(ih4))
+```
+
+---
+
+## 2D Grid Heatmaps
+### 7. 2D Tile-and-Point Heatmaps with **MultifeatureGrid**
+
+#### 7.1. Using Built-In Demo Data
 
 ```r
 # (a) Fetch the demo data frame
@@ -386,9 +576,189 @@ plot_heatmap(
 
 > **Result:** A tile-and-point grid: tiles show z-scores, colored points show –log₁₀(p), and point size reflects gene count, faceted by `timePoint`.
 
+
+
+```r
+df_grid <- data.frame(
+  tissue=rep(c("Liver","Brain"), each=4), signaling=rep(c("WNT","MAPK","PI3K","JAK"),2),
+  Activation_z_score=runif(8,-2,2), p=runif(8,0,0.05), number_of_genes=sample(1:100,8),
+  timePoint=rep(c("Early","Late"),4)
+)
+mg <- MultifeatureGrid(df_grid, title="Pathway Activation", x_label="Tissue", y_label="Signal", color_palette="RdYlBu", breaks=seq(-2,2,1))
+plot_heatmap(mg, pValueColumn="p", columnForNumber="number_of_genes")
+```
+
+**Real:**
+
+```r
+library(fgsea)
+# df_fgsea must have signaling, Activation_z_score, p, number_of_genes, tissue
+mg2 <- MultifeatureGrid(df_fgsea, title="TCGA FGSEA", x_label="Tissue", y_label="Pathway", breaks=seq(-3,3,0.5))
+plot_heatmap(mg2, pValueColumn="p", columnForNumber="number_of_genes", independantVariable="tissue")
+```
+
 ---
 
-### 6. Unified Interface with `MultiModalPlot`
+## Unified MultiModalPlot
+
+**Combine any volcano/heatmap panels from tables, matrices+meta, MAE, lists, etc.**
+
+```r
+inputs <- list(
+  AirwayVolcano = de_df,
+  AirwayHeatmap = list(expr=assay(airway,"counts"), meta=as.data.frame(colData(airway))),
+  ACC = miniACC
+)
+p1 <- MultiModalPlot(
+  inputs, assayNames=c(ACC="RNAseq"), groupColumns=c(AirwayHeatmap="dex", ACC="subtype"), sampleTypes=c(AirwayHeatmap="celltype", ACC="tissue"),
+  panel_type=c(AirwayVolcano="volcano", AirwayHeatmap="heatmap", ACC="volcano"), pvalue_cutoff=0.01
+)
+print(p1)
+```
+
+**Multi-omics example:**
+
+```r
+omics_mae <- curatedTCGAData("BRCA", assays = c("RNASeq2GeneNorm", "Methylation"), dry.run=FALSE)
+MultiModalPlot(
+  inputs = list(RNA = omics_mae, Methylation = omics_mae),
+  assayNames = list(RNA="BRCA_RNASeq2GeneNorm-20160128", Methylation="BRCA_Methylation-20160128"),
+  groupColumns = list(RNA="PAM50.mRNA", Methylation="PAM50.mRNA"),
+  panel_type = "heatmap"
+)
+```
+
+---
+
+## Advanced: Shiny, Layers, Trajectories
+
+### Shiny App
+
+```r
+library(shiny)
+ui <- fluidPage(
+  sidebarLayout(
+    sidebarPanel(
+      selectInput("dat","Data:",choices=c("Airway","pasilla","miniACC")),
+      sliderInput("cut","–log10(p) cutoff:",1,5,2)
+    ),
+    mainPanel(plotOutput("volc"), plotOutput("heat"))
+  )
+)
+server <- function(input, output) {
+  reactiveDE <- reactive({
+    switch(input$dat,
+      Airway  = de_df,
+      pasilla = { /* precomputed pasilla DE */ },
+      miniACC = cs_mae@data
+    )
+  })
+  output$volc <- renderPlot({
+    cs <- ClearScatterplot(reactiveDE(), negLog10pValue=input$cut)
+    print(createPlot(cs)@plot)
+  })
+  output$heat <- renderPlot({
+    hm <- InformativeHeatmap(
+      assay(airway,"counts"),
+      as.data.frame(colData(airway)),
+      groupColumn="dex",
+      pvalue_cutoff=10^-input$cut
+    )
+    draw(getHeatmapObject(hm))
+  })
+}
+shinyApp(ui, server)
+```
+
+**Tip:** Use `reactive()` + UI controls for threshold and color tweaks.
+
+### Custom Heatmap Layer
+
+```r
+custom_layer_fun <- function(j, i, x, y, w, h, fill) {
+  if (runif(1) < 0.5) grid::grid.text("*", x = x, y = y)
+}
+ihm2 <- updateLayerFun(ih1, custom_layer_fun)
+draw(getHeatmapObject(ihm2))
+```
+
+### Time-course & Trajectory Analysis
+
+```r
+# Assume mae_time has assay "RNA" & colData $timepoint ∈ {T0,T1,T2}
+hm_time <- InformativeHeatmap(
+  data=mae_time, assayNames=c(RNA="RNA"), groupColumns=c(RNA="treatment"),
+  sampleTypes=c(RNA="tissue"), timepoints=c(RNA="timepoint"), var_quantile=0.7, cluster_rows=TRUE, cluster_columns=FALSE, show_column_names=TRUE
+)
+draw(getHeatmapObject(hm_time))
+```
+
+**Comment:** Order metadata columns chronologically for time series.
+
+---
+
+## Best Practices & Troubleshooting
+
+* Always check `groupColumn`, `sampleType`, `timepoint` are present in your metadata.
+* Use `parallel=TRUE` and supply a `BPPARAM` for large datasets.
+* Inspect S4 objects with `slotNames(obj)` or `str(obj)`.
+* All functions have detailed `?FunctionName` docs.
+* For exporting: wrap plot calls in `pdf()` or `png()`.
+* For multi-modal, multi-cohort, or multi-assay analysis: use lists or MAE objects as input.
+
+---
+
+## References & Example Data
+
+* [MultiAssayExperiment](https://bioconductor.org/packages/MultiAssayExperiment/)
+* [ComplexHeatmap](https://jokergoo.github.io/ComplexHeatmap-reference/book/)
+* [curatedTCGAData](https://bioconductor.org/packages/curatedTCGAData/)
+* [airway](https://bioconductor.org/packages/airway/)
+* [curatedPCaData](https://bioconductor.org/packages/curatedPCaData/)
+* [scNMT](https://bioconductor.org/packages/scNMT/)
+
+---
+
+## **SUPPLEMENT: Single-Cell and Multi-Omics Real Workflows**
+
+**scNMT (Single-cell multi-omics):**
+
+```r
+BiocManager::install("scNMT"); library(scNMT)
+data("scNMT_GeneCounts")
+rna <- scNMT_GeneCounts; meta <- as.data.frame(colData(rna)); meta$stage <- factor(meta$stage, levels = c("E5.5", "E6.5"))
+expr <- as.matrix(assay(rna)[, meta$stage %in% c("E5.5", "E6.5")]); meta_sub <- meta[meta$stage %in% c("E5.5", "E6.5"), ]
+cs_scNMT <- ClearScatterplot_table(expr, meta_sub, groupColumn = "stage", sampleType = "stage", dataType = "count", var_quantile = 0.8)
+createPlot(cs_scNMT, color1 = "forestgreen", color3 = "darkorange", legend_title = "Stage DE")
+```
+
+**curatedPCaData (Prostate Cancer Multi-Omics):**
+
+```r
+BiocManager::install("curatedPCaData"); library(curatedPCaData)
+Taylor <- getPCa("Taylor2010_ExprSet", "expression")
+expr <- exprs(Taylor); meta <- pData(Taylor)
+meta$gleason_grp <- ifelse(meta$gleason_score <= 7, "Low", "High")
+expr_sub <- expr[, !is.na(meta$gleason_grp)]; meta_sub <- meta[!is.na(meta$gleason_grp), ]
+cs_pca <- ClearScatterplot_table(expr_sub, meta_sub, groupColumn = "gleason_grp", sampleType = "gleason_grp", dataType = "continuous", var_quantile = 0.75)
+createPlot(cs_pca, color1 = "royalblue", color3 = "firebrick", legend_title = "Gleason Group")
+```
+
+**Multi-panel:**
+
+```r
+panels <- list(scNMT_Volcano = cs_scNMT, PCa_Heatmap = hm_pca)
+mm_panel <- MultiModalPlot(inputs = panels, panel_type = c(scNMT_Volcano =
+```
+
+
+"volcano", PCa\_Heatmap = "heatmap"))
+print(mm\_panel)
+
+```
+---
+
+### 8. Unified Interface with `MultiModalPlot`
 
 When you have **multiple modalities** to display (e.g., both a volcano and a heatmap side by side, or two different assays), you can call a single function, **`MultiModalPlot()`**, which auto-detects input types and stitches panels together.
 
@@ -452,7 +822,7 @@ ComplexHeatmap::draw(mm_heat, heatmap_legend_side = "right")
 
 ---
 
-### 7. Linking the Manual
+### 9. Linking the Manual
 
 For **in-depth guidance**, step-by-step walkthroughs, and advanced customization, please consult the **User Manual**:
 
