@@ -21,57 +21,11 @@ This README guides you through installation, per-class usage (ClearScatterplot, 
 ---
 
 
-## Quick Start
+# # Quick Start Guide
 
 Welcome to **MultiModalGraphics**. This section gives you a rapid, hands-on introduction to installing the package and producing your first plots. For full details, see the [User Manual](MANUAL.md).
 
 ---
-
-### 1. Installation
-
-```r
-# (1) Install BiocManager if needed
-if (!requireNamespace("BiocManager", quietly=TRUE))
-    install.packages("BiocManager")
-
-# (2) Install MultiModalGraphics from Bioconductor
-BiocManager::install("MultiModalGraphics")
-
-# From the GitHub branch:
-remotes::install_git(
-  "https://github.com/famanalytics0/MultiModalGraphics.git",
-  ref         = "famanalytics0-patch-3",
-  dependencies= TRUE,
-  upgrade     = "never"
-)
-
-# (3) Load the package
-library(MultiModalGraphics)
-
-# (4) (Optional) Install suggested data packages for examples:
-BiocManager::install(c("curatedPCaData", "curatedTCGAData", "curatedTCGADataData"))
-````
-
----
-
-### 2. Core Dependencies
-
-```r
-library(ggplot2)             # for plotting
-library(dplyr)               # for data handling
-library(matrixStats)         # for variance filtering
-library(BiocParallel)        # for parallel DE
-library(MultiAssayExperiment) 
-library(SummarizedExperiment)
-library(limma)               # for differential expression
-library(RColorBrewer)        # for palettes
-library(ComplexHeatmap)      # for heatmaps
-```
-
----
-
-
-# MultiModalGraphics: Quick Start Guide
 
 > **Unified Visualization Toolkit for Multi-Modal Data**
 
@@ -104,22 +58,73 @@ library(ComplexHeatmap)      # for heatmaps
 
 ---
 
-## Installation & Core Dependencies
+## 1. Installation
 
 ```r
-# Bioconductor core and data
-if (!requireNamespace("BiocManager", quietly=TRUE)) install.packages("BiocManager")
+# (1) Install BiocManager if needed
+if (!requireNamespace("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+
+# (2) Install MultiModalGraphics and all core/data dependencies from Bioconductor
 BiocManager::install(c(
-  "MultiModalGraphics", "MultiAssayExperiment", "SummarizedExperiment",
-  "ComplexHeatmap", "limma", "DESeq2", "BiocParallel", "matrixStats",
-  # Example datasets:
-  "airway", "pasilla", "miniACC", "TCGAbiolinks", "curatedTCGAData", "curatedPCaData", "scNMT", "msigdbr", "fgsea"
+    "MultiModalGraphics",
+    # Core data structures and computation
+    "MultiAssayExperiment", "SummarizedExperiment",
+    "ComplexHeatmap", "limma", "DESeq2", "BiocParallel", "matrixStats",
+    # Example datasets and data interfaces
+    "airway", "pasilla", "miniACC", "TCGAbiolinks",
+    "curatedTCGAData", "curatedPCaData", "scNMT", "msigdbr", "fgsea"
 ))
-install.packages(c("ggplot2", "magrittr", "rlang", "dplyr", "RColorBrewer", "patchwork", "grid", "shiny"))
-# Load all at once for a frictionless session
-library(MultiModalGraphics); library(MultiAssayExperiment); library(SummarizedExperiment)
-library(ComplexHeatmap); library(ggplot2); library(dplyr); library(BiocParallel)
+
+# (3) Install additional CRAN dependencies
+install.packages(c(
+    "ggplot2",      # plotting
+    "magrittr",     # pipe operator
+    "rlang",        # tidy evaluation
+    "dplyr",        # data wrangling
+    "RColorBrewer", # color palettes
+    "patchwork",    # plot composition
+    "grid",         # grid graphics
+    "shiny"         # interactive dashboards (optional, but recommended)
+))
+
+# (4) (Optional) Install the latest development version from GitHub branch (for newest features/fixes)
+if (!requireNamespace("remotes", quietly = TRUE))
+    install.packages("remotes")
+remotes::install_git(
+    "https://github.com/famanalytics0/MultiModalGraphics.git",
+    ref          = "famanalytics0-patch-3",
+    dependencies = TRUE,
+    upgrade      = "never"
+)
+
+# (5) (Optional) Install extra data packages for examples (if not already above)
+BiocManager::install(c("curatedPCaData", "curatedTCGAData", "curatedTCGADataData"))
 ```
+
+---
+
+## 2. Core Dependencies
+
+```r
+library(MultiModalGraphics)      # Main package
+library(MultiAssayExperiment)    # Multi-modal data integration
+library(SummarizedExperiment)    # Genomics data containers
+library(ComplexHeatmap)          # Heatmap visualization
+library(ggplot2)                 # General plotting
+library(dplyr)                   # Data wrangling
+library(matrixStats)             # Fast matrix operations
+library(BiocParallel)            # Parallel computation
+library(limma)                   # Differential expression analysis
+library(DESeq2)                  # DE for count data
+library(RColorBrewer)            # Color palettes
+library(magrittr)                # Pipe operator
+library(rlang)                   # Tidy evaluation
+library(patchwork)               # Multi-panel plots
+library(grid)                    # Low-level graphics
+library(shiny)                   # For interactive dashboards
+```
+
 
 ---
 
