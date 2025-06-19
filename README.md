@@ -37,7 +37,7 @@ if (!requireNamespace("BiocManager", quietly=TRUE))
 # (2) Install MultiModalGraphics from Bioconductor
 BiocManager::install("MultiModalGraphics")
 
-Or from the GitHub branch:
+# From the GitHub branch:
 remotes::install_git(
   "https://github.com/famanalytics0/MultiModalGraphics.git",
   ref         = "famanalytics0-patch-3",
