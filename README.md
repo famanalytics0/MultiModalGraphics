@@ -942,7 +942,7 @@ print(mbm)
 Timing results are summarized for different dataset sizes and levels of parallelization, helping users optimize runtime for their computational environments.
 
 <a name="installation"></a>
-## 1. Installation
+## 1. Installation (See Quick Sart above for more detailed instruction)
 
 ### 1.1. Prerequisites
 
@@ -968,29 +968,6 @@ remotes::install_git(
   upgrade     = "never"
 )
 ```
-
-### 1.4. Load Core Dependencies
-
-```r
-library(MultiModalGraphics)
-library(ggplot2)            # for plotting
-library(dplyr)              # for data manipulation
-library(matrixStats)        # for variance filtering
-library(BiocParallel)       # for parallel DE
-library(MultiAssayExperiment)
-library(SummarizedExperiment)
-library(limma)
-library(RColorBrewer)       # for color palettes
-library(ComplexHeatmap)     # for heatmap rendering
-```
-
-> **Tip:** Data-package examples require:
->
-> ```r
-> BiocManager::install(c("curatedPCaData","curatedTCGAData","curatedTCGADataData"))
-> ```
-
----
 
 <a name="overview"></a>
 
