@@ -14,7 +14,7 @@ df_full <- data.frame(
   stringsAsFactors = FALSE
 )
 
-mg <- MultifeatureGrid(df_full)
+mg <- CompositeFeatureHeatmap(df_full)
 
 test_that("plot_heatmap returns a ggplot and prints invisibly", {
   # Should return a ggplot object without error
@@ -25,7 +25,7 @@ test_that("plot_heatmap returns a ggplot and prints invisibly", {
 test_that("plot_heatmap errors if pValueColumn contains zeros or negatives", {
   df2 <- df_full
   df2$p[1] <- 0
-  mg2 <- MultifeatureGrid(df2)
+  mg2 <- CompositeFeatureHeatmap(df2)
   expect_error(
     plot_heatmap(mg2, pValueColumn = "p"),
     "must be strictly > 0"
@@ -42,7 +42,7 @@ test_that("plot_heatmap errors if asked for non-existent pValueColumn", {
 test_that("plot_heatmap errors if columnForNumber missing or negative", {
   df3 <- df_full
   df3$number_of_genes[1] <- -1
-  mg3 <- MultifeatureGrid(df3)
+  mg3 <- CompositeFeatureHeatmap(df3)
   expect_error(
     plot_heatmap(mg3, columnForNumber = "number_of_genes"),
     "must be ≥ 0"

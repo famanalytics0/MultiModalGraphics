@@ -2,7 +2,7 @@ library(testthat)
 library(MultiModalGraphics)
 library(SummarizedExperiment)
 
-test_that("InformativeHeatmap(matrix, meta) works for single modality", {
+test_that("AnnotatedHeatmap(matrix, meta) works for single modality", {
   # toy expression matrix
   set.seed(1)
   mat <- matrix(rnorm(20), nrow=5)
@@ -13,13 +13,13 @@ test_that("InformativeHeatmap(matrix, meta) works for single modality", {
     row.names = colnames(mat),
     stringsAsFactors = FALSE
   )
-  hm <- InformativeHeatmap(
+  hm <- AnnotatedHeatmap(
     data        = mat,
     meta        = meta,
     groupColumn = "Group",
     heatmap_data_scale = "expression"
   )
-  expect_s4_class(hm, "InformativeHeatmap")
+  expect_s4_class(hm, "AnnotatedHeatmap")
   # heatmap object exists
   ht_obj <- getHeatmapObject(hm)
   expect_true(inherits(ht_obj, "Heatmap"))

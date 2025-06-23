@@ -12,13 +12,13 @@ test_that("MAE helper works end-to-end", {
   se  <- SummarizedExperiment(assays = list(counts = expr), colData = meta)
   mae <- MultiAssayExperiment(list(myassay = se))
 
-  hm <- InformativeHeatmapFromMAE(mae, assayName="myassay", groupColumn="treatment")
-  expect_s4_class(hm, "InformativeHeatmap")
+  hm <- AnnotatedHeatmapFromMAE(mae, assayName="myassay", groupColumn="treatment")
+  expect_s4_class(hm, "AnnotatedHeatmap")
 })
 
 test_that("MAE helper errors on non-MAE input", {
   expect_error(
-    InformativeHeatmapFromMAE(42),
+    AnnotatedHeatmapFromMAE(42),
     "must be a MultiAssayExperiment"
   )
 })

@@ -1,9 +1,9 @@
 # Suppress “no visible binding” warnings for variables used in ggplot2
 utils::globalVariables(c("Activation_z_score", "neglog10p"))
 
-#’ @title MultifeatureGrid: A Class for 2D Heatmap Visualization
+#’ @title CompositeFeatureHeatmap: A Class for 2D Heatmap Visualization
 #’ @description
-#’ The `MultifeatureGrid` class encapsulates a data‐frame of “signaling” vs. “tissue” 
+#’ The `CompositeFeatureHeatmap` class encapsulates a data‐frame of “signaling” vs. “tissue” 
 #’ (or any two categorical axes), along with associated activation z-scores, p-values, 
 #’ and item counts.  It provides a single method, `plot_heatmap()`, which builds a fully‐
 #’ customized ggplot2 heatmap: tiles are colored by z-score, overplotted points sized by 
@@ -25,17 +25,17 @@ utils::globalVariables(c("Activation_z_score", "neglog10p"))
 #’ @slot numitems_label Character; legend label for item counts.
 #’ @slot color_palette Character; a valid RColorBrewer palette name (length ≥ 3).
 #’ @slot breaks Numeric; a strictly increasing vector of breakpoints for the z‐score color scale.
-#’ @name MultifeatureGrid
+#’ @name CompositeFeatureHeatmap
 #’ @docType class
 #’ @importFrom methods new setClass setGeneric setMethod
 #’ @importFrom ggplot2 ggplot aes_string geom_tile scale_fill_gradientn geom_point scale_color_gradient scale_size labs facet_grid theme_bw theme element_text element_rect
 #’ @importFrom RColorBrewer brewer.pal
 #’ @importFrom grDevices colorRampPalette
 #’ @importFrom scales comma_format
-#’ @exportClass MultifeatureGrid
+#’ @exportClass CompositeFeatureHeatmap
 #’ @export plot_heatmap
 setClass(
-  "MultifeatureGrid",
+  "CompositeFeatureHeatmap",
   slots = list(
     data            = "data.frame",
     title           = "character",
@@ -49,9 +49,9 @@ setClass(
   )
 )
 
-#’ @title MultifeatureGrid Constructor
+#’ @title CompositeFeatureHeatmap Constructor
 #’ @description
-#’ Create a `MultifeatureGrid` object.  Only basic validation is performed here;
+#’ Create a `CompositeFeatureHeatmap` object.  Only basic validation is performed here;
 #’ most column‐checking happens at plot time.  However, we immediately verify that
 #’ `data` is a data.frame and contains the mandatory columns `tissue`, `signaling`, 
 #’ and `Activation_z_score`.
@@ -70,7 +70,7 @@ setClass(
 #’ @param breaks Numeric vector; breakpoints for z‐score color‐mapping. Must be strictly increasing. 
 #’   Default `seq(-1,1,0.5)`.
 #’   
-#’ @return A `MultifeatureGrid` S4 object (no plot yet).
+#’ @return A `CompositeFeatureHeatmap` S4 object (no plot yet).
 #’ @examples
 #’ \dontrun{
 #’ df <- data.frame(
@@ -82,10 +82,10 @@ setClass(
 #’   timePoint = rep(c("Early","Late"), 4),
 #’   stringsAsFactors = FALSE
 #’ )
-#’ mg <- MultifeatureGrid(df, title = "My Heatmap")
+#’ mg <- CompositeFeatureHeatmap(df, title = "My Heatmap")
 #’ }
 #’ @export
-MultifeatureGrid <- function(
+CompositeFeatureHeatmap <- function(
   data,
   title          = "Heatmap",
   x_label        = "X Label",
@@ -132,7 +132,7 @@ MultifeatureGrid <- function(
   }
   ## 6) All checks passed; construct
   methods::new(
-    "MultifeatureGrid",
+    "CompositeFeatureHeatmap",
     data            = data,
     title           = title,
     x_label         = x_label,
@@ -145,23 +145,23 @@ MultifeatureGrid <- function(
   )
 }
 
-#’ @title plot_heatmap: Generic for MultifeatureGrid
+#’ @title plot_heatmap: Generic for CompositeFeatureHeatmap
 #’ @description
-#’ Generic method for plotting a `MultifeatureGrid`.  Built‐in checks ensure that
+#’ Generic method for plotting a `CompositeFeatureHeatmap`.  Built‐in checks ensure that
 #’ the specified p‐value column, count column, and faceting column exist and have
 #’ the correct type.  The final ggplot2 call is fully vectorized (no loops).
-#’ @param object An object of class `MultifeatureGrid`.
+#’ @param object An object of class `CompositeFeatureHeatmap`.
 #’ @param ... Additional arguments passed to the specific method.
 #’ @export
 setGeneric("plot_heatmap", function(object, ...) standardGeneric("plot_heatmap"))
 
-#’ @title plot_heatmap for MultifeatureGrid Objects
+#’ @title plot_heatmap for CompositeFeatureHeatmap Objects
 #’ @description
 #’ Create and display a 2D heatmap with colored tiles (by z‐score), overplotted points
 #’ (size = number_of_items, color = –log10(p)), and optional faceting by any column.
 #’ This method performs extensive input validation—no loops, all vectorized.
 #’
-#’ @param object A `MultifeatureGrid` instance.
+#’ @param object A `CompositeFeatureHeatmap` instance.
 #’ @param pValueColumn Character(1): name of the column in `object@data` storing raw p‐values. 
 #’   Will be transformed to –log10(p).  Default `"p"`.
 #’ @param lowColor Character(1): low‐end color for –log10(p) gradient. Default `"yellow"`.
@@ -174,7 +174,7 @@ setGeneric("plot_heatmap", function(object, ...) standardGeneric("plot_heatmap")
 #’
 #’ @return Invisibly returns the ggplot object, and prints it to the current device.
 #’ @export
-setMethod("plot_heatmap", signature(object = "MultifeatureGrid"),
+setMethod("plot_heatmap", signature(object = "CompositeFeatureHeatmap"),
           function(object,
                    pValueColumn       = "p",
                    lowColor           = "yellow",

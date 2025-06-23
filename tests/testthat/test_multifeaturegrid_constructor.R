@@ -9,8 +9,8 @@ test_that("constructor succeeds with minimal required columns", {
     Activation_z_score = c(-1.5, 2.3),
     stringsAsFactors = FALSE
   )
-  mg <- MultifeatureGrid(df)
-  expect_s4_class(mg, "MultifeatureGrid")
+  mg <- CompositeFeatureHeatmap(df)
+  expect_s4_class(mg, "CompositeFeatureHeatmap")
   expect_identical(slot(mg, "breaks"), seq(-1,1,0.5))
 })
 
@@ -20,7 +20,7 @@ test_that("constructor errors when required columns are missing", {
     Activation_z_score = c(0,1)
   )
   expect_error(
-    MultifeatureGrid(df1),
+    CompositeFeatureHeatmap(df1),
     "`data` is missing required column\\(s\\): signaling"
   )
 
@@ -31,7 +31,7 @@ test_that("constructor errors when required columns are missing", {
     stringsAsFactors = FALSE
   )
   expect_error(
-    MultifeatureGrid(df2),
+    CompositeFeatureHeatmap(df2),
     "Column `Activation_z_score` must be numeric"
   )
 })
@@ -44,11 +44,11 @@ test_that("constructor enforces strictly increasing breaks", {
     stringsAsFactors = FALSE
   )
   expect_error(
-    MultifeatureGrid(df, breaks = c(0,0,1)),
+    CompositeFeatureHeatmap(df, breaks = c(0,0,1)),
     "`breaks` must be strictly increasing"
   )
   expect_error(
-    MultifeatureGrid(df, breaks = "not numeric"),
+    CompositeFeatureHeatmap(df, breaks = "not numeric"),
     "`breaks` must be a numeric vector"
   )
 })
@@ -61,7 +61,7 @@ test_that("constructor errors on invalid palette", {
     stringsAsFactors = FALSE
   )
   expect_error(
-    MultifeatureGrid(df, color_palette = "NotAPalette"),
+    CompositeFeatureHeatmap(df, color_palette = "NotAPalette"),
     "`color_palette` must be a valid RColorBrewer palette name"
   )
 })

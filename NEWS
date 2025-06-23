@@ -5,7 +5,7 @@ Changes in version 0.99.0 (2024-04-20)
 
 * Submitted to Bioconductor.
 
-* Added new classes `InformativeHeatmap`, `MultifeatureGrid`, and `ClearScatterplot` for advanced data visualization techniques.
+* Added new classes `AnnotatedHeatmap`, `CompositeFeatureHeatmap`, and `ThresholdedScatterplot` for advanced data visualization techniques.
 
 * Included functions for intuitive visualization of multimodal datasets, allowing users to identify patterns, correlations, and anomalies across diverse data sources.
 

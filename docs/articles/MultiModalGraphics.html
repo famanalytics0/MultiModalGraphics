@@ -52,7 +52,7 @@
   </a>
   <ul class="dropdown-menu" role="menu">
 <li>
-      <a href="../articles/multifeature_grid.html">MultifeatureGrid Visualization</a>
+      <a href="../articles/multifeature_grid.html">CompositeFeatureHeatmap Visualization</a>
     </li>
   </ul>
 </li>
@@ -96,8 +96,8 @@ visual representation. This package facilitates the creation of
 intuitive visualizations that merge multiple streams of data into a
 single coherent graphic.</p>
 <p>This comprehensive guide includes the following sections: -
-Generating Data - Using ClearScatterplot - Informative Heatmap Usage -
-MultifeatureGrid Visualization</p>
+Generating Data - Using ThresholdedScatterplot - Informative Heatmap Usage -
+CompositeFeatureHeatmap Visualization</p>
 </div>
 <div class="section level2">
 <h2 id="generating-data">Generating Data<a class="anchor" aria-label="anchor" href="#generating-data"></a>
@@ -433,11 +433,11 @@ points.</p>
 </div>
 </div>
 <div class="section level2">
-<h2 id="using-clearscatterplot">Using ClearScatterplot<a class="anchor" aria-label="anchor" href="#using-clearscatterplot"></a>
+<h2 id="using-clearscatterplot">Using ThresholdedScatterplot<a class="anchor" aria-label="anchor" href="#using-clearscatterplot"></a>
 </h2>
 <p>This section demonstrates how to use the
-<code>ClearScatterplot</code> class to create enhanced scatterplots. The
-<code>ClearScatterplot</code> class provides functionalities for
+<code>ThresholdedScatterplot</code> class to create enhanced scatterplots. The
+<code>ThresholdedScatterplot</code> class provides functionalities for
 creating scatterplots with enhanced visualization features like coloring
 based on significance levels and plotting against different
 variables.</p>
@@ -445,11 +445,11 @@ variables.</p>
 <h3 id="example-creating-a-scatterplot">Example: Creating a Scatterplot<a class="anchor" aria-label="anchor" href="#example-creating-a-scatterplot"></a>
 </h3>
 <p>First, load the necessary data and create an instance of
-<code>ClearScatterplot</code>.</p>
+<code>ThresholdedScatterplot</code>.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">plotdata</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_clear_scatterplot_df.html">get_clear_scatterplot_df</a></span><span class="op">(</span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">scatterplotObject</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ClearScatterplot.html">ClearScatterplot</a></span><span class="op">(</span></span>
+<span><span class="va">scatterplotObject</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ThresholdedScatterplot.html">ThresholdedScatterplot</a></span><span class="op">(</span></span>
 <span>  data <span class="op">=</span> <span class="va">plotdata</span>,</span>
 <span>  logFoldChange <span class="op">=</span> <span class="st">"log2fc"</span>,</span>
 <span>  timePointColumn <span class="op">=</span> <span class="st">"timePoint"</span>,</span>
@@ -506,10 +506,10 @@ representing genes, their value groups, and significance levels.</p>
 <div class="section level4">
 <h4 id="creating-heatmap">Creating Heatmap<a class="anchor" aria-label="anchor" href="#creating-heatmap"></a>
 </h4>
-<p>Create an <code>InformativeHeatmap</code> object with custom settings
+<p>Create an <code>AnnotatedHeatmap</code> object with custom settings
 for visual representation.</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">htmp_plus</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/InformativeHeatmap.html">InformativeHeatmap</a></span><span class="op">(</span><span class="va">group_val</span>,</span>
+<code class="sourceCode R"><span><span class="va">htmp_plus</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/AnnotatedHeatmap.html">AnnotatedHeatmap</a></span><span class="op">(</span><span class="va">group_val</span>,</span>
 <span>                                unit_val <span class="op">=</span> <span class="fl">7</span>,</span>
 <span>                                pch_val <span class="op">=</span> <span class="fl">16</span>,</span>
 <span>                                significant_color <span class="op">=</span> <span class="st">"black"</span>,</span>
@@ -538,10 +538,10 @@ visualize the data.</p>
 </div>
 </div>
 <div class="section level2">
-<h2 id="multifeaturegrid-visualization">MultifeatureGrid Visualization<a class="anchor" aria-label="anchor" href="#multifeaturegrid-visualization"></a>
+<h2 id="multifeaturegrid-visualization">CompositeFeatureHeatmap Visualization<a class="anchor" aria-label="anchor" href="#multifeaturegrid-visualization"></a>
 </h2>
 <p>This section demonstrates how to use the
-<code>MultifeatureGrid</code> class from the
+<code>CompositeFeatureHeatmap</code> class from the
 <code>MultiModalGraphics</code> package to create comprehensive heatmaps
 integrating various data features such as z-scores, p-values, and
 counts.</p>
@@ -555,12 +555,12 @@ activation z-scores.</p>
 <code class="sourceCode R"><span><span class="va">data</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_multifeature_grid_df.html">get_multifeature_grid_df</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">
-<h3 id="creating-a-multifeaturegrid-object">Creating a MultifeatureGrid Object<a class="anchor" aria-label="anchor" href="#creating-a-multifeaturegrid-object"></a>
+<h3 id="creating-a-multifeaturegrid-object">Creating a CompositeFeatureHeatmap Object<a class="anchor" aria-label="anchor" href="#creating-a-multifeaturegrid-object"></a>
 </h3>
-<p>We initialize the <code>MultifeatureGrid</code> object with the data
+<p>We initialize the <code>CompositeFeatureHeatmap</code> object with the data
 prepared above.</p>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">mg</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/MultifeatureGrid.html">MultifeatureGrid</a></span><span class="op">(</span><span class="va">data</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">mg</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/CompositeFeatureHeatmap.html">CompositeFeatureHeatmap</a></span><span class="op">(</span><span class="va">data</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="plotting-the-heatmap">Plotting the Heatmap<a class="anchor" aria-label="anchor" href="#plotting-the-heatmap"></a>

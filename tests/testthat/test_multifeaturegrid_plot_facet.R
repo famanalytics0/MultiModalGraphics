@@ -6,7 +6,7 @@ library(ggplot2)
 # timePoint all NA → skip facet with a warning
 df_na_facet <- df_full
 df_na_facet$timePoint <- NA
-mg_na <- MultifeatureGrid(df_na_facet)
+mg_na <- CompositeFeatureHeatmap(df_na_facet)
 
 test_that("plot_heatmap skips facet when facet column is all NA", {
   expect_warning(

@@ -13,14 +13,14 @@
 1. [Introduction](#introduction)
 2. [Installation & Setup](#installation)
 3. [Overview of Package Functionality](#overview)
-4. [Section 1: ClearScatterplot (Volcano Plots)](#clear_scatterplot)
+4. [Section 1: ThresholdedScatterplot (Volcano Plots)](#clear_scatterplot)
 
    1. [Background & Purpose](#cs_background)
    2. [API Reference](#cs_api)
 
-      * [ClearScatterplot (Table-only)](#cs_table)
-      * [ClearScatterplot\_table (Matrix + Metadata)](#cs_matrix)
-      * [ClearScatterplot\_MAE (MultiAssayExperiment-based)](#cs_mae)
+      * [ThresholdedScatterplot (Table-only)](#cs_table)
+      * [ThresholdedScatterplot\_table (Matrix + Metadata)](#cs_matrix)
+      * [ThresholdedScatterplot\_MAE (MultiAssayExperiment-based)](#cs_mae)
       * [createPlot](#cs_createplot)
       * [show](#cs_show)
    3. [Practical Examples](#cs_examples)
@@ -30,29 +30,29 @@
       * [Example 1C: `curatedTCGAData::BRCA` (Precomputed DE Table)](#cs_example1c)
    4. [Advanced Customization](#cs_advanced)
    5. [Troubleshooting & Tips](#cs_troubleshoot)
-5. [Section 2: InformativeHeatmap (Custom Heatmaps)](#informative_heatmap)
+5. [Section 2: AnnotatedHeatmap (Custom Heatmaps)](#informative_heatmap)
 
    1. [Background & Purpose](#ih_background)
    2. [API Reference](#ih_api)
 
-      * [InformativeHeatmap (Matrix- or MAE-based DE)](#ih_matrix_mae)
-      * [InformativeHeatmapFromMAT (Fold-Change + P-Value Matrices)](#ih_matrices)
-      * [InformativeHeatmapFromMAE (iClusterPlus + DE)](#ih_mae)
+      * [AnnotatedHeatmap (Matrix- or MAE-based DE)](#ih_matrix_mae)
+      * [AnnotatedHeatmapFromMAT (Fold-Change + P-Value Matrices)](#ih_matrices)
+      * [AnnotatedHeatmapFromMAE (iClusterPlus + DE)](#ih_mae)
       * [updateLayerFun](#ih_update)
       * [getHeatmapObject](#ih_get)
    3. [Practical Examples](#ih_examples)
 
       * [Example 2A: Subset of `miniACC` for Heatmap (Matrix + Metadata)](#ih_example2a)
       * [Example 2B: Small Simulated Fold-Change + P-Value Matrix](#ih_example2b)
-      * [Example 2C: Custom MAE with `InformativeHeatmapFromMAE`](#ih_example2c)
+      * [Example 2C: Custom MAE with `AnnotatedHeatmapFromMAE`](#ih_example2c)
    4. [Advanced Customization](#ih_advanced)
    5. [Troubleshooting & Tips](#ih_troubleshoot)
-6. [Section 3: MultifeatureGrid (2D Tile-and-Point Heatmaps)](#multifeature_grid)
+6. [Section 3: CompositeFeatureHeatmap (2D Tile-and-Point Heatmaps)](#multifeature_grid)
 
    1. [Background & Purpose](#mg_background)
    2. [API Reference](#mg_api)
 
-      * [MultifeatureGrid (Constructor)](#mg_constructor)
+      * [CompositeFeatureHeatmap (Constructor)](#mg_constructor)
       * [plot\_heatmap](#mg_plot)
    3. [Practical Examples](#mg_examples)
 
@@ -91,9 +91,9 @@ In addition to class-specific constructors and plot methods, the package offers 
 
 This manual covers three S4 classes:
 
-1. **ClearScatterplot**: Faceted volcano‐plot pipelines.
-2. **InformativeHeatmap**: Custom ComplexHeatmap pipelines.
-3. **MultifeatureGrid**: 2D tile‐and‐point heatmaps.
+1. **ThresholdedScatterplot**: Faceted volcano‐plot pipelines.
+2. **AnnotatedHeatmap**: Custom ComplexHeatmap pipelines.
+3. **CompositeFeatureHeatmap**: 2D tile‐and‐point heatmaps.
 
 Each section provides API documentation, novice‐friendly step-by-step examples (using lightweight real-world datasets), and advanced usage tips.
 
@@ -184,41 +184,41 @@ library(ComplexHeatmap)     # for heatmap functions
 
 MultiModalGraphics provides three core S4 classes (with associated constructors and plot methods):
 
-1. **ClearScatterplot**
+1. **ThresholdedScatterplot**
 
    * Faceted volcano plots of log2 fold-change vs. –log10(p-value).
    * Constructors:
 
-     * `ClearScatterplot(data.frame_of_DE_results, …)`
-     * `ClearScatterplot_table(expr_matrix, meta_data, …)`
-     * `ClearScatterplot_MAE(mae_object, assayName, …)`
+     * `ThresholdedScatterplot(data.frame_of_DE_results, …)`
+     * `ThresholdedScatterplot_table(expr_matrix, meta_data, …)`
+     * `ThresholdedScatterplot_MAE(mae_object, assayName, …)`
    * Plotting:
 
-     * `createPlot(ClearScatterplot_object, …)`
-     * `show(ClearScatterplot_object)`
+     * `createPlot(ThresholdedScatterplot_object, …)`
+     * `show(ThresholdedScatterplot_object)`
 
-2. **InformativeHeatmap**
+2. **AnnotatedHeatmap**
 
    * Customized ComplexHeatmap displays with “layer\_fun” overlays of significant/trending points.
    * Constructors:
 
-     * `InformativeHeatmap(expr_matrix, meta_data, …)` (does DE under the hood)
-     * `InformativeHeatmapFromMAT(logFC_matrix, pval_matrix, …)`
-     * `InformativeHeatmapFromMAE(mae_object, …)` (optional iClusterPlus + DE).
+     * `AnnotatedHeatmap(expr_matrix, meta_data, …)` (does DE under the hood)
+     * `AnnotatedHeatmapFromMAT(logFC_matrix, pval_matrix, …)`
+     * `AnnotatedHeatmapFromMAE(mae_object, …)` (optional iClusterPlus + DE).
    * Updates / Retrieval:
 
-     * `updateLayerFun(InformativeHeatmap_object, new_layer_fun)`
-     * `getHeatmapObject(InformativeHeatmap_object)`
+     * `updateLayerFun(AnnotatedHeatmap_object, new_layer_fun)`
+     * `getHeatmapObject(AnnotatedHeatmap_object)`
 
-3. **MultifeatureGrid**
+3. **CompositeFeatureHeatmap**
 
    * 2D heatmap + point overlay where tile fill = z‐score, point size/color = –log10(p) & feature count.
    * Constructor:
 
-     * `MultifeatureGrid(data_frame, …)`
+     * `CompositeFeatureHeatmap(data_frame, …)`
    * Plotting:
 
-     * `plot_heatmap(MultifeatureGrid_object, …)`
+     * `plot_heatmap(CompositeFeatureHeatmap_object, …)`
 
 In addition, a **unified high-level wrapper**:
 
@@ -230,7 +230,7 @@ All constructors perform:
 * **Input validation**: ensure required columns/assays exist; stop early with clear error if mismatched.
 * **NA removal**: drop samples or rows with missing grouping/faceting values.
 * **Variance filtering** (optional): drop low-variance features by quantile.
-* **DE analysis** (for ClearScatterplot and InformativeHeatmap) using `limma` (continuous) or `limma::voom` (counts).
+* **DE analysis** (for ThresholdedScatterplot and AnnotatedHeatmap) using `limma` (continuous) or `limma::voom` (counts).
 * **Sensible defaults** for thresholds (fold-change, p-value), colors (red/blue/grey), facets, themes.
 * **Full customization**: every color, theme, facet formula, clustering parameter, font, text size, etc. is exposed via arguments.
 * **Parallel / vectorized** execution for scalability.
@@ -241,13 +241,13 @@ Novice users can get a complete faceted volcano or heatmap with two lines of cod
 
 <a name="clear_scatterplot"></a>
 
-## 4. Section 1: ClearScatterplot (Volcano Plots)
+## 4. Section 1: ThresholdedScatterplot (Volcano Plots)
 
 <a name="cs_background"></a>
 
 ### 4.1. Background & Purpose
 
-A **volcano plot** displays log<sub>2</sub> fold-change (x‐axis) versus –log<sub>10</sub>(p‐value) (y‐axis), highlighting significant “up” and “down” features. In multi-omic or multi-condition studies, you may want **faceted volcanoes** per sample type, time point, or other metadata strata. The **ClearScatterplot** class encapsulates:
+A **volcano plot** displays log<sub>2</sub> fold-change (x‐axis) versus –log<sub>10</sub>(p‐value) (y‐axis), highlighting significant “up” and “down” features. In multi-omic or multi-condition studies, you may want **faceted volcanoes** per sample type, time point, or other metadata strata. The **ThresholdedScatterplot** class encapsulates:
 
 * **Data slot**: A `data.frame` of DE results for all facets (columns:
   `log2fc`, `negLog10p`, `regulation`, `SampleType`, optional `timePoint`, plus internally computed `color_flag` and `category`).
@@ -267,10 +267,10 @@ After construction, call `createPlot()` to build the faceted `ggplot`. Then call
 
 ### 4.2. API Reference
 
-#### 4.2.1. ClearScatterplot (Table-only Constructor) <a name="cs_table"></a>
+#### 4.2.1. ThresholdedScatterplot (Table-only Constructor) <a name="cs_table"></a>
 
 ```r
-ClearScatterplot(
+ThresholdedScatterplot(
   data,                  # data.frame with DE results
   highLog2fc     =  0.585,   # |log2FC| > 0.585 (≃1.5×) → "up"/"down"
   lowLog2fc      = -0.585,
@@ -307,22 +307,22 @@ ClearScatterplot(
   6. Return:
 
      ```r
-     methods::new("ClearScatterplot", data = data, plot = NULL)
+     methods::new("ThresholdedScatterplot", data = data, plot = NULL)
      ```
 
 * **Exports**:
 
   ```r
-  @exportClass ClearScatterplot
-  @exportMethod ClearScatterplot
+  @exportClass ThresholdedScatterplot
+  @exportMethod ThresholdedScatterplot
   ```
 
 ---
 
-#### 4.2.2. ClearScatterplot\_table (Expression Matrix + Metadata) <a name="cs_matrix"></a>
+#### 4.2.2. ThresholdedScatterplot\_table (Expression Matrix + Metadata) <a name="cs_matrix"></a>
 
 ```r
-ClearScatterplot_table(
+ThresholdedScatterplot_table(
   expr,                   # numeric matrix: features × samples
   meta,                   # data.frame: samples × metadata; rownames(meta) = colnames(expr)
   groupColumn    = "Group",     # metadata column for DE contrast
@@ -388,21 +388,21 @@ ClearScatterplot_table(
       * If zero results, warning and skip.
       * Combine all cell results with `do.call(rbind, lst)`.
       * If combined DE table is empty, `stop("No DE results to plot.")`.
-  11. **Call** `ClearScatterplot(de_table, highLog2fc=fc_cutoff, lowLog2fc=-fc_cutoff, negLog10pValue=-log10(pvalue_cutoff), dropNA=TRUE)`; return that object.
+  11. **Call** `ThresholdedScatterplot(de_table, highLog2fc=fc_cutoff, lowLog2fc=-fc_cutoff, negLog10pValue=-log10(pvalue_cutoff), dropNA=TRUE)`; return that object.
 
 * **Exports**:
 
   ```r
-  @exportClass ClearScatterplot_table
-  @exportMethod ClearScatterplot_table
+  @exportClass ThresholdedScatterplot_table
+  @exportMethod ThresholdedScatterplot_table
   ```
 
 ---
 
-#### 4.2.3. ClearScatterplot\_MAE (MultiAssayExperiment-based Constructor) <a name="cs_mae"></a>
+#### 4.2.3. ThresholdedScatterplot\_MAE (MultiAssayExperiment-based Constructor) <a name="cs_mae"></a>
 
 ```r
-ClearScatterplot_MAE(
+ThresholdedScatterplot_MAE(
   mae,                    # MultiAssayExperiment object
   assayName,              # character: name of assay to extract
   groupColumn     = "Group",     # metadata column (in assay-level or top-level colData) for DE
@@ -453,15 +453,15 @@ ClearScatterplot_MAE(
   9. **Cap features** (`max_features`) by variance if specified.
   10. **Determine `dataType`**: as in table version.
   11. **Split into cells**: combinations of `(sampleType, timepoint)` (or just `sampleType` if `timepoint=NULL`).
-  12. **Per-cell DE**: identical logic as in `ClearScatterplot_table`, using `voom()` for `count` or direct `lmFit()` for `continuous`. Use `bplapply()` if `(vectorized=="vectorized" || (vectorized=="auto" && n.cells > bpworkers(BPPARAM))) && parallel==TRUE`.
+  12. **Per-cell DE**: identical logic as in `ThresholdedScatterplot_table`, using `voom()` for `count` or direct `lmFit()` for `continuous`. Use `bplapply()` if `(vectorized=="vectorized" || (vectorized=="auto" && n.cells > bpworkers(BPPARAM))) && parallel==TRUE`.
   13. Combine DE tables; if empty, `stop("No DE results to plot.")`.
-  14. **Call** `ClearScatterplot(de_table, highLog2fc=fc_cutoff, lowLog2fc=-fc_cutoff, negLog10pValue=-log10(pvalue_cutoff), dropNA=TRUE)`; return that object.
+  14. **Call** `ThresholdedScatterplot(de_table, highLog2fc=fc_cutoff, lowLog2fc=-fc_cutoff, negLog10pValue=-log10(pvalue_cutoff), dropNA=TRUE)`; return that object.
 
 * **Exports**:
 
   ```r
-  @exportClass ClearScatterplot_MAE
-  @exportMethod ClearScatterplot_MAE
+  @exportClass ThresholdedScatterplot_MAE
+  @exportMethod ThresholdedScatterplot_MAE
   ```
 
 ---
@@ -471,7 +471,7 @@ ClearScatterplot_MAE(
 ```r
 setMethod(
   "createPlot",
-  signature(object = "ClearScatterplot"),
+  signature(object = "ThresholdedScatterplot"),
   function(
     object,
     color_up          = "indianred",         # color for “up” (category == "up")
@@ -608,7 +608,7 @@ setMethod(
 ```r
 setMethod(
   "show",
-  signature(object = "ClearScatterplot"),
+  signature(object = "ThresholdedScatterplot"),
   function(object) {
     if (is.null(object@plot)) {
       stop("Plot not yet built. Run `object <- createPlot(object, …)` first.")
@@ -676,10 +676,10 @@ Below are three lightweight, **real-world-style** examples—one for each constr
    BPPARAM <- MulticoreParam(workers = 2)
    ```
 
-3. **Construct `ClearScatterplot_MAE` Object**
+3. **Construct `ThresholdedScatterplot_MAE` Object**
 
    ```r
-   cs_mae <- ClearScatterplot_MAE(
+   cs_mae <- ThresholdedScatterplot_MAE(
      mae         = miniACC,
      assayName   = "RNASeq2GeneNorm",
      groupColumn = "C1A.C1B",
@@ -797,10 +797,10 @@ Below are three lightweight, **real-world-style** examples—one for each constr
    BPPARAM <- MulticoreParam(workers = 2)
    ```
 
-4. **Construct `ClearScatterplot_table` Object**
+4. **Construct `ThresholdedScatterplot_table` Object**
 
    ```r
-   cs_table <- ClearScatterplot_table(
+   cs_table <- ThresholdedScatterplot_table(
      expr          = expr_mat,
      meta          = meta_df,
      groupColumn   = "DiseaseStatus",   # “Tumor” vs “Normal”
@@ -860,9 +860,9 @@ Below are three lightweight, **real-world-style** examples—one for each constr
 
 #### Example 1C: `curatedTCGAData::BRCA` (Precomputed DE Table)
 
-**Goal:** Run DE manually on two subtypes (“Basal-like” vs “Luminal A”) of TCGA-BRCA, then plot with `ClearScatterplot(data.frame_DE)`.
+**Goal:** Run DE manually on two subtypes (“Basal-like” vs “Luminal A”) of TCGA-BRCA, then plot with `ThresholdedScatterplot(data.frame_DE)`.
 
-> **Note:** We only demonstrate building a small DE table and passing it to `ClearScatterplot`. We do not facet by `timePoint` (set to `NA`).
+> **Note:** We only demonstrate building a small DE table and passing it to `ThresholdedScatterplot`. We do not facet by `timePoint` (set to `NA`).
 
 1. **Load Packages & Data**
 
@@ -931,10 +931,10 @@ Below are three lightweight, **real-world-style** examples—one for each constr
    }
    ```
 
-4. **Construct & Plot Volcano with ClearScatterplot**
+4. **Construct & Plot Volcano with ThresholdedScatterplot**
 
    ```r
-   cs_de <- ClearScatterplot(
+   cs_de <- ThresholdedScatterplot(
      data            = df_de,
      highLog2fc      = 1.0,   # |log2FC| > 1
      lowLog2fc       = -1.0,
@@ -1018,7 +1018,7 @@ Below are three lightweight, **real-world-style** examples—one for each constr
    Store then print:
 
    ```r
-   cs <- ClearScatterplot(df_de, highLog2fc=1, lowLog2fc=-1, negLog10pValue=1.301)
+   cs <- ThresholdedScatterplot(df_de, highLog2fc=1, lowLog2fc=-1, negLog10pValue=1.301)
    cs <- createPlot(cs, …)
    # Do other data prep, then:
    show(cs)
@@ -1035,7 +1035,7 @@ Below are three lightweight, **real-world-style** examples—one for each constr
    * *Symptom*:
 
      ```
-     Error in ClearScatterplot_table(...): Missing columns: X, Y
+     Error in ThresholdedScatterplot_table(...): Missing columns: X, Y
      ```
    * *Fix*: Check `colnames(meta)` and ensure exact, case-sensitive match for `groupColumn`, `sampleType`, and `timepoint`.
 
@@ -1044,7 +1044,7 @@ Below are three lightweight, **real-world-style** examples—one for each constr
    * *Symptom*:
 
      ```
-     Error in ClearScatterplot_MAE(...): No overlapping samples between expression and metadata
+     Error in ThresholdedScatterplot_MAE(...): No overlapping samples between expression and metadata
      ```
    * *Fix*: Verify that `colnames(expr_matrix)` match `rownames(meta)` exactly. If using an MAE, confirm `sampleMap(mae)` is correct or merge top-level `colData(mae)` properly.
 
@@ -1053,7 +1053,7 @@ Below are three lightweight, **real-world-style** examples—one for each constr
    * *Symptom*:
 
      ```
-     Error in ClearScatterplot_table(...): Each level of 'DiseaseStatus' must have ≥3 samples
+     Error in ThresholdedScatterplot_table(...): Each level of 'DiseaseStatus' must have ≥3 samples
      ```
    * *Fix*: Check `table(meta$DiseaseStatus, meta$SampleType, meta$timePoint)`. Choose different grouping/faceting columns or adjust `min_samples` argument.
 
@@ -1096,13 +1096,13 @@ Below are three lightweight, **real-world-style** examples—one for each constr
 
 <a name="informative_heatmap"></a>
 
-## 5. Section 2: InformativeHeatmap (Custom Heatmaps)
+## 5. Section 2: AnnotatedHeatmap (Custom Heatmaps)
 
 <a name="ih_background"></a>
 
 ### 5.1. Background & Purpose
 
-A **ComplexHeatmap** is a highly customizable heatmap that can integrate multiple annotations and “layer functions” (custom drawing of grid elements). The **InformativeHeatmap** class wraps around a `ComplexHeatmap::Heatmap` object, adding:
+A **ComplexHeatmap** is a highly customizable heatmap that can integrate multiple annotations and “layer functions” (custom drawing of grid elements). The **AnnotatedHeatmap** class wraps around a `ComplexHeatmap::Heatmap` object, adding:
 
 * **Built-in differential expression pipelines** (for matrix + metadata or MAE) to compute fold-changes and p-values.
 * **Optional clustering via iClusterPlus** (for multi-omic MAE), combining multiple assay DE results.
@@ -1115,14 +1115,14 @@ Core slots:
 
 Three entry points:
 
-1. **`InformativeHeatmap(expr_matrix, meta_data, …)`** — runs DE per facet and builds an expression/fold-change matrix.
-2. **`InformativeHeatmapFromMAT(logFC_matrix, pvalue_matrix, …)`** — uses precomputed fold-change + p-value matrices.
-3. **`InformativeHeatmapFromMAE(mae_object, …)`** — runs iClusterPlus (optional) → DE on clusters in each assay → assembles combined fold-change & p-value matrices → builds heatmap.
+1. **`AnnotatedHeatmap(expr_matrix, meta_data, …)`** — runs DE per facet and builds an expression/fold-change matrix.
+2. **`AnnotatedHeatmapFromMAT(logFC_matrix, pvalue_matrix, …)`** — uses precomputed fold-change + p-value matrices.
+3. **`AnnotatedHeatmapFromMAE(mae_object, …)`** — runs iClusterPlus (optional) → DE on clusters in each assay → assembles combined fold-change & p-value matrices → builds heatmap.
 
 Additional methods:
 
-* `updateLayerFun(InformativeHeatmap_object, new_layer_fun)`: Replace the overlay function, re-draw heatmap.
-* `getHeatmapObject(InformativeHeatmap_object)`: Extract the underlying `Heatmap` (ComplexHeatmap) for further manipulation.
+* `updateLayerFun(AnnotatedHeatmap_object, new_layer_fun)`: Replace the overlay function, re-draw heatmap.
+* `getHeatmapObject(AnnotatedHeatmap_object)`: Extract the underlying `Heatmap` (ComplexHeatmap) for further manipulation.
 
 ---
 
@@ -1130,10 +1130,10 @@ Additional methods:
 
 ### 5.2. API Reference
 
-#### 5.2.1. InformativeHeatmap (Matrix + Metadata or MAE) <a name="ih_matrix_mae"></a>
+#### 5.2.1. AnnotatedHeatmap (Matrix + Metadata or MAE) <a name="ih_matrix_mae"></a>
 
 ```r
-InformativeHeatmap(
+AnnotatedHeatmap(
   data,                    # Either:
                            #  1) numeric matrix (features × samples) + meta (if !MAE), OR
                            #  2) a MultiAssayExperiment (MAE) object
@@ -1177,7 +1177,7 @@ InformativeHeatmap(
      * Decide `heatmap_data <- t(combined_logFC)` (samples/assays as rows/columns).
   2. **Else if** `is.matrix(data)` & `!is.null(meta)`:
 
-     * **DE per facet** identical to `ClearScatterplot_table`, but store final `logFC` & `pvalue` for each gene/sampleType/timePoint cell.
+     * **DE per facet** identical to `ThresholdedScatterplot_table`, but store final `logFC` & `pvalue` for each gene/sampleType/timePoint cell.
      * **Assemble** a matrix of fold-change: rows = features, columns = “cell” names (e.g., “StageI\_high”).
      * **Assemble** matching p-value matrix.
      * **Set** `heatmap_data <- logFC_matrix` (features × cells).
@@ -1241,22 +1241,22 @@ InformativeHeatmap(
   8. **Wrap**:
 
      ```r
-     methods::new("InformativeHeatmap", heatmap = hm, params = as.list(environment()))
+     methods::new("AnnotatedHeatmap", heatmap = hm, params = as.list(environment()))
      ```
 
 * **Exports**:
 
   ```r
-  @exportClass InformativeHeatmap
-  @exportMethod InformativeHeatmap
+  @exportClass AnnotatedHeatmap
+  @exportMethod AnnotatedHeatmap
   ```
 
 ---
 
-#### 5.2.2. InformativeHeatmapFromMAT (Fold-Change + P-Value Matrices) <a name="ih_matrices"></a>
+#### 5.2.2. AnnotatedHeatmapFromMAT (Fold-Change + P-Value Matrices) <a name="ih_matrices"></a>
 
 ```r
-InformativeHeatmapFromMAT(
+AnnotatedHeatmapFromMAT(
   logFC_matrix,      # numeric matrix: features × conditions
   pvalue_matrix,     # numeric matrix: same dims as logFC_matrix
   pvalue_cutoff     = 0.05,
@@ -1284,21 +1284,21 @@ InformativeHeatmapFromMAT(
   6. **Wrap**:
 
      ```r
-     methods::new("InformativeHeatmap", heatmap = hm, params = as.list(environment()))
+     methods::new("AnnotatedHeatmap", heatmap = hm, params = as.list(environment()))
      ```
 
 * **Exports**:
 
   ```r
-  @export InformativeHeatmapFromMAT
+  @export AnnotatedHeatmapFromMAT
   ```
 
 ---
 
-#### 5.2.3. InformativeHeatmapFromMAE (MAE + iClusterPlus) <a name="ih_mae"></a>
+#### 5.2.3. AnnotatedHeatmapFromMAE (MAE + iClusterPlus) <a name="ih_mae"></a>
 
 ```r
-InformativeHeatmapFromMAE(
+AnnotatedHeatmapFromMAE(
   mae,                    # MultiAssayExperiment object
   significant_pvalue   = 0.05,
   trending_pvalue      = 0.1,
@@ -1359,7 +1359,7 @@ InformativeHeatmapFromMAE(
   9. **Wrap**:
 
      ```r
-     methods::new("InformativeHeatmap", heatmap = hm, params = as.list(environment()))
+     methods::new("AnnotatedHeatmap", heatmap = hm, params = as.list(environment()))
      ```
 
 * **Dependencies**:
@@ -1371,7 +1371,7 @@ InformativeHeatmapFromMAE(
 * **Exports**:
 
   ```r
-  @export InformativeHeatmapFromMAE
+  @export AnnotatedHeatmapFromMAE
   ```
 
 ---
@@ -1381,7 +1381,7 @@ InformativeHeatmapFromMAE(
 ```r
 setMethod(
   "updateLayerFun",
-  signature(x = "InformativeHeatmap"),
+  signature(x = "AnnotatedHeatmap"),
   function(x, layer_fun) {
     if (!requireNamespace("ComplexHeatmap", quietly = TRUE))
       stop("ComplexHeatmap required to update layer_fun. Install via BiocManager::install('ComplexHeatmap').")
@@ -1397,7 +1397,7 @@ setMethod(
 )
 ```
 
-* **Purpose**: Take an existing `InformativeHeatmap` object, supply a brand-new `layer_fun` (e.g., plot different symbols or threshold criteria), and re-draw the heatmap.
+* **Purpose**: Take an existing `AnnotatedHeatmap` object, supply a brand-new `layer_fun` (e.g., plot different symbols or threshold criteria), and re-draw the heatmap.
 * **Exports**:
 
   ```r
@@ -1411,7 +1411,7 @@ setMethod(
 ```r
 setMethod(
   "getHeatmapObject",
-  signature(x = "InformativeHeatmap"),
+  signature(x = "AnnotatedHeatmap"),
   function(x) {
     if (!requireNamespace("ComplexHeatmap", quietly = TRUE))
       stop("ComplexHeatmap required to retrieve Heatmap object.")
@@ -1437,7 +1437,7 @@ setMethod(
 
 ### 5.3. Practical Examples
 
-Below are three lightweight examples showcasing use of **InformativeHeatmap** in different modes. Each example can be run in a fresh R session. We deliberately work with small subsets to minimize computation time.
+Below are three lightweight examples showcasing use of **AnnotatedHeatmap** in different modes. Each example can be run in a fresh R session. We deliberately work with small subsets to minimize computation time.
 
 ---
 
@@ -1450,7 +1450,7 @@ Below are three lightweight examples showcasing use of **InformativeHeatmap** in
 > **Concept:** We will:
 >
 > 1. Extract a small subset of samples and features from `miniACC`.
-> 2. Run `InformativeHeatmap` in “matrix + metadata” mode to perform DE within each `pathologic_stage` (two groups: “C1A” vs “C1B”).
+> 2. Run `AnnotatedHeatmap` in “matrix + metadata” mode to perform DE within each `pathologic_stage` (two groups: “C1A” vs “C1B”).
 > 3. Visualize a heatmap of logFC per gene per stage, overlaying points where p < 0.05.
 
 1. **Load Packages & Data**
@@ -1486,13 +1486,13 @@ Below are three lightweight examples showcasing use of **InformativeHeatmap** in
    expr_small <- expr_small[top_genes, ]
    ```
 
-3. **Run `InformativeHeatmap` in Matrix+Metadata Mode**
+3. **Run `AnnotatedHeatmap` in Matrix+Metadata Mode**
 
    ```r
    # Define parallel backend (2 cores)
    BPPARAM <- MulticoreParam(workers = 2)
 
-   ih_matrix <- InformativeHeatmap(
+   ih_matrix <- AnnotatedHeatmap(
      data               = expr_small,        # 200 × 30 matrix
      meta               = meta_small,       
      groupColumn        = "C1A.C1B",         # “C1A” vs “C1B”
@@ -1556,10 +1556,10 @@ Below are three lightweight examples showcasing use of **InformativeHeatmap** in
    colnames(pval_mat) <- colnames(logFC_mat)
    ```
 
-2. **Construct `InformativeHeatmapFromMAT` Object**
+2. **Construct `AnnotatedHeatmapFromMAT` Object**
 
    ```r
-   ih_mat <- InformativeHeatmapFromMAT(
+   ih_mat <- AnnotatedHeatmapFromMAT(
      logFC_matrix     = logFC_mat,
      pvalue_matrix    = pval_mat,
      pvalue_cutoff    = 0.05,
@@ -1593,7 +1593,7 @@ Below are three lightweight examples showcasing use of **InformativeHeatmap** in
 
 <a name="ih_example2c"></a>
 
-#### Example 2C: Custom MAE with `InformativeHeatmapFromMAE`
+#### Example 2C: Custom MAE with `AnnotatedHeatmapFromMAE`
 
 **Goal:** Simulate a tiny MAE with two assays (gene expression & methylation), run iClusterPlus to identify 2 clusters, run DE on each assay comparing clusters, and build a combined heatmap.
 
@@ -1633,11 +1633,11 @@ Below are three lightweight examples showcasing use of **InformativeHeatmap** in
    )
    ```
 
-2. **Run `InformativeHeatmapFromMAE`**
+2. **Run `AnnotatedHeatmapFromMAE`**
 
    ```r
    # Use 2 clusters, lambda=0.1
-   ih_mae <- InformativeHeatmapFromMAE(
+   ih_mae <- AnnotatedHeatmapFromMAE(
      mae                 = tiny_mae,
      significant_pvalue  = 0.05,
      trending_pvalue     = 0.1,
@@ -1680,7 +1680,7 @@ Below are three lightweight examples showcasing use of **InformativeHeatmap** in
    Provide any `circlize::colorRamp2()` call:
 
    ```r
-   ih_matrix <- InformativeHeatmap(
+   ih_matrix <- AnnotatedHeatmap(
      …,
      col = circlize::colorRamp2(c(-3,0,3), c("#1B9E77","white","#D95F02")),
      …
@@ -1690,7 +1690,7 @@ Below are three lightweight examples showcasing use of **InformativeHeatmap** in
 2. **Turn Off Clustering**
 
    ```r
-   ih_mat <- InformativeHeatmapFromMAT(
+   ih_mat <- AnnotatedHeatmapFromMAT(
      …,
      cluster_rows       = FALSE,
      cluster_columns   = FALSE,
@@ -1701,7 +1701,7 @@ Below are three lightweight examples showcasing use of **InformativeHeatmap** in
 3. **Adjust Dot Shapes & Sizes**
 
    ```r
-   ih_mat <- InformativeHeatmapFromMAT(
+   ih_mat <- AnnotatedHeatmapFromMAT(
      …,
      pch_val = 15,  # square dots
      unit_val= 5,   # bigger
@@ -1712,7 +1712,7 @@ Below are three lightweight examples showcasing use of **InformativeHeatmap** in
 4. **Change “Significant” vs “Trending” Thresholds**
 
    ```r
-   ih_matrix <- InformativeHeatmap(
+   ih_matrix <- AnnotatedHeatmap(
      …,
      pvalue_cutoff   = 0.01,
      trending_cutoff = 0.05,
@@ -1755,9 +1755,9 @@ Below are three lightweight examples showcasing use of **InformativeHeatmap** in
    * *Symptom*:
 
      ```
-     Error in InformativeHeatmap(data = df, …): Data must be a matrix.
+     Error in AnnotatedHeatmap(data = df, …): Data must be a matrix.
      ```
-   * *Fix*: If you intended to run the “table-only” or “precomputed” workflow, use `InformativeHeatmapFromMAT`. To use `InformativeHeatmap` with a data.frame, first convert to matrix.
+   * *Fix*: If you intended to run the “table-only” or “precomputed” workflow, use `AnnotatedHeatmapFromMAT`. To use `AnnotatedHeatmap` with a data.frame, first convert to matrix.
 
 2. **“Missing pvalues”**
 
@@ -1766,7 +1766,7 @@ Below are three lightweight examples showcasing use of **InformativeHeatmap** in
      ```
      Error: object 'pvalue_matrix' not found
      ```
-   * *Fix*: For `InformativeHeatmapFromMAT`, ensure you passed `pvalue_matrix=…` exactly matching dims of `logFC_matrix`.
+   * *Fix*: For `AnnotatedHeatmapFromMAT`, ensure you passed `pvalue_matrix=…` exactly matching dims of `logFC_matrix`.
 
 3. **“iClusterPlus took too long”**
 
@@ -1806,13 +1806,13 @@ Below are three lightweight examples showcasing use of **InformativeHeatmap** in
 
 <a name="multifeature_grid"></a>
 
-## 6. Section 3: MultifeatureGrid (2D Tile-and-Point Heatmaps)
+## 6. Section 3: CompositeFeatureHeatmap (2D Tile-and-Point Heatmaps)
 
 <a name="mg_background"></a>
 
 ### 6.1. Background & Purpose
 
-A **MultifeatureGrid** plot displays a grid where:
+A **CompositeFeatureHeatmap** plot displays a grid where:
 
 * **X-axis**: one categorical variable (e.g., tissue type).
 * **Y-axis**: another categorical variable (e.g., signaling pathway).
@@ -1837,8 +1837,8 @@ Core slots:
 
 Two key methods:
 
-* Constructor: `MultifeatureGrid(data_frame, …)`.
-* Plot: `plot_heatmap(MultifeatureGrid_object, pValueColumn, lowColor, highColor, borderColor, columnForNumber, independantVariable)`.
+* Constructor: `CompositeFeatureHeatmap(data_frame, …)`.
+* Plot: `plot_heatmap(CompositeFeatureHeatmap_object, pValueColumn, lowColor, highColor, borderColor, columnForNumber, independantVariable)`.
 
 ---
 
@@ -1846,10 +1846,10 @@ Two key methods:
 
 ### 6.2. API Reference
 
-#### 6.2.1. MultifeatureGrid (Constructor) <a name="mg_constructor"></a>
+#### 6.2.1. CompositeFeatureHeatmap (Constructor) <a name="mg_constructor"></a>
 
 ```r
-MultifeatureGrid(
+CompositeFeatureHeatmap(
   data,                # data.frame with required columns
   title            = "Heatmap",
   x_label          = "X Label",
@@ -1879,7 +1879,7 @@ MultifeatureGrid(
 
      ```r
      methods::new(
-       "MultifeatureGrid",
+       "CompositeFeatureHeatmap",
        data            = data,
        title           = title,
        x_label         = x_label,
@@ -1895,8 +1895,8 @@ MultifeatureGrid(
 * **Exports**:
 
   ```r
-  @exportClass MultifeatureGrid
-  @exportMethod MultifeatureGrid
+  @exportClass CompositeFeatureHeatmap
+  @exportMethod CompositeFeatureHeatmap
   ```
 
 ---
@@ -1906,7 +1906,7 @@ MultifeatureGrid(
 ```r
 setMethod(
   "plot_heatmap",
-  signature(object = "MultifeatureGrid"),
+  signature(object = "CompositeFeatureHeatmap"),
   function(
     object,
     pValueColumn      = "p",                   # column for p-values
@@ -2025,7 +2025,7 @@ setMethod(
 
 ### 6.3. Practical Examples
 
-Below are two lightweight, **real-world-style** examples demonstrating `MultifeatureGrid`. Both use a small “demo” dataset to minimize memory/time.
+Below are two lightweight, **real-world-style** examples demonstrating `CompositeFeatureHeatmap`. Both use a small “demo” dataset to minimize memory/time.
 
 ---
 
@@ -2054,10 +2054,10 @@ Below are two lightweight, **real-world-style** examples demonstrating `Multifea
    #  $ timePoint         : Factor w/ 2 levels “Time1”, “Time2”
    ```
 
-2. **Construct `MultifeatureGrid` Object**
+2. **Construct `CompositeFeatureHeatmap` Object**
 
    ```r
-   mg <- MultifeatureGrid(
+   mg <- CompositeFeatureHeatmap(
      data           = data_mg,
      title          = "Demo Multifeature Grid",
      x_label        = "Tissue Type",
@@ -2097,7 +2097,7 @@ Below are two lightweight, **real-world-style** examples demonstrating `Multifea
 
 #### Example 3B: Custom Table from Pathway Enrichment (Real-World)
 
-**Goal:** Suppose you ran pathway enrichment on Differential Expression results from the “Taylor” dataset and obtained a small table of 12 pathways. We demonstrate building a `MultifeatureGrid` from that real-world output.
+**Goal:** Suppose you ran pathway enrichment on Differential Expression results from the “Taylor” dataset and obtained a small table of 12 pathways. We demonstrate building a `CompositeFeatureHeatmap` from that real-world output.
 
 1. **(Simulate) Pathway Enrichment**
 
@@ -2124,7 +2124,7 @@ Below are two lightweight, **real-world-style** examples demonstrating `Multifea
 2. **Construct & Plot**
 
    ```r
-   mg2 <- MultifeatureGrid(
+   mg2 <- CompositeFeatureHeatmap(
      data           = df_pe,
      title          = "Pathway Enrichment Grid: Taylor PCa",
      x_label        = "Tissue",
@@ -2162,7 +2162,7 @@ Below are two lightweight, **real-world-style** examples demonstrating `Multifea
 1. **Custom Breakpoints & Palettes**
 
    ```r
-   mg <- MultifeatureGrid(
+   mg <- CompositeFeatureHeatmap(
      data           = data_mg,
      color_palette  = "Spectral",
      breaks         = seq(-4,4,0.5)
@@ -2261,7 +2261,7 @@ Below are two lightweight, **real-world-style** examples demonstrating `Multifea
 Often, you want to display **multiple visualizations** (e.g., several volcano plots or several heatmaps) side-by-side for different modalities (RNA, methylation, proteomics). Instead of manually invoking each constructor and combining with `patchwork` or `ComplexHeatmap::+`, **MultiModalPlot** automatically:
 
 1. Detects each input’s type (MAE, matrix+meta, DE table).
-2. Dispatches to the appropriate builder (`ClearScatterplot_MAE`, `ClearScatterplot_table`, `ClearScatterplot`, or `InformativeHeatmap`).
+2. Dispatches to the appropriate builder (`ThresholdedScatterplot_MAE`, `ThresholdedScatterplot_table`, `ThresholdedScatterplot`, or `AnnotatedHeatmap`).
 3. Returns a **combined plot**:
 
    * For `panel_type = "volcano"`: a `ggplot` (if one modality) or a `patchwork` object (if >1).
@@ -2300,9 +2300,9 @@ MultiModalPlot(
 
 * **Inputs**: Must be a **named** list. Each element’s name is used as the panel label.
 
-  * **Case A**: `inherits(x, "MultiAssayExperiment")` → calls `ClearScatterplot_MAE()` or `InformativeHeatmap()` depending on `panel_type`.
-  * **Case B**: `is.list(x) && is.matrix(x$expr) && is.data.frame(x$meta)` → calls `ClearScatterplot_table()` or `InformativeHeatmap()`.
-  * **Case C**: `is.data.frame(x)` with columns `c("log2fc","negLog10p","regulation","SampleType")` → calls `ClearScatterplot()`. Only valid if `panel_type = "volcano"`.
+  * **Case A**: `inherits(x, "MultiAssayExperiment")` → calls `ThresholdedScatterplot_MAE()` or `AnnotatedHeatmap()` depending on `panel_type`.
+  * **Case B**: `is.list(x) && is.matrix(x$expr) && is.data.frame(x$meta)` → calls `ThresholdedScatterplot_table()` or `AnnotatedHeatmap()`.
+  * **Case C**: `is.data.frame(x)` with columns `c("log2fc","negLog10p","regulation","SampleType")` → calls `ThresholdedScatterplot()`. Only valid if `panel_type = "volcano"`.
   * Else: `stop("Input ‘…’ not recognized. Must be MAE, (expr, meta), or DE table.")`.
 
 * **Per-modality arguments**: If you pass vectors (e.g., `dataType = c(RNA="auto", Meth="count")`), `MultiModalPlot` picks the element matching the modality name. Otherwise, it recycles or defaults.
@@ -2315,7 +2315,7 @@ MultiModalPlot(
 * **Additional arguments** (`…`):
 
   * For volcano mode: passed to `createPlot()` (e.g., `color_up`, `color_down`, `title`, etc.).
-  * For heatmap mode: passed to the respective `InformativeHeatmap*` constructor (e.g., `col`, `cluster_rows`, `pch_val`, etc.).
+  * For heatmap mode: passed to the respective `AnnotatedHeatmap*` constructor (e.g., `col`, `cluster_rows`, `pch_val`, etc.).
 
 * **Example skeleton**:
 
@@ -2328,7 +2328,7 @@ MultiModalPlot(
     if (inherits(x, "MultiAssayExperiment")) {
       # check assayNames[[mod]], groupColumns[[mod]], sampleTypes[[mod]]
       if (panel_type=="volcano") {
-        panel_list[[mod]] <- ClearScatterplot_MAE(
+        panel_list[[mod]] <- ThresholdedScatterplot_MAE(
           mae          = x,
           assayName    = assayNames[[mod]],
           groupColumn  = groupColumns[[mod]],
@@ -2344,7 +2344,7 @@ MultiModalPlot(
           …
         )
       } else {
-        panel_list[[mod]] <- InformativeHeatmap(
+        panel_list[[mod]] <- AnnotatedHeatmap(
           data            = x,
           assayName       = assayNames[[mod]],
           groupColumn     = groupColumns[[mod]],
@@ -2364,14 +2364,14 @@ MultiModalPlot(
         )
       }
     } else if (is.list(x) && is.matrix(x$expr) && is.data.frame(x$meta)) {
-      # call ClearScatterplot_table() or InformativeHeatmap()
+      # call ThresholdedScatterplot_table() or AnnotatedHeatmap()
       …
     } else if (is.data.frame(x) &&
                all(c("log2fc","negLog10p","regulation","SampleType") %in% colnames(x))) {
       if (panel_type != "volcano") {
         stop("DE tables only support `panel_type='volcano'`.")
       }
-      panel_list[[mod]] <- ClearScatterplot(
+      panel_list[[mod]] <- ThresholdedScatterplot(
         data           = x,
         highLog2fc     = fc_cutoff,
         lowLog2fc      = -fc_cutoff,
@@ -2477,7 +2477,7 @@ print(volcano_plot)
 
 **What happens internally**:
 
-* Detects `inputs$ACC` is an MAE → calls `ClearScatterplot_MAE(...)` → builds `ClearScatterplot` object → `createPlot(...)` → `ggplot`.
+* Detects `inputs$ACC` is an MAE → calls `ThresholdedScatterplot_MAE(...)` → builds `ThresholdedScatterplot` object → `createPlot(...)` → `ggplot`.
 * Returns a `ggplot` object ready to print.
 
 ---
@@ -2569,7 +2569,7 @@ print(volcano_plot)
 
    **What happens internally**:
 
-   * **RNA**: `InformativeHeatmapFromMAE(mae_rna_meth, assayName="expr", groupColumn="C1A.C1B", sampleType="pathologic_stage", …)` → heatmap of RNA logFC.
+   * **RNA**: `AnnotatedHeatmapFromMAE(mae_rna_meth, assayName="expr", groupColumn="C1A.C1B", sampleType="pathologic_stage", …)` → heatmap of RNA logFC.
    * **Meth**: same with `assayName="beta"` → heatmap of methylation logFC.
    * Both `Heatmap` objects combined side-by-side (`Heatmap1 + Heatmap2`) → returned as `HeatmapList`.
 
@@ -2625,7 +2625,7 @@ print(volcano_plot)
    rownames(pval_mat)  <- rownames(logFC_mat)
    colnames(pval_mat)  <- colnames(logFC_mat)
 
-   ih_mat <- InformativeHeatmapFromMAT(
+   ih_mat <- AnnotatedHeatmapFromMAT(
      logFC_matrix     = logFC_mat,
      pvalue_matrix    = pval_mat,
      pvalue_cutoff    = 0.05,
@@ -2739,7 +2739,7 @@ print(volcano_plot)
      ```
      Error: DE tables only support `panel_type='volcano'`
      ```
-   * *Fix*: Use `panel_type = "volcano"` if your input is precomputed DE. To heatmap that, use `InformativeHeatmapFromMAT()` instead.
+   * *Fix*: Use `panel_type = "volcano"` if your input is precomputed DE. To heatmap that, use `AnnotatedHeatmapFromMAT()` instead.
 
 2. **Missing Modality Mismatch**
 

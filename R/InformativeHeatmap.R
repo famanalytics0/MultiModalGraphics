@@ -1,8 +1,8 @@
 ################################################################################
-# InformativeHeatmap.R
+# AnnotatedHeatmap.R
 ################################################################################
 
-#' @title InformativeHeatmap: A Class for Enhanced Heatmaps
+#' @title AnnotatedHeatmap: A Class for Enhanced Heatmaps
 #' @description
 #' Encapsulates a ComplexHeatmap::Heatmap (or combined HeatmapList) together with
 #' all parameters used to build it. Supports:
@@ -14,7 +14,7 @@
 #'
 #' @slot heatmap A ComplexHeatmap::Heatmap or HeatmapList
 #' @slot params  A list of all parameters used (including sub‐lists)
-#' @exportClass InformativeHeatmap
+#' @exportClass AnnotatedHeatmap
 #' @importMethodsFrom methods setClass new
 #' @importFrom ComplexHeatmap Heatmap
 #' @importFrom matrixStats rowVars rowMaxs
@@ -23,7 +23,7 @@
 #' @importFrom limma voom lmFit eBayes topTable
 #' @importFrom BiocParallel bpparam bpworkers bplapply
 setClass(
-  "InformativeHeatmap",
+  "AnnotatedHeatmap",
   slots = c(
     heatmap = "Heatmap",
     params  = "list"
@@ -32,22 +32,22 @@ setClass(
 
 #— GENERICS -------------------------------------------------------------------
 
-#' @rdname InformativeHeatmap
+#' @rdname AnnotatedHeatmap
 #' @export
-setGeneric("InformativeHeatmap",
-  function(data, meta = NULL, pval_list = NULL, ...) standardGeneric("InformativeHeatmap")
+setGeneric("AnnotatedHeatmap",
+  function(data, meta = NULL, pval_list = NULL, ...) standardGeneric("AnnotatedHeatmap")
 )
 
-#' @rdname InformativeHeatmap
+#' @rdname AnnotatedHeatmap
 #' @export
-setGeneric("InformativeHeatmap_table", function(fc_matrix, pval_matrix, ...) standardGeneric("InformativeHeatmap_table"))
+setGeneric("AnnotatedHeatmap_table", function(fc_matrix, pval_matrix, ...) standardGeneric("AnnotatedHeatmap_table"))
 
 #— SINGLE-MATRIX METHOD -----------------------------------------------------
 
-#' @describeIn InformativeHeatmap Build from expression matrix + metadata.
-#' @exportMethod InformativeHeatmap
+#' @describeIn AnnotatedHeatmap Build from expression matrix + metadata.
+#' @exportMethod AnnotatedHeatmap
 setMethod(
-  "InformativeHeatmap",
+  "AnnotatedHeatmap",
   signature(data = "matrix"),
   function(
     data, meta = NULL,
@@ -113,16 +113,16 @@ setMethod(
 
     ## 4) Wrap and return
     params <- as.list(environment())[setdiff(names(environment()), c("..."))]
-    new("InformativeHeatmap", heatmap = ht, params = params)
+    new("AnnotatedHeatmap", heatmap = ht, params = params)
   }
 )
 
 #— TABLE-BASED METHOD ---------------------------------------------------------
 
-#' @describeIn InformativeHeatmap Build from precomputed FC & P-value matrices.
-#' @exportMethod InformativeHeatmap_table
+#' @describeIn AnnotatedHeatmap Build from precomputed FC & P-value matrices.
+#' @exportMethod AnnotatedHeatmap_table
 setMethod(
-  "InformativeHeatmap_table",
+  "AnnotatedHeatmap_table",
   signature(fc_matrix = "matrix", pval_matrix = "matrix"),
   function(
     fc_matrix, pval_matrix,
@@ -170,18 +170,18 @@ setMethod(
     )
 
     params <- as.list(environment())[setdiff(names(formals()), c("fc_matrix","pval_matrix","..."))]
-    new("InformativeHeatmap", heatmap = ht, params = params)
+    new("AnnotatedHeatmap", heatmap = ht, params = params)
   }
 )
 
 #— MULTI-/SINGLE-MATRIX METHOD ---------------------------------------------
 
-#' @describeIn InformativeHeatmap Build from one-or-more expression+metadata pairs:
+#' @describeIn AnnotatedHeatmap Build from one-or-more expression+metadata pairs:
 #'   - length = 1 → side-by-side expr vs DE heatmaps  
 #'   - length >1  → aggregate FC/P and draw combined heatmap
-#' @exportMethod InformativeHeatmap
+#' @exportMethod AnnotatedHeatmap
 setMethod(
-  "InformativeHeatmap",
+  "AnnotatedHeatmap",
   signature(data = "list", meta = "list"),
   function(
     data, meta,
@@ -277,7 +277,7 @@ setMethod(
         ...
       )
       combo <- ht1 + ht2
-      return(new("InformativeHeatmap", heatmap = combo, params = list(single = TRUE)))
+      return(new("AnnotatedHeatmap", heatmap = combo, params = list(single = TRUE)))
     }
 
     # Multi‐matrix aggregation
@@ -296,7 +296,7 @@ setMethod(
     rownames(fc_mat) <- rownames(pv_mat) <- all_feats
 
     # Delegate to table‐based
-    InformativeHeatmap_table(
+    AnnotatedHeatmap_table(
       fc_matrix = fc_mat,
       pval_matrix = pv_mat,
       pvalue_cutoff = pvalue_cutoff,
@@ -320,21 +320,21 @@ setMethod(
 
 #— MULTI-MAE LIST METHOD -----------------------------------------------------
 
-#' @describeIn InformativeHeatmap
+#' @describeIn AnnotatedHeatmap
 #' Build from multiple MultiAssayExperiment objects:
 #'   Extracts each assay (via `assayNames[[mod]]`) + colData,
 #'   then calls the list-of-matrices method.
 #' @param data        Named list of MultiAssayExperiment
 #' @param assayNames  Named character: which assay in each MAE to use
 #' @param groupColumns Named character: grouping column in each colData
-#' @exportMethod InformativeHeatmap
+#' @exportMethod AnnotatedHeatmap
 setMethod(
-  "InformativeHeatmap",
+  "AnnotatedHeatmap",
   signature(data = "list", meta = "missing"),
   function(data, assayNames, groupColumns, ...) {
     # sanity
     if (!all(vapply(data, inherits, logical(1), what = "MultiAssayExperiment")))
-      stop("When calling InformativeHeatmap(list), all elements must be MultiAssayExperiment.")
+      stop("When calling AnnotatedHeatmap(list), all elements must be MultiAssayExperiment.")
     if (is.null(assayNames) || is.null(groupColumns))
       stop("You must supply both `assayNames` and `groupColumns` for a list of MAEs.")
     mods <- names(data)
@@ -353,7 +353,7 @@ setMethod(
       meta_list[[mod]] <- as.data.frame(SummarizedExperiment::colData(se), stringsAsFactors = FALSE)
     }
     # Delegate to list-of-matrices
-    InformativeHeatmap(
+    AnnotatedHeatmap(
       data = data_list,
       meta = meta_list,
       ...,
@@ -365,16 +365,16 @@ setMethod(
 
 #— MULTIMODAL FC/PVAL LIST METHOD -------------------------------------------
 
-#' @describeIn InformativeHeatmap Integrate named FC/p‐value matrices.
-#' @exportMethod InformativeHeatmap
+#' @describeIn AnnotatedHeatmap Integrate named FC/p‐value matrices.
+#' @exportMethod AnnotatedHeatmap
 setMethod(
-  "InformativeHeatmap",
+  "AnnotatedHeatmap",
   signature(data = "list", pval_list = "list"),
   function(data, pval_list, ...) {
     if (!identical(sort(names(data)), sort(names(pval_list))))
       stop("Names of `data` and `pval_list` must match.")
     hms <- Map(function(fc, pv) {
-      InformativeHeatmap_table(
+      AnnotatedHeatmap_table(
         fc_matrix = fc,
         pval_matrix = pv,
         legend_title = NULL,
@@ -382,23 +382,23 @@ setMethod(
       )
     }, data, pval_list)
     combo <- Reduce(`+`, lapply(hms, slot, "heatmap"))
-    new("InformativeHeatmap", heatmap = combo, params = list(multimodal = TRUE))
+    new("AnnotatedHeatmap", heatmap = combo, params = list(multimodal = TRUE))
   }
 )
 
 #— MAE HELPER ---------------------------------------------------------------
 
-#' @title InformativeHeatmapFromMAE
+#' @title AnnotatedHeatmapFromMAE
 #' @description
 #' Extracts assay & metadata from a MultiAssayExperiment and calls
 #' the matrix+metadata constructor.
 #' @param mae       A `MultiAssayExperiment`
 #' @param assayName Which assay to use (auto‐selects if only one)
-#' @param ...       Passed to `InformativeHeatmap(matrix, meta, ...)`
+#' @param ...       Passed to `AnnotatedHeatmap(matrix, meta, ...)`
 #' @importFrom MultiAssayExperiment experiments
 #' @importFrom SummarizedExperiment assay colData
 #' @export
-InformativeHeatmapFromMAE <- function(mae, assayName = NULL, ...) {
+AnnotatedHeatmapFromMAE <- function(mae, assayName = NULL, ...) {
   if (!inherits(mae, "MultiAssayExperiment"))
     stop("`mae` must be a MultiAssayExperiment.")
   assays_list <- MultiAssayExperiment::experiments(mae)
@@ -410,20 +410,20 @@ InformativeHeatmapFromMAE <- function(mae, assayName = NULL, ...) {
   se <- assays_list[[assayName]]
   expr <- SummarizedExperiment::assay(se)
   meta <- as.data.frame(SummarizedExperiment::colData(se), stringsAsFactors = FALSE)
-  InformativeHeatmap(expr, meta = meta, ...)
+  AnnotatedHeatmap(expr, meta = meta, ...)
 }
 
 #— ACCESSORS ---------------------------------------------------------------
 
-#' @rdname InformativeHeatmap
+#' @rdname AnnotatedHeatmap
 #' @export
 setGeneric("getHeatmapObject", function(x) standardGeneric("getHeatmapObject"))
-setMethod("getHeatmapObject", "InformativeHeatmap", function(x) x@heatmap)
+setMethod("getHeatmapObject", "AnnotatedHeatmap", function(x) x@heatmap)
 
-#' @rdname InformativeHeatmap
+#' @rdname AnnotatedHeatmap
 #' @export
 setGeneric("updateLayerFun", function(x, layer_fun) standardGeneric("updateLayerFun"))
-setMethod("updateLayerFun", "InformativeHeatmap", function(x, layer_fun) {
+setMethod("updateLayerFun", "AnnotatedHeatmap", function(x, layer_fun) {
   if (isTRUE(x@params$multimodal))
     stop("To update layer_fun for a multimodal object, reconstruct modality by modality.")
   args <- c(list(x@heatmap@matrix), x@params)
@@ -433,9 +433,9 @@ setMethod("updateLayerFun", "InformativeHeatmap", function(x, layer_fun) {
   x
 })
 
-#' @rdname InformativeHeatmap
+#' @rdname AnnotatedHeatmap
 #' @exportMethod show
-setMethod("show", "InformativeHeatmap", function(object) {
+setMethod("show", "AnnotatedHeatmap", function(object) {
   ComplexHeatmap::draw(object@heatmap)
   invisible(object)
 })

@@ -37,7 +37,7 @@ that merge multiple streams of data into a single coherent graphic."><!-- mathja
     <span class="caret"></span>
   </a>
   <ul class="dropdown-menu" role="menu"><li>
-      <a href="../articles/multifeature_grid.html">MultifeatureGrid Visualization</a>
+      <a href="../articles/multifeature_grid.html">CompositeFeatureHeatmap Visualization</a>
     </li>
   </ul></li>
       </ul><ul class="nav navbar-nav navbar-right"><li>
@@ -69,9 +69,9 @@ that merge multiple streams of data into a single coherent graphic.</p>
 
     <div id="details">
     <h2>Details</h2>
-    <p>The MultiModalGraphics package offers the following features:</p><ul><li><p>InformativeHeatmap: encapsulating a CompexHeatmap object to provide additional functionality</p></li>
-<li><p>MultifeatureGrid: generating a heatmap grid, where each row presents a composite of information about a group of related features per row, rather than a single feature (unlike typically seen in conventional heatmaps).</p></li>
-<li><p>ClearScatterplot: generating customizable scatter plots that can encompass multiple datasets within a single visualization.</p></li>
+    <p>The MultiModalGraphics package offers the following features:</p><ul><li><p>AnnotatedHeatmap: encapsulating a CompexHeatmap object to provide additional functionality</p></li>
+<li><p>CompositeFeatureHeatmap: generating a heatmap grid, where each row presents a composite of information about a group of related features per row, rather than a single feature (unlike typically seen in conventional heatmaps).</p></li>
+<li><p>ThresholdedScatterplot: generating customizable scatter plots that can encompass multiple datasets within a single visualization.</p></li>
 <li><p>generate_data: helper class to provide data to quickly test the 3 classes above.</p></li>
 </ul></div>
     <div id="getting-started">
@@ -97,7 +97,7 @@ that merge multiple streams of data into a single coherent graphic.</p>
 
     <div id="ref-examples">
     <h2>Examples</h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Example of creating an InformativeHeatmap</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Example of creating an AnnotatedHeatmap</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/jokergoo/ComplexHeatmap" class="external-link">ComplexHeatmap</a></span><span class="op">)</span></span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Loading required package: grid</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> ========================================</span>
@@ -120,7 +120,7 @@ that merge multiple streams of data into a single coherent graphic.</p>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> ========================================</span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/famanalytics0/MultiModalGraphics" class="external-link">MultiModalGraphics</a></span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">100</span><span class="op">)</span>, ncol <span class="op">=</span> <span class="fl">10</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">heatmap</span> <span class="op">&lt;-</span> <span class="fu"><a href="InformativeHeatmap.html">InformativeHeatmap</a></span><span class="op">(</span><span class="va">data</span>, pch_val <span class="op">=</span> <span class="fl">20</span>, unit_val <span class="op">=</span> <span class="fl">2</span>,</span></span>
+<span class="r-in"><span><span class="va">heatmap</span> <span class="op">&lt;-</span> <span class="fu"><a href="AnnotatedHeatmap.html">AnnotatedHeatmap</a></span><span class="op">(</span><span class="va">data</span>, pch_val <span class="op">=</span> <span class="fl">20</span>, unit_val <span class="op">=</span> <span class="fl">2</span>,</span></span>
 <span class="r-in"><span>                                significant_color <span class="op">=</span> <span class="st">"red"</span>,</span></span>
 <span class="r-in"><span>                                trending_color <span class="op">=</span> <span class="st">"blue"</span>,</span></span>
 <span class="r-in"><span>                                significant_pvalue <span class="op">=</span> <span class="fl">0.05</span>,</span></span>
@@ -128,9 +128,9 @@ that merge multiple streams of data into a single coherent graphic.</p>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/pkg/ComplexHeatmap/man/draw-dispatch.html" class="external-link">draw</a></span><span class="op">(</span><span class="fu"><a href="getHeatmapObject.html">getHeatmapObject</a></span><span class="op">(</span><span class="va">heatmap</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="MultiModalGraphics-package-1.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Example of creating a ClearScatterplot</span></span></span>
+<span class="r-in"><span><span class="co"># Example of creating a ThresholdedScatterplot</span></span></span>
 <span class="r-in"><span><span class="va">plotdata</span> <span class="op">&lt;-</span> <span class="fu"><a href="get_clear_scatterplot_df.html">get_clear_scatterplot_df</a></span><span class="op">(</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">scatterplotObject</span> <span class="op">&lt;-</span> <span class="fu"><a href="ClearScatterplot.html">ClearScatterplot</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span><span class="va">scatterplotObject</span> <span class="op">&lt;-</span> <span class="fu"><a href="ThresholdedScatterplot.html">ThresholdedScatterplot</a></span><span class="op">(</span></span></span>
 <span class="r-in"><span>  data <span class="op">=</span> <span class="va">plotdata</span>,</span></span>
 <span class="r-in"><span>  logFoldChange <span class="op">=</span> <span class="st">"log2fc"</span>,</span></span>
 <span class="r-in"><span>  timePointColumn <span class="op">=</span> <span class="st">"timePoint"</span>,</span></span>

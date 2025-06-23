@@ -53,7 +53,7 @@
   </a>
   <ul class="dropdown-menu" role="menu">
 <li>
-      <a href="articles/multifeature_grid.html">MultifeatureGrid Visualization</a>
+      <a href="articles/multifeature_grid.html">CompositeFeatureHeatmap Visualization</a>
     </li>
   </ul>
 </li>
@@ -83,19 +83,19 @@
 </h1></div>
 </div>
 <div class="section level1">
-<h1 id="id_1-clearscatterplot">1. ClearScatterplot<a class="anchor" aria-label="anchor" href="#id_1-clearscatterplot"></a>
+<h1 id="id_1-clearscatterplot">1. ThresholdedScatterplot<a class="anchor" aria-label="anchor" href="#id_1-clearscatterplot"></a>
 </h1>
 <div class="section level2">
 <h2 id="introduction">Introduction<a class="anchor" aria-label="anchor" href="#introduction"></a>
 </h2>
-<p>This example demonstrates how to use the <code>ClearScatterplot</code> class to create enhanced scatterplots. The <code>ClearScatterplot</code> class provides functionalities for creating scatterplots with enhanced visualization features like coloring based on significance levels and plotting against different variables.</p>
+<p>This example demonstrates how to use the <code>ThresholdedScatterplot</code> class to create enhanced scatterplots. The <code>ThresholdedScatterplot</code> class provides functionalities for creating scatterplots with enhanced visualization features like coloring based on significance levels and plotting against different variables.</p>
 </div>
 <div class="section level2">
 <h2 id="example-creating-a-scatterplot">Example: Creating a Scatterplot<a class="anchor" aria-label="anchor" href="#example-creating-a-scatterplot"></a>
 </h2>
-<p>First, load the necessary data and create an instance of <code>ClearScatterplot</code>.</p>
+<p>First, load the necessary data and create an instance of <code>ThresholdedScatterplot</code>.</p>
 <p>```{r load-data} plotdata &lt;- get_clear_scatterplot_df()</p>
-<p>scatterplotObject &lt;- ClearScatterplot( data = plotdata, logFoldChange = “log2fc”, timePointColumn = “timePoint”, timePointLevels = c(“T10R1”, “T5R1”) )</p>
+<p>scatterplotObject &lt;- ThresholdedScatterplot( data = plotdata, logFoldChange = “log2fc”, timePointColumn = “timePoint”, timePointLevels = c(“T10R1”, “T5R1”) )</p>
 <pre><code>
 Next, create the scatterplot using the `createPlot` method, specifying various
 parameters such as color and thresholds.
@@ -126,7 +126,7 @@ scattered_plot &lt;-
 </div>
 </div>
 <div class="section level1">
-<h1 id="id_2-informativeheatmap">2. InformativeHeatmap<a class="anchor" aria-label="anchor" href="#id_2-informativeheatmap"></a>
+<h1 id="id_2-informativeheatmap">2. AnnotatedHeatmap<a class="anchor" aria-label="anchor" href="#id_2-informativeheatmap"></a>
 </h1>
 <p>This section demonstrates how to create and visualize an informative heatmap using the <code>MultiModalGraphics</code> package which utilizes the <code>ComplexHeatmap</code> package for enhanced visualizations.</p>
 <div class="section level2">
@@ -142,8 +142,8 @@ scattered_plot &lt;-
 <div class="section level3">
 <h3 id="creating-heatmap">Creating Heatmap<a class="anchor" aria-label="anchor" href="#creating-heatmap"></a>
 </h3>
-<p>Create an <code>InformativeHeatmap</code> object with custom settings for visual representation.</p>
-<p><code>{r create-heatmap} htmp_plus &lt;- InformativeHeatmap(group_val,                                 unit_val = 7,                                 pch_val = 16,                                 significant_color = "black",                                 trending_color = "turquoise",                                 significant_pvalue = 0.05,                                 trending_pvalue = 0.1,                                 significance_level = p_val,                                 row_title = "Genes",                                 column_title = "Value and Significance",                                 cluster_rows = TRUE,                                 show_row_names = TRUE,                                 row_names_side = "left",                                 column_names_rot = 45,                                 row_dend_reorder = TRUE,                                 rect_gp = gpar(col = "white", lwd = 2))</code></p>
+<p>Create an <code>AnnotatedHeatmap</code> object with custom settings for visual representation.</p>
+<p><code>{r create-heatmap} htmp_plus &lt;- AnnotatedHeatmap(group_val,                                 unit_val = 7,                                 pch_val = 16,                                 significant_color = "black",                                 trending_color = "turquoise",                                 significant_pvalue = 0.05,                                 trending_pvalue = 0.1,                                 significance_level = p_val,                                 row_title = "Genes",                                 column_title = "Value and Significance",                                 cluster_rows = TRUE,                                 show_row_names = TRUE,                                 row_names_side = "left",                                 column_names_rot = 45,                                 row_dend_reorder = TRUE,                                 rect_gp = gpar(col = "white", lwd = 2))</code></p>
 </div>
 <div class="section level3">
 <h3 id="drawing-heatmap">Drawing Heatmap<a class="anchor" aria-label="anchor" href="#drawing-heatmap"></a>
@@ -164,21 +164,21 @@ scattered_plot &lt;-
 </div>
 </div>
 <div class="section level1">
-<h1 id="id_3-multifeaturegrid">3. MultifeatureGrid<a class="anchor" aria-label="anchor" href="#id_3-multifeaturegrid"></a>
+<h1 id="id_3-multifeaturegrid">3. CompositeFeatureHeatmap<a class="anchor" aria-label="anchor" href="#id_3-multifeaturegrid"></a>
 </h1>
-<p>This example demonstrates how to use the <code>MultifeatureGrid</code> class from the <code>MultiModalGraphics</code> package to create comprehensive heatmaps integrating various data features such as z-scores, p-values, and counts.</p>
+<p>This example demonstrates how to use the <code>CompositeFeatureHeatmap</code> class from the <code>MultiModalGraphics</code> package to create comprehensive heatmaps integrating various data features such as z-scores, p-values, and counts.</p>
 <div class="section level2">
 <h2 id="example-data-preparation">Example Data Preparation<a class="anchor" aria-label="anchor" href="#example-data-preparation"></a>
 </h2>
 <p>First, we create a sample dataset representing biological data across different tissues and signaling pathways, with associated p-values and activation z-scores.</p>
 <p>```{r example-data} data &lt;- get_multifeature_grid_df()</p>
 <pre><code>
-## Creating a MultifeatureGrid Object
+## Creating a CompositeFeatureHeatmap Object
 
-We initialize the `MultifeatureGrid` object with the data prepared above.
+We initialize the `CompositeFeatureHeatmap` object with the data prepared above.
 
 ```{r create-grid}
-mg &lt;- MultifeatureGrid(data)</code></pre>
+mg &lt;- CompositeFeatureHeatmap(data)</code></pre>
 </div>
 <div class="section level2">
 <h2 id="plotting-the-heatmap">Plotting the Heatmap<a class="anchor" aria-label="anchor" href="#plotting-the-heatmap"></a>

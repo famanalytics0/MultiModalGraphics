@@ -26,9 +26,9 @@ The `MultiModalGraphics` package provides rich functionalities for combining dif
 
 This comprehensive guide includes the following sections:
 - Generating Data
-- Using ClearScatterplot
+- Using ThresholdedScatterplot
 - Informative Heatmap Usage
-- MultifeatureGrid Visualization
+- CompositeFeatureHeatmap Visualization
 
 # Generating Data
 
@@ -61,18 +61,18 @@ multifeature_grid_df <- get_multifeature_grid_df()
 print(multifeature_grid_df)
 ```
 
-# Using ClearScatterplot
+# Using ThresholdedScatterplot
 
-This section demonstrates how to use the `ClearScatterplot` class to create enhanced scatterplots. The `ClearScatterplot` class provides functionalities for creating scatterplots with enhanced visualization features like coloring based on significance levels and plotting against different variables.
+This section demonstrates how to use the `ThresholdedScatterplot` class to create enhanced scatterplots. The `ThresholdedScatterplot` class provides functionalities for creating scatterplots with enhanced visualization features like coloring based on significance levels and plotting against different variables.
 
 ## Example: Creating a Scatterplot
 
-First, load the necessary data and create an instance of `ClearScatterplot`.
+First, load the necessary data and create an instance of `ThresholdedScatterplot`.
 
 ```{r load-data}
 plotdata <- get_clear_scatterplot_df()
 
-scatterplotObject <- ClearScatterplot(
+scatterplotObject <- ThresholdedScatterplot(
   data = plotdata,
   logFoldChange = "log2fc",
   timePointColumn = "timePoint",
@@ -127,10 +127,10 @@ p_val <- informative_heatmap_matrix[, 4:6]
 
 ### Creating Heatmap
 
-Create an `InformativeHeatmap` object with custom settings for visual representation.
+Create an `AnnotatedHeatmap` object with custom settings for visual representation.
 
 ```{r create-heatmap}
-htmp_plus <- InformativeHeatmap(group_val,
+htmp_plus <- AnnotatedHeatmap(group_val,
                                 unit_val = 7,
                                 pch_val = 16,
                                 significant_color = "black",
@@ -156,9 +156,9 @@ Finally, draw the heatmap using the ComplexHeatmap function to visualize the dat
 draw(getHeatmapObject(htmp_plus))
 ```
 
-# MultifeatureGrid Visualization
+# CompositeFeatureHeatmap Visualization
 
-This section demonstrates how to use the `MultifeatureGrid` class from the `MultiModalGraphics` package to create comprehensive heatmaps integrating various data features such as z-scores, p-values, and counts.
+This section demonstrates how to use the `CompositeFeatureHeatmap` class from the `MultiModalGraphics` package to create comprehensive heatmaps integrating various data features such as z-scores, p-values, and counts.
 
 ## Example Data Preparation
 
@@ -168,12 +168,12 @@ First, we create a sample dataset representing biological data across different 
 data <- get_multifeature_grid_df()
 ```
 
-## Creating a MultifeatureGrid Object
+## Creating a CompositeFeatureHeatmap Object
 
-We initialize the `MultifeatureGrid` object with the data prepared above.
+We initialize the `CompositeFeatureHeatmap` object with the data prepared above.
 
 ```{r create-grid}
-mg <- MultifeatureGrid(data)
+mg <- CompositeFeatureHeatmap(data)
 ```
 
 ## Plotting the Heatmap

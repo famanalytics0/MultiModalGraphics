@@ -9,8 +9,8 @@ test_that("Plain DE‐data constructor works", {
     SampleType = rep("A", 3),
     stringsAsFactors = FALSE
   )
-  cs <- ClearScatterplot(df)
-  expect_s4_class(cs, "ClearScatterplot")
+  cs <- ThresholdedScatterplot(df)
+  expect_s4_class(cs, "ThresholdedScatterplot")
   expect_equal(levels(cs@data$category), c("down","neutral","up"))
   # make sure plotting slot gets filled
   cs <- createPlot(cs)

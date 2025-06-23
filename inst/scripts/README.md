@@ -11,14 +11,14 @@ This document describes how each dataset in inst/extdata/ was generated, includi
 
 Datasets were obtained from [The Cancer Genome Atlas (TCGA)](https://www.google.com/url?sa=t&rct=j&q=&esrc=s&source=web&cd=&cad=rja&uact=8&ved=2ahUKEwj6j7SEidKDAxUJ_bsIHS0LAJcQFnoECAYQAQ&url=https%3A%2F%2Fwww.cancer.gov%2Fccg%2Fresearch%2Fgenome-sequencing%2Ftcga&usg=AOvVaw2DAuLgtHHkBJrTRkFONrpi&opi=89978449https://www.google.com/url?sa=t&rct=j&q=&esrc=s&source=web&cd=&cad=rja&uact=8&ved=2ahUKEwj6j7SEidKDAxUJ_bsIHS0LAJcQFnoECAYQAQ&url=https%3A%2F%2Fwww.cancer.gov%2Fccg%2Fresearch%2Fgenome-sequencing%2Ftcga&usg=AOvVaw2DAuLgtHHkBJrTRkFONrpi&opi=89978449), [International Cancer Genome Consortium](https://dcc.icgc.org/) and [cBioPortal for cancer genomics](https://www.google.com/url?sa=t&rct=j&q=&esrc=s&source=web&cd=&cad=rja&uact=8&ved=2ahUKEwiX4dvoidKDAxXegv0HHcDRBmsQFnoECAgQAQ&url=https%3A%2F%2Fwww.cbioportal.org%2F&usg=AOvVaw099aWQoFJloiAjhgTScY7c&opi=89978449). Highly expressed messenger RNAs, proteins, microRNAs and probes of methylation sites across the six-cancer types were significantly associated with cellular proliferations and antiapoptotic signaling pathways. The genetic datasets (copy number and structural variations) showed mutation of these genes though to a different extent of mutational frequencies and significances. ‘The six cancer types include CESC: Cervical squamous cell carcinoma and endocervical adenocarcinoma; OV: Ovarian serous cystadenocarcinoma; PRAD: Prostate adenocarcinoma; TGCT: Testicular Germ Cell Tumors; UCEC: Uterine Corpus Endometrial Carcinoma; UCS: Uterine Carcinosarcoma.’
 
-***MultifeatureGrid dataset***
+***CompositeFeatureHeatmap dataset***
 
 - scatterexample.csv
 
 These datasets were downloaded from [Gene Expression Omnibus GSE45035](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE45035). Brain regions include AY: amygdala, HC: hippocampus, MPFC: medial prefrontal cortex, SE: septal region, ST: corpus striatum, and VS: ventral striatum.’
 
 
-***ClearScatterplot dataset***
+***ThresholdedScatterplot dataset***
 
 - twoD_graphics.csv
 

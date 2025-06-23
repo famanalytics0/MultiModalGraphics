@@ -11,11 +11,11 @@ test_that("list‐of‐MAEs constructor works", {
     MultiAssayExperiment(list(mod = se))
   }
   mae1 <- make_mae(4); mae2 <- make_mae(4)
-  cs <- ClearScatterplot(
+  cs <- ThresholdedScatterplot(
     data         = list(First = mae1, Second = mae2),
     assayName    = c(First="mod", Second="mod"),
     groupColumn  = c(First="Group", Second="Group"),
     sampleType   = c(First="SampleType", Second="SampleType")
   )
-  expect_s4_class(cs, "ClearScatterplot")
+  expect_s4_class(cs, "ThresholdedScatterplot")
 })

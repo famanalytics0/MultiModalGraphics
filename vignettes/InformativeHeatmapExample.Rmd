@@ -9,9 +9,9 @@ vignette: >
 
 ## Abstract
 
-The `InformativeHeatmap` class extends the `ComplexHeatmap` object to overlay analytical outputs—such as p-values, q-values, standard deviations, or uncertainty/error metrics—that are not typically visible in standard heatmaps. This enriched visualization provides insight into the **statistical significance of molecular features**, highlighting those that truly contribute to group separations (e.g., control vs. case). Squares are visually marked using star icons to represent significance levels (e.g., dark for significant, yellow for trending, none for not significant), helping users avoid misleading interpretations based solely on color intensity.
+The `AnnotatedHeatmap` class extends the `ComplexHeatmap` object to overlay analytical outputs—such as p-values, q-values, standard deviations, or uncertainty/error metrics—that are not typically visible in standard heatmaps. This enriched visualization provides insight into the **statistical significance of molecular features**, highlighting those that truly contribute to group separations (e.g., control vs. case). Squares are visually marked using star icons to represent significance levels (e.g., dark for significant, yellow for trending, none for not significant), helping users avoid misleading interpretations based solely on color intensity.
 
-This vignette demonstrates how to generate an `InformativeHeatmap` and apply it to a dataset with group-level contrasts. Compared to standard heatmap tools in Bioconductor such as `ComplexHeatmap`, `pheatmap`, or `heatmaply`, `InformativeHeatmap` emphasizes **feature-level significance** within the heatmap grid, addressing a common gap in omics visualization. This makes it particularly suitable for pathway exploration, biomarker discovery, and visual QC of statistical outputs.
+This vignette demonstrates how to generate an `AnnotatedHeatmap` and apply it to a dataset with group-level contrasts. Compared to standard heatmap tools in Bioconductor such as `ComplexHeatmap`, `pheatmap`, or `heatmaply`, `AnnotatedHeatmap` emphasizes **feature-level significance** within the heatmap grid, addressing a common gap in omics visualization. This makes it particularly suitable for pathway exploration, biomarker discovery, and visual QC of statistical outputs.
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(
@@ -184,7 +184,7 @@ pancancer_mirna_log2_matrix = as.matrix(pancancer_mirna_log2[, 2:7])
 col_fun_mir = colorRamp2(c(-2, -1, 0, 1, 2),
                          c("slategray3", "slategray1", "white", "thistle3", "rosybrown4"))
 
-htmp_mir_pancancer <- InformativeHeatmap(
+htmp_mir_pancancer <- AnnotatedHeatmap(
   pancancer_mirna_log2_matrix,
   show_row_names = FALSE,
   column_title = "miRNA",
@@ -246,7 +246,7 @@ col_fun_dmp = colorRamp2(
   )
 )# "orange"))
 
-htmp_dmp_pancancer <- InformativeHeatmap(
+htmp_dmp_pancancer <- AnnotatedHeatmap(
   pancancer_dmp_matrix,
   show_row_names = FALSE,
   column_title = "cis-regulatory DMPs",
@@ -303,7 +303,7 @@ small_mat_pv_protein = protein_mrna_pvalues_matrix[, c(13:18)]
 
 colnames(small_mat_protein) = c(case_numbers$cancer)
 col_fun = colorRamp2(c(-0.5, 0, 0.4), c("blue", "white", "red"))
-htmp1_protein <- InformativeHeatmap(
+htmp1_protein <- AnnotatedHeatmap(
   small_mat_protein,
   significance_level = small_mat_pv_protein,
   col = col_fun,
@@ -339,7 +339,7 @@ small_mat_pv_mrna = protein_mrna_pvalues_matrix[, c(19:24)]
 
 colnames(small_mat_mrna) = case_numbers$cancer
 col_fun = colorRamp2(c(-0.5, 0, 0.4), c("blue", "white", "red"))
-htmp1_mRNA <- InformativeHeatmap(
+htmp1_mRNA <- AnnotatedHeatmap(
   small_mat_mrna,
   significance_level = small_mat_pv_mrna,
   name = "log2FC",

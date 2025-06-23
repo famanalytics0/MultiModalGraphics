@@ -12,11 +12,11 @@ test_that("MAE constructor works", {
   )
   se <- SummarizedExperiment(assays = list(counts = expr), colData = coldata)
   mae <- MultiAssayExperiment(list(mod = se))
-  cs <- ClearScatterplot_MAE(
+  cs <- ThresholdedScatterplot_MAE(
     mae         = mae,
     assayName   = "mod",
     groupColumn = "Group",
     sampleType  = "SampleType"
   )
-  expect_s4_class(cs, "ClearScatterplot")
+  expect_s4_class(cs, "ThresholdedScatterplot")
 })

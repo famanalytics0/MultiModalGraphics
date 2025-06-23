@@ -13,9 +13,9 @@ that merge multiple streams of data into a single coherent graphic.
 \details{
 The MultiModalGraphics package offers the following features:
 \itemize{
-\item InformativeHeatmap: encapsulating a CompexHeatmap object to provide additional functionality
-\item MultifeatureGrid: generating a heatmap grid, where each row presents a composite of information about a group of related features per row, rather than a single feature (unlike typically seen in conventional heatmaps).
-\item ClearScatterplot: generating customizable scatter plots that can encompass multiple datasets within a single visualization.
+\item AnnotatedHeatmap: encapsulating a CompexHeatmap object to provide additional functionality
+\item CompositeFeatureHeatmap: generating a heatmap grid, where each row presents a composite of information about a group of related features per row, rather than a single feature (unlike typically seen in conventional heatmaps).
+\item ThresholdedScatterplot: generating customizable scatter plots that can encompass multiple datasets within a single visualization.
 \item generate_data: helper class to provide data to quickly test the 3 classes above.
 }
 }
@@ -30,20 +30,20 @@ devtools::install_github("famanalytics0/MultiModalGraphics")
 }
 
 \examples{
-# Example of creating an InformativeHeatmap
+# Example of creating an AnnotatedHeatmap
 library(ComplexHeatmap)
 library(MultiModalGraphics)
 data <- matrix(rnorm(100), ncol = 10)
-heatmap <- InformativeHeatmap(data, pch_val = 20, unit_val = 2,
+heatmap <- AnnotatedHeatmap(data, pch_val = 20, unit_val = 2,
                                 significant_color = "red",
                                 trending_color = "blue",
                                 significant_pvalue = 0.05,
                                 trending_pvalue = 0.1)
 draw(getHeatmapObject(heatmap))
 
-# Example of creating a ClearScatterplot
+# Example of creating a ThresholdedScatterplot
 plotdata <- get_clear_scatterplot_df()
-scatterplotObject <- ClearScatterplot(
+scatterplotObject <- ThresholdedScatterplot(
   data = plotdata,
   logFoldChange = "log2fc",
   timePointColumn = "timePoint",

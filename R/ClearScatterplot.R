@@ -13,10 +13,10 @@ if (getRversion() >= "2.15.1") utils::globalVariables(c(".data", "n1", "n2"))
 #' @importFrom stats quantile model.matrix
 #' @importFrom grid unit gpar grid.points
 #' @importFrom ggplot2 ggplot aes geom_jitter geom_point labs facet_grid theme_bw theme element_text element_rect scale_color_manual
-#' @exportClass ClearScatterplot
+#' @exportClass ThresholdedScatterplot
 
 setClass(
-  "ClearScatterplot",
+  "ThresholdedScatterplot",
   slots   = c(data = "data.frame", plot = "ANY"),
   validity = function(object) {
     req <- c("log2fc", "negLog10p", "regulation", "SampleType")
@@ -36,10 +36,10 @@ setClass(
 )
 
 #' @export
-setGeneric("ClearScatterplot", function(data, ...) standardGeneric("ClearScatterplot"))
+setGeneric("ThresholdedScatterplot", function(data, ...) standardGeneric("ThresholdedScatterplot"))
 
 #' @export
-ClearScatterplot <- function(
+ThresholdedScatterplot <- function(
   data,
   highLog2fc     = 0.585,
   lowLog2fc      = -0.585,
@@ -73,7 +73,7 @@ ClearScatterplot <- function(
     ordered = TRUE
   )
 
-  methods::new("ClearScatterplot", data = data, plot = NULL)
+  methods::new("ThresholdedScatterplot", data = data, plot = NULL)
 }
 
 #' @noRd
@@ -102,7 +102,7 @@ ClearScatterplot <- function(
 }
 
 #' @export
-ClearScatterplot_MAE <- function(
+ThresholdedScatterplot_MAE <- function(
   mae,
   assayName,
   groupColumn = "Group",
@@ -156,7 +156,7 @@ ClearScatterplot_MAE <- function(
   )
   if (ncol(expr) < 6) stop("Too few samples (<6) remain after filtering.")
 
-  .ClearScatterplot_core(
+  .ThresholdedScatterplot_core(
     expr, meta, groupColumn, sampleType,
     timepoint, dataType,
     if (parallel) vectorized else "perCell",
@@ -165,7 +165,7 @@ ClearScatterplot_MAE <- function(
 }
 
 #' @export
-ClearScatterplot_table <- function(
+ThresholdedScatterplot_table <- function(
   expr,
   meta,
   groupColumn = "Group",
@@ -200,7 +200,7 @@ ClearScatterplot_table <- function(
     stop("No features remain after variance filtering.")
   }
 
-  .ClearScatterplot_core(
+  .ThresholdedScatterplot_core(
     expr, meta2, groupColumn, sampleType,
     timepoint, dataType,
     if (parallel) vectorized else "perCell",
@@ -209,7 +209,7 @@ ClearScatterplot_table <- function(
 }
 
 #' @noRd
-.ClearScatterplot_core <- function(
+.ThresholdedScatterplot_core <- function(
   expr, meta, groupColumn, sampleType,
   timepoint, dataType, vectorized, BPPARAM
 ) {
@@ -273,7 +273,7 @@ ClearScatterplot_table <- function(
   pd <- do.call(rbind, lst)
   if (!nrow(pd)) stop("No DE results to plot (all cells returned zero rows).")
   rownames(pd) <- NULL
-  ClearScatterplot(pd)
+  ThresholdedScatterplot(pd)
 }
 
 #' @exportMethod createPlot
@@ -281,7 +281,7 @@ setGeneric("createPlot", function(object, ...) standardGeneric("createPlot"))
 
 #' @describeIn createPlot Render the volcano ggplot
 #' @exportMethod createPlot
-setMethod("createPlot", "ClearScatterplot", function(object,
+setMethod("createPlot", "ThresholdedScatterplot", function(object,
   color1          = "cornflowerblue",
   color2          = "grey",
   color3          = "indianred",
@@ -356,7 +356,7 @@ setMethod("createPlot", "ClearScatterplot", function(object,
 })
 
 #' @exportMethod show
-setMethod("show", "ClearScatterplot", function(object) {
+setMethod("show", "ThresholdedScatterplot", function(object) {
   if (is.null(object@plot)) object <- createPlot(object)
   print(object@plot)
   invisible(object)

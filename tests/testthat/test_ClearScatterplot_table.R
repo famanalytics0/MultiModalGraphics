@@ -10,12 +10,12 @@ test_that("matrix+meta constructor works", {
     stringsAsFactors = FALSE,
     row.names = paste0("S", 1:4)
   )
-  cs <- ClearScatterplot_table(
+  cs <- ThresholdedScatterplot_table(
     expr        = mat,
     meta        = meta,
     groupColumn = "Group",
     sampleType  = "SampleType"
   )
-  expect_s4_class(cs, "ClearScatterplot")
+  expect_s4_class(cs, "ThresholdedScatterplot")
   expect_equal(sort(unique(cs@data$SampleType)), sort(unique(meta$SampleType)))
 })

@@ -6,8 +6,8 @@
 #’   3. Precomputed DE tables (data.frames with log2fc, negLog10p, regulation, SampleType, optional timePoint).
 #’ 
 #’ Dispatches each input to the appropriate builder:
-#’   - Volcano: ClearScatterplot_MAE / ClearScatterplot_table / ClearScatterplot  
-#’   - Heatmap: InformativeHeatmapFromMAE / InformativeHeatmap  
+#’   - Volcano: ThresholdedScatterplot_MAE / ThresholdedScatterplot_table / ThresholdedScatterplot  
+#’   - Heatmap: AnnotatedHeatmapFromMAE / AnnotatedHeatmap  
 #’ Returns either a ggplot (volcano) or ComplexHeatmap (heatmap), combining multiple panels with patchwork or HeatmapList.
 #’
 #’ @param inputs         Named list of inputs (MAE, list(expr,meta), or DE‐table df)
@@ -28,7 +28,7 @@
 #’ @importFrom rlang %||%
 #’ @importFrom BiocParallel bpparam
 #’ @importFrom patchwork wrap_plots
-#’ @importFrom YourPkg InformativeHeatmapFromMAE createPlot getHeatmapObject
+#’ @importFrom YourPkg AnnotatedHeatmapFromMAE createPlot getHeatmapObject
 #’ @export
 MultiModalPlot <- function(
   inputs,
@@ -73,7 +73,7 @@ MultiModalPlot <- function(
         stop(sprintf("For MAE '%s', supply groupColumns[['%s']].", mod, mod))
       }
       if (panel_type == "volcano") {
-        panel_list[[mod]] <- ClearScatterplot_MAE(
+        panel_list[[mod]] <- ThresholdedScatterplot_MAE(
           mae           = x,
           assayName     = assayNames[[mod]],
           groupColumn   = groupColumns[[mod]],
@@ -90,7 +90,7 @@ MultiModalPlot <- function(
           ...
         )
       } else {
-        panel_list[[mod]] <- InformativeHeatmapFromMAE(
+        panel_list[[mod]] <- AnnotatedHeatmapFromMAE(
           mae             = x,
           assayName       = assayNames[[mod]],
           groupColumn     = groupColumns[[mod]],
@@ -115,7 +115,7 @@ MultiModalPlot <- function(
         stop(sprintf("For matrix '%s', supply groupColumns[['%s']].", mod, mod))
       }
       if (panel_type == "volcano") {
-        panel_list[[mod]] <- ClearScatterplot_table(
+        panel_list[[mod]] <- ThresholdedScatterplot_table(
           expr          = x$expr,
           meta          = x$meta,
           groupColumn   = groupColumns[[mod]],
@@ -132,7 +132,7 @@ MultiModalPlot <- function(
           ...
         )
       } else {
-        panel_list[[mod]] <- InformativeHeatmap(
+        panel_list[[mod]] <- AnnotatedHeatmap(
           data            = x$expr,
           meta            = x$meta,
           groupColumn     = groupColumns[[mod]],
@@ -157,7 +157,7 @@ MultiModalPlot <- function(
       if (panel_type != "volcano") {
         stop("DE‐tables only support panel_type = 'volcano'.")
       }
-      panel_list[[mod]] <- ClearScatterplot(
+      panel_list[[mod]] <- ThresholdedScatterplot(
         data           = x,
         highLog2fc     = fc_cutoff,
         lowLog2fc      = -fc_cutoff,

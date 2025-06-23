@@ -1,7 +1,7 @@
 library(testthat)
 library(MultiModalGraphics)
 
-test_that("InformativeHeatmap(list of matrices) single vs multi", {
+test_that("AnnotatedHeatmap(list of matrices) single vs multi", {
   set.seed(2)
   # single
   mat1 <- matrix(rnorm(12), nrow=3)
@@ -12,12 +12,12 @@ test_that("InformativeHeatmap(list of matrices) single vs multi", {
     row.names = colnames(mat1),
     stringsAsFactors = FALSE
   )
-  hm1 <- InformativeHeatmap(
+  hm1 <- AnnotatedHeatmap(
     data        = list(M1=mat1),
     meta        = list(M1=meta1),
     groupColumn = "Group"
   )
-  expect_s4_class(hm1, "InformativeHeatmap")
+  expect_s4_class(hm1, "AnnotatedHeatmap")
   expect_true(hm1@params$single)
 
   # multi
@@ -29,11 +29,11 @@ test_that("InformativeHeatmap(list of matrices) single vs multi", {
     row.names = colnames(mat2),
     stringsAsFactors = FALSE
   )
-  hm2 <- InformativeHeatmap(
+  hm2 <- AnnotatedHeatmap(
     data        = list(M1=mat1, M2=mat2),
     meta        = list(M1=meta1, M2=meta2),
     groupColumn = "Group"
   )
-  expect_s4_class(hm2, "InformativeHeatmap")
+  expect_s4_class(hm2, "AnnotatedHeatmap")
   expect_false(isTRUE(hm2@params$single))
 })

@@ -1,4 +1,4 @@
-# tests/testthat/test_ClearScatterplot_edge_cases.R
+# tests/testthat/test_ThresholdedScatterplot_edge_cases.R
 library(testthat)
 library(MultiModalGraphics)
 library(MultiAssayExperiment)
@@ -16,7 +16,7 @@ test_that("core errors when no DE results to plot", {
   se  <- SummarizedExperiment(assays=list(counts=expr), colData=coldata)
   mae <- MultiAssayExperiment(list(se=se))
   expect_error(
-    ClearScatterplot_MAE(mae, "se", groupColumn="Group", sampleType="SampleType"),
+    ThresholdedScatterplot_MAE(mae, "se", groupColumn="Group", sampleType="SampleType"),
     "No DE results to plot"
   )
 })
@@ -32,12 +32,12 @@ test_that("duplicate sampleType/timePoint combos are handled", {
     row.names  = paste0("S",1:6),
     stringsAsFactors = FALSE
   )
-  cs <- ClearScatterplot_table(
+  cs <- ThresholdedScatterplot_table(
     expr, meta,
     groupColumn = "Group",
     sampleType  = "SampleType",
     timepoint   = "timePoint"
   )
-  expect_s4_class(cs, "ClearScatterplot")
+  expect_s4_class(cs, "ThresholdedScatterplot")
   # ensure no error on duplicate combos
 })
