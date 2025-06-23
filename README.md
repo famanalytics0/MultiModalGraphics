@@ -93,10 +93,14 @@ if (!requireNamespace("remotes", quietly = TRUE))
     install.packages("remotes")
 remotes::install_git(
     "https://github.com/famanalytics0/MultiModalGraphics.git",
-    ref          = "famanalytics0-patch-3",
+    ref          = "main",
     dependencies = TRUE,
     upgrade      = "never"
 )
+
+# or simply use the following since main is the only and default
+remotes::install_github("famanalytics0/MultiModalGraphics")
+
 
 # (5) (Optional) Install extra data packages for examples (if not already above)
 BiocManager::install(c("curatedPCaData", "curatedTCGAData", "curatedTCGADataData"))
