@@ -1,7 +1,7 @@
 # MultiModalGraphics
 
 **Version:** 0.99.5  
-**Authors:** Foziya Ahmed Mohammed, Malick Fall, Rasha Hammamieh, Seid Muhie  
+**Authors:** Foziya Ahmed Mohammed, Malick Fall, Kula Kekeba Tune, Marti Jett, Rasha Hammamieh, Seid Muhie  
 **License:** Artistic-2.0  
 
 A unified R/Bioconductor package for creating publication-quality volcano plots and custom heatmaps from diverse biological data sources. Designed for maximum flexibility and ease of use, the package supports:
