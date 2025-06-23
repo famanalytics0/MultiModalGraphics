@@ -942,10 +942,14 @@ BiocManager::install("MultiModalGraphics")
 if (!requireNamespace("remotes", quietly = TRUE)) install.packages("remotes")
 remotes::install_git(
   "https://github.com/famanalytics0/MultiModalGraphics.git",
-  ref         = "master",
+  ref         = "main",
   dependencies= TRUE,
   upgrade     = "never"
 )
+
+
+# or simply use the following since main is the only and default
+remotes::install_github("famanalytics0/MultiModalGraphics")
 ```
 
 <a name="overview"></a>
