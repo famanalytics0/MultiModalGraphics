@@ -382,20 +382,7 @@ cs_airway <- ThresholdedScatterplot_table(expr,
 createPlot(cs_airway, legend_title="Gene Regulation")
 ```
 
-### 4.2 From Matrix + Metadata
-
-```r
-set.seed(102)
-expr <- matrix(rpois(100*20, lambda=10), nrow=100, ncol=20)
-meta <- data.frame(
-  Group=rep(c("A","B"), each=10), SampleType=rep(c("X","Y"), times=10), timePoint=rep(c("T1","T2"), each=5, times=2),
-  row.names=paste0("Sample",1:20)
-)
-cs2 <- ThresholdedScatterplot_table(expr, meta, groupColumn="Group", sampleType="SampleType", timepoint="timePoint", dataType="auto", var_quantile=0.75, parallel=TRUE, BPPARAM=MulticoreParam(2))
-createPlot(cs2, color1="firebrick", color3="navy", title="Matrix + Metadata Volcano")
-```
-
-### 4.3 From MultiAssayExperiment
+### 4.2 From MultiAssayExperiment
 
 ```r
 library(curatedTCGAData)
@@ -404,7 +391,7 @@ cs_brca <- ThresholdedScatterplot_MAE(mae=mae_brca, assayName="RNASeq2GeneNorm",
 createPlot(cs_brca)
 ```
 
-### 4.4 From Lists (multi-cohort/time)
+### 4.3 From Lists (multi-cohort/time)
 
 ```r
 expr_list <- list(T0=expr, T1=expr+rpois(100*20,5))
