@@ -491,7 +491,7 @@ cs_list <- ThresholdedScatterplot(expr_list, meta_list, top_n=10)
 createPlot(cs_list)
 ```
 
-**Special: scNMT & curatedPCaData—see Supplement at end for full examples.**
+**Special: scNMT & curatedPCaData—see *Supplement* at the end for full examples.**
 
 ---
 
