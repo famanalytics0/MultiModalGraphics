@@ -164,7 +164,7 @@ Supports:
 | Modularization     | S4 classes, atomic functions, helper methods                              |
 | Real Data Examples | Shipped and demonstrated with airway, pasilla, TCGA, scNMT, miniACC, etc. |
 | User Controls      | Thresholding, filtering, parallel toggles, and backend selection          |
-| Benchmarking       | Documented with microbenchmark, empirical timings in vignette             |
+| Benchmarking       | Documented with microbenchmark, empirical timings            |
 
 ---
 
