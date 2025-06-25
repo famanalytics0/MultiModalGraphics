@@ -208,6 +208,140 @@ ThresholdedScatterplot_table <- function(
   )
 }
 
+#’ @title Faceted Volcano from Multiple Inputs (max flexibility)
+#’ @description
+#’ Compute and plot volcano scatterplots for multiple conditions in one faceted ggplot.  
+#’ Supports three modes:
+#’   - “expr”: named list of expression matrices + matching metadata frames  
+#’   - “mae”:  named list of MultiAssayExperiment objects  
+#’   - “de”:   named list of precomputed DE tables  
+#’  
+#’ You may pass extra parameters to the DE‐calculation step via `compute_args`  
+#’ and to the plotting step via `plot_args`.  
+#’  
+#’ @param data_list    Named list of inputs (matrices, MAEs, or DE tables).  
+#’ @param meta_list    Named list of metadata data.frames (only for expr mode).  
+#’ @param input_type   One of `"expr"`, `"mae"`, or `"de"`.  
+#’ @param groupColumn  Grouping column (expr/mae only).  
+#’ @param sampleType   SampleType column (expr/mae only).  
+#’ @param timepoint    Optional timepoint column (expr/mae only).  
+#’ @param dataType     `"auto"`/`"continuous"`/`"count"` (expr/mae only).  
+#’ @param var_quantile Numeric in [0,1]: variance filter quantile (expr/mae only).  
+#’ @param compute_args Named list of extra args to pass to the DE step.  
+#’ @param plot_args    Named list of extra args to pass to `createPlot()`.  
+#’ @param facet_by     Facet formula (string), e.g. `". ~ panel"` or `"panel ~ SampleType"`.  
+#’ @return A `ThresholdedScatterplot` S4 object whose `@plot` slot is the faceted volcano.  
+#’ @importFrom ggplot2 facet_grid  
+#’ @importFrom MultiAssayExperiment experiments  
+#’ @export
+ThresholdedScatterplot_list <- function(
+  data_list,
+  meta_list     = NULL,
+  input_type    = c("expr","mae","de"),
+  groupColumn   = "Group",
+  sampleType    = "SampleType",
+  timepoint     = NULL,
+  dataType      = c("auto","continuous","count"),
+  var_quantile  = 0.75,
+  compute_args  = list(),
+  plot_args     = list(),
+  facet_by      = ". ~ panel"
+) {
+  ## --- validate top-level args ---
+  input_type <- match.arg(input_type)
+  dataType   <- match.arg(dataType)
+  stopifnot(
+    is.list(data_list), length(data_list)>0,
+    !is.null(names(data_list))
+  )
+  panels <- names(data_list)
+  stopifnot(is.list(compute_args), is.list(plot_args))
+  if (length(compute_args) && is.null(names(compute_args)))
+    stop("`compute_args` must be a named list.")
+  if (length(plot_args) && is.null(names(plot_args)))
+    stop("`plot_args` must be a named list.")
+  
+  if (input_type=="expr") {
+    stopifnot(is.list(meta_list), identical(sort(names(meta_list)), sort(panels)))
+    lapply(meta_list, function(x) stopifnot(is.data.frame(x)))
+  }
+
+  ## --- internal helper: get DE table for one panel ---
+  get_de <- function(x, meta) {
+    if (input_type=="expr") {
+      stopifnot(is.matrix(x), is.data.frame(meta))
+      args <- c(
+        list(expr        = x,
+             meta        = meta,
+             groupColumn = groupColumn,
+             sampleType  = sampleType,
+             timepoint   = timepoint,
+             dataType    = dataType,
+             var_quantile= var_quantile),
+        compute_args
+      )
+      tbl <- do.call(ThresholdedScatterplot_table, args)@data
+
+    } else if (input_type=="mae") {
+      stopifnot(inherits(x, "MultiAssayExperiment"))
+      assays    <- MultiAssayExperiment::experiments(x)
+      assayName <- names(assays)[1]
+      args <- c(
+        list(mae         = x,
+             assayName   = assayName,
+             groupColumn = groupColumn,
+             sampleType  = sampleType,
+             timepoint   = timepoint,
+             dataType    = dataType,
+             var_quantile= var_quantile),
+        compute_args
+      )
+      tbl <- do.call(ThresholdedScatterplot_MAE, args)@data
+
+    } else {  # "de"
+      stopifnot(is.data.frame(x))
+      tbl <- x
+      req <- c("log2fc","negLog10p","regulation","SampleType")
+      miss <- setdiff(req, colnames(tbl))
+      if (length(miss)) stop("Missing DE cols: ", paste(miss, collapse = ","))
+    }
+    if (nrow(tbl)==0) warning("Panel has zero DE rows; it will be dropped.")
+    tbl
+  }
+
+  ## --- assemble all DE tables ---
+  de_list <- lapply(panels, function(p) {
+    meta_p <- if (input_type=="expr") meta_list[[p]] else NULL
+    df <- get_de(data_list[[p]], meta_p)
+    df$panel <- p
+    df
+  })
+  all_de <- do.call(rbind, de_list)
+  all_de$panel <- factor(all_de$panel, levels = panels)
+
+  ## --- construct the S4 object ---
+  cs <- ThresholdedScatterplot(all_de)
+
+  ## --- call createPlot & extract ggplot object ---
+  cs_plot <- do.call(createPlot, c(list(cs), plot_args))
+  p       <- cs_plot@plot
+
+  ## --- safe facet_by parsing ---
+  facet_formula <- tryCatch(
+    stats::as.formula(facet_by),
+    error = function(e) stop("`facet_by` is not a valid formula: ", facet_by)
+  )
+
+  ## --- add faceting and store ---
+  cs@plot <- p + ggplot2::facet_grid(
+    facet_formula,
+    space = "free", scales = "free_x"
+  )
+
+  invisible(cs)
+}
+
+           
 #' @noRd
 .ThresholdedScatterplot_core <- function(
   expr, meta, groupColumn, sampleType,
