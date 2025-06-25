@@ -271,7 +271,7 @@ ThresholdedScatterplot_table <- function(
   }
 
   pd <- do.call(rbind, lst)
-  if (!nrow(pd)) stop("No DE results to plot (all cells returned zero rows).")
+  if (is.null(pd) || nrow(pd) == 0) stop("No DE results to plot (all cells returned zero rows).")
   rownames(pd) <- NULL
   ThresholdedScatterplot(pd)
 }
