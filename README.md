@@ -483,7 +483,8 @@ show(cs_airway_plot)
 
 
 ### 4.2 From Lists (multi-cohort/time)
-This is handled by the ThresholdedScatterplot_list function, which takes multiple (expr, meta) pairs (or precomputed DE tables), computes the volcano/scatter plots for each, and returns a single composite plot with each scatterplot arranged in a grid—essentially a faceted or patchwork-style arrangement, not just a list of objects.
+This is handled by the `ThresholdedScatterplot_list()` which is a high-level convenience wrapper that lets you generate a multi-panel volcano plot from differential-expression inputs.  You supply a named list of either raw expression matrices (with accompanying metadata), `MultiAssayExperiment` objects, or precomputed DE tables; it runs limma under the hood when needed (with full user control over variance filtering, count vs continuous modes, p-value and fold-change cutoffs, etc.), collates all results into a single `ThresholdedScatterplot` S4 object, and then dispatches to `createPlot()` to build a `ggplot2` volcano.  Finally, it automatically facets that plot by your panel labels (using any custom facet formula you like) and stores the faceted `ggplot` back in the object’s `@plot` slot.
+
 
 This is a common and powerful pattern for comparing multiple conditions, timepoints, or datasets in one visualization.
 
