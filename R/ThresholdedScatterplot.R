@@ -208,31 +208,35 @@ ThresholdedScatterplot_table <- function(
   )
 }
 
+           
 #’ @title Faceted Volcano from Multiple Inputs (max flexibility)
 #’ @description
-#’ Compute and plot volcano scatterplots for multiple conditions in one faceted ggplot.  
-#’ Supports three modes:
+#’ Compute and plot volcano scatterplots for multiple conditions in one faceted ggplot.
+#’ Supports three input types:
 #’   - “expr”: named list of expression matrices + matching metadata frames  
 #’   - “mae”:  named list of MultiAssayExperiment objects  
 #’   - “de”:   named list of precomputed DE tables  
-#’  
-#’ You may pass extra parameters to the DE‐calculation step via `compute_args`  
-#’ and to the plotting step via `plot_args`.  
-#’  
-#’ @param data_list    Named list of inputs (matrices, MAEs, or DE tables).  
-#’ @param meta_list    Named list of metadata data.frames (only for expr mode).  
-#’ @param input_type   One of `"expr"`, `"mae"`, or `"de"`.  
-#’ @param groupColumn  Grouping column (expr/mae only).  
-#’ @param sampleType   SampleType column (expr/mae only).  
-#’ @param timepoint    Optional timepoint column (expr/mae only).  
-#’ @param dataType     `"auto"`/`"continuous"`/`"count"` (expr/mae only).  
-#’ @param var_quantile Numeric in [0,1]: variance filter quantile (expr/mae only).  
-#’ @param compute_args Named list of extra args to pass to the DE step.  
-#’ @param plot_args    Named list of extra args to pass to `createPlot()`.  
-#’ @param facet_by     Facet formula (string), e.g. `". ~ panel"` or `"panel ~ SampleType"`.  
-#’ @return A `ThresholdedScatterplot` S4 object whose `@plot` slot is the faceted volcano.  
-#’ @importFrom ggplot2 facet_grid  
-#’ @importFrom MultiAssayExperiment experiments  
+#’
+#’ You may pass extra parameters to the DE-calculation step via `compute_args`
+#’ and to the plotting step via `plot_args`.
+#’
+#’ @param data_list    Named list of inputs (matrices, MAEs, or DE tables).
+#’ @param meta_list    Named list of metadata data.frames (required for expr mode).
+#’ @param input_type   One of `"expr"`, `"mae"`, or `"de"`.
+#’ @param groupColumn  Grouping column (expr/mae only).
+#’ @param sampleType   SampleType column (expr/mae only).
+#’ @param timepoint    Optional timepoint column (expr/mae only).
+#’ @param dataType     `"auto"`, `"continuous"` or `"count"` (expr/mae only).
+#’ @param var_quantile Variance quantile in [0,1] (expr/mae only).
+#’ @param compute_args Named list of extra args passed to the DE function.
+#’ @param plot_args    Named list of extra args passed to `createPlot()`.
+#’                    (*Supported:* color1, color2, color3, point_size, point_alpha, text_size, etc.)
+#’ @param facet_by     Facet formula, e.g. `". ~ panel"` or `"panel ~ SampleType"`.
+#’ @return A `ThresholdedScatterplot` S4 object whose `@plot` slot is the faceted volcano.
+#’ @importFrom ggplot2 facet_grid geom_text
+#’ @importFrom dplyr filter group_by tally
+#’ @importFrom rlang %||%
+#’ @importFrom MultiAssayExperiment experiments
 #’ @export
 ThresholdedScatterplot_list <- function(
   data_list,
@@ -247,55 +251,47 @@ ThresholdedScatterplot_list <- function(
   plot_args     = list(),
   facet_by      = ". ~ panel"
 ) {
-  ## --- validate top-level args ---
+  # 1) validate top-level arguments
   input_type <- match.arg(input_type)
   dataType   <- match.arg(dataType)
-  stopifnot(
-    is.list(data_list), length(data_list)>0,
-    !is.null(names(data_list))
-  )
+  stopifnot(is.list(data_list), length(data_list) > 0, !is.null(names(data_list)))
+  if (length(compute_args) && is.null(names(compute_args))) stop("`compute_args` must be named.")
+  if (length(plot_args)    && is.null(names(plot_args)))    stop("`plot_args` must be named.")
   panels <- names(data_list)
-  stopifnot(is.list(compute_args), is.list(plot_args))
-  if (length(compute_args) && is.null(names(compute_args)))
-    stop("`compute_args` must be a named list.")
-  if (length(plot_args) && is.null(names(plot_args)))
-    stop("`plot_args` must be a named list.")
-  
-  if (input_type=="expr") {
+
+  if (input_type == "expr") {
     stopifnot(is.list(meta_list), identical(sort(names(meta_list)), sort(panels)))
-    lapply(meta_list, function(x) stopifnot(is.data.frame(x)))
+    lapply(meta_list, function(df) stopifnot(is.data.frame(df)))
   }
 
-  ## --- internal helper: get DE table for one panel ---
+  # 2) helper to get a DE table for one panel
   get_de <- function(x, meta) {
-    if (input_type=="expr") {
+    if (input_type == "expr") {
       stopifnot(is.matrix(x), is.data.frame(meta))
-      args <- c(
-        list(expr        = x,
-             meta        = meta,
-             groupColumn = groupColumn,
-             sampleType  = sampleType,
-             timepoint   = timepoint,
-             dataType    = dataType,
-             var_quantile= var_quantile),
-        compute_args
-      )
+      args <- c(list(
+        expr        = x,
+        meta        = meta,
+        groupColumn = groupColumn,
+        sampleType  = sampleType,
+        timepoint   = timepoint,
+        dataType    = dataType,
+        var_quantile= var_quantile
+      ), compute_args)
       tbl <- do.call(ThresholdedScatterplot_table, args)@data
 
-    } else if (input_type=="mae") {
+    } else if (input_type == "mae") {
       stopifnot(inherits(x, "MultiAssayExperiment"))
       assays    <- MultiAssayExperiment::experiments(x)
       assayName <- names(assays)[1]
-      args <- c(
-        list(mae         = x,
-             assayName   = assayName,
-             groupColumn = groupColumn,
-             sampleType  = sampleType,
-             timepoint   = timepoint,
-             dataType    = dataType,
-             var_quantile= var_quantile),
-        compute_args
-      )
+      args <- c(list(
+        mae         = x,
+        assayName   = assayName,
+        groupColumn = groupColumn,
+        sampleType  = sampleType,
+        timepoint   = timepoint,
+        dataType    = dataType,
+        var_quantile= var_quantile
+      ), compute_args)
       tbl <- do.call(ThresholdedScatterplot_MAE, args)@data
 
     } else {  # "de"
@@ -303,43 +299,74 @@ ThresholdedScatterplot_list <- function(
       tbl <- x
       req <- c("log2fc","negLog10p","regulation","SampleType")
       miss <- setdiff(req, colnames(tbl))
-      if (length(miss)) stop("Missing DE cols: ", paste(miss, collapse = ","))
+      if (length(miss)) stop("Missing DE columns: ", paste(miss, collapse = ", "))
     }
-    if (nrow(tbl)==0) warning("Panel has zero DE rows; it will be dropped.")
+    if (nrow(tbl) == 0) warning("Panel yields no DE rows; it will be dropped.")
     tbl
   }
 
-  ## --- assemble all DE tables ---
+  # 3) build list of DE tables, drop empties
   de_list <- lapply(panels, function(p) {
-    meta_p <- if (input_type=="expr") meta_list[[p]] else NULL
-    df <- get_de(data_list[[p]], meta_p)
+    md <- if (input_type=="expr") meta_list[[p]] else NULL
+    df <- get_de(data_list[[p]], md)
     df$panel <- p
     df
   })
+  de_list <- Filter(function(df) nrow(df) > 0, de_list)
+  if (length(de_list)==0) stop("All panels dropped; no DE results to plot.")
   all_de <- do.call(rbind, de_list)
-  all_de$panel <- factor(all_de$panel, levels = panels)
+  all_de$panel <- factor(all_de$panel, levels = names(de_list))
 
-  ## --- construct the S4 object ---
-  cs <- ThresholdedScatterplot(all_de)
+  # 4) create the S4 object and initial ggplot
+  cs      <- ThresholdedScatterplot(all_de)
+  cs_full <- do.call(createPlot, c(list(cs), plot_args))
+  p       <- cs_full@plot
 
-  ## --- call createPlot & extract ggplot object ---
-  cs_plot <- do.call(createPlot, c(list(cs), plot_args))
-  p       <- cs_plot@plot
+  # 5) remove the built-in count labels (n1/n2 layers)
+  p$layers <- Filter(function(ly) !any(c("n1","n2") %in% names(ly$data)), p$layers)
 
-  ## --- safe facet_by parsing ---
+  # 6) recompute up/down counts per panel
+  counts_up <- all_de %>%
+    dplyr::filter(regulation=="up") %>%
+    dplyr::group_by(panel, SampleType, timePoint) %>%
+    dplyr::tally(name="n_up")
+  counts_dn <- all_de %>%
+    dplyr::filter(regulation=="down") %>%
+    dplyr::group_by(panel, SampleType, timePoint) %>%
+    dplyr::tally(name="n_dn")
+
+  # 7) pick user colors or defaults
+  col_up   <- plot_args$color1    %||% "cornflowerblue"
+  col_dn   <- plot_args$color3    %||% "indianred"
+  txt_sz   <- plot_args$text_size %||% 10L
+
+  # 8) overlay the corrected count labels
+  p <- p +
+    ggplot2::geom_text(
+      data = counts_up,
+      ggplot2::aes(x = Inf,  y = Inf, label = n_up),
+      hjust = 1.1, vjust = 1.1,
+      color = col_up,
+      size  = txt_sz / ggplot2::.pt
+    ) +
+    ggplot2::geom_text(
+      data = counts_dn,
+      ggplot2::aes(x = -Inf, y = Inf, label = n_dn),
+      hjust = -0.1, vjust = 1.1,
+      color = col_dn,
+      size  = txt_sz / ggplot2::.pt
+    )
+
+  # 9) facet by the user’s formula
   facet_formula <- tryCatch(
     stats::as.formula(facet_by),
     error = function(e) stop("`facet_by` is not a valid formula: ", facet_by)
   )
-
-  ## --- add faceting and store ---
-  cs@plot <- p + ggplot2::facet_grid(
-    facet_formula,
-    space = "free", scales = "free_x"
-  )
+  cs@plot <- p + ggplot2::facet_grid(facet_formula, space="free", scales="free_x")
 
   invisible(cs)
 }
+
 
            
 #' @noRd
