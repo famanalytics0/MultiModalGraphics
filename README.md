@@ -349,6 +349,7 @@ de_df <- data.frame(
 )
 cs <- ThresholdedScatterplot(de_df, highLog2fc=1, lowLog2fc=-1, negLog10pValue=2)
 createPlot(cs, color1="tomato", color3="steelblue", legend_labels=c("Down","Neutral","Up"), title="Example Volcano")
+show(cs)
 ```
 
 **Real Example: airway RNA-seq**
