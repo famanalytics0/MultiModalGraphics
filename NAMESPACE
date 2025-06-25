@@ -39,8 +39,9 @@ import(methods)
 importFrom(stats, model.matrix, quantile, as.formula)
 
 ## ---- Imports: data manipulation & piping ----
-importFrom(dplyr, group_by, tally)
+importFrom(dplyr, filter, group_by, tally)
 importFrom(magrittr, "%>%")
+importFrom(rlang, `%||%`)
 
 ## ---- Imports: variance filtering & parallel ----
 importFrom(matrixStats, rowVars)
