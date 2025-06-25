@@ -299,6 +299,7 @@ show(cs2)
 
 #### 3.3. From a **MultiAssayExperiment** Object
 
+##### Example 1
 ```r
 # (a) Load a small example MAE (miniACC)
 data("miniACC", package="MultiAssayExperiment")
@@ -334,6 +335,75 @@ show(cs3)
 > **Result:** DE is run per facet (Stage × Methylation) using the chosen assay in the MAE. The final output is a publication-ready faceted volcano.
 
 ---
+
+
+#### Example 2 
+
+```r
+# Load required packages
+library(curatedTCGAData)
+library(SummarizedExperiment)
+
+# Step 1: Download/load the BRCA MAE object (this may take some time/space)
+mae_brca <- curatedTCGAData("BRCA", assays = "RNASeq2GeneNorm", version = "2.1.1", dry.run = FALSE)
+
+# Step 2: Inspect available columns for sampleType
+meta <- as.data.frame(colData(mae_brca))
+
+# Step 3: Create mapping for short histological type names
+histo_short <- c(
+  "other, specify"                   = "Other",
+  "infiltrating ductal carcinoma"    = "Ductal",
+  "mixed histology (please specify)" = "Mixed",
+  "infiltrating lobular carcinoma"   = "Lobular",
+  "medullary carcinoma"              = "Medullary",
+  "mucinous carcinoma"               = "Mucinous",
+  "metaplastic carcinoma"            = "Metaplastic",
+  "infiltrating carcinoma nos"       = "NOS"
+)
+
+# Step 4: Add short names as a new column to colData of MAE
+# Convert to character to avoid factor issues
+colData(mae_brca)$histology_short <- histo_short[as.character(colData(mae_brca)$histological_type)]
+# Handle any NA values explicitly
+colData(mae_brca)$histology_short[is.na(colData(mae_brca)$histological_type)] <- "NA"
+
+# OPTIONAL: Also create short names for PAM50.mRNA (if needed)
+pam50_short <- c(
+  "Luminal A"            = "LumA",
+  "Luminal B"            = "LumB",
+  "HER2-enriched"        = "HER2",
+  "Basal-like"           = "Basal",
+  "Normal-like"          = "Normal"
+)
+colData(mae_brca)$PAM50.mRNA_short <- pam50_short[as.character(colData(mae_brca)$PAM50.mRNA)]
+colData(mae_brca)$PAM50.mRNA_short[is.na(colData(mae_brca)$PAM50.mRNA)] <- "NA"
+
+# Step 5: Run the ThresholdedScatterplot_MAE function using the new short columns
+cs_brca <- ThresholdedScatterplot_MAE(
+  mae         = mae_brca,
+  assayName   = "BRCA_RNASeq2GeneNorm-20160128",
+  groupColumn = "PAM50.mRNA_short",        # Use short PAM50 names
+  sampleType  = "histology_short",         # Use short histology names
+  dataType    = "continuous",
+  var_quantile= 0.5
+)
+
+# Step 6: Plot with custom color choices (up = firebrick/red, down = steelblue/blue)
+cs_brca_plot <- createPlot(
+  cs_brca,
+  legend_title = "Gene Regulation",
+  color1 = "firebrick",   # "up" regulation
+  color2 = "grey70",      # "neutral"
+  color3 = "steelblue"    # "down" regulation
+)
+
+# Step 7: Display the plot
+show(cs_brca_plot)
+
+```
+
+
 
 ### 4.1 From DE Table
 
@@ -411,16 +481,8 @@ cs_airway_plot = createPlot(
 show(cs_airway_plot)
 ```
 
-### 4.2 From MultiAssayExperiment
 
-```r
-library(curatedTCGAData)
-mae_brca <- curatedTCGAData("BRCA", assays = "RNASeq2GeneNorm", dry.run=FALSE)
-cs_brca <- ThresholdedScatterplot_MAE(mae=mae_brca, assayName="RNASeq2GeneNorm", groupColumn="PAM50.mRNA", sampleType="histological_type", dataType="continuous", var_quantile=0.5)
-createPlot(cs_brca)
-```
-
-### 4.3 From Lists (multi-cohort/time)
+### 4.2 From Lists (multi-cohort/time)
 
 ```r
 expr_list <- list(T0=expr, T1=expr+rpois(100*20,5))
