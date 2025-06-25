@@ -220,6 +220,7 @@ df <- data.frame(
   negLog10p  = runif(100, 0, 5),
   regulation = sample(c("up","down"), 100, TRUE),
   SampleType = sample(c("A","B"), 100, TRUE),
+timePoint = sample(c('early', 'late'),100, TRUE),
   stringsAsFactors = FALSE
 )
 
