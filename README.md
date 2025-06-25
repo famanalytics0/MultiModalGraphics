@@ -61,13 +61,26 @@ Welcome to **MultiModalGraphics**. This section gives you a rapid, hands-on intr
 ## 1. Installation
 
 ```r
-# (1) Install BiocManager if needed
+
+# (1) Install the latest development version from GitHub branch (for newest features/fixes)
+if (!requireNamespace("remotes", quietly = TRUE))
+    install.packages("remotes")
+remotes::install_git(
+    "https://github.com/famanalytics0/MultiModalGraphics.git",
+    ref          = "main",
+    dependencies = TRUE,
+    upgrade      = "never"
+)
+
+# or simply use the following since main is the only and default
+remotes::install_github("famanalytics0/MultiModalGraphics")
+
+# (2) Install BiocManager if needed
 if (!requireNamespace("BiocManager", quietly = TRUE))
     install.packages("BiocManager")
 
-# (2) Install MultiModalGraphics and all core/data dependencies from Bioconductor
+# () Install core/data dependencies from Bioconductor
 BiocManager::install(c(
-    "MultiModalGraphics",
     # Core data structures and computation
     "MultiAssayExperiment", "SummarizedExperiment",
     "ComplexHeatmap", "limma", "DESeq2", "BiocParallel", "matrixStats",
@@ -88,22 +101,10 @@ install.packages(c(
     "shiny"         # interactive dashboards (optional, but recommended)
 ))
 
-# (4) (Optional) Install the latest development version from GitHub branch (for newest features/fixes)
-if (!requireNamespace("remotes", quietly = TRUE))
-    install.packages("remotes")
-remotes::install_git(
-    "https://github.com/famanalytics0/MultiModalGraphics.git",
-    ref          = "main",
-    dependencies = TRUE,
-    upgrade      = "never"
-)
 
-# or simply use the following since main is the only and default
-remotes::install_github("famanalytics0/MultiModalGraphics")
-
-
-# (5) (Optional) Install extra data packages for examples (if not already above)
+# (4) (Optional) Install extra data packages for examples (if not already above)
 BiocManager::install(c("curatedPCaData", "curatedTCGAData", "curatedTCGADataData"))
+
 ```
 
 ---
