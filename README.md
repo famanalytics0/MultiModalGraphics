@@ -347,8 +347,15 @@ de_df <- data.frame(
   timePoint  = rep(c("T1","T2"), times=100),
   stringsAsFactors = FALSE
 )
-cs <- ThresholdedScatterplot(de_df, highLog2fc=1, lowLog2fc=-1, negLog10pValue=2)
-createPlot(cs, color1="tomato", color3="steelblue", legend_labels=c("Down","Neutral","Up"), title="Example Volcano")
+cs <- ThresholdedScatterplot(de_df,
+                              highLog2fc=1,
+                              lowLog2fc=-1,
+                              negLog10pValue=2)
+createPlot(cs,
+            color1="tomato",
+            color3="steelblue",
+            legend_labels=c("Down","Neutral","Up"),
+            title="Example Volcano")
 show(cs)
 ```
 
@@ -358,7 +365,11 @@ show(cs)
 library(airway)
 data(airway)
 expr <- assay(airway, "counts"); meta <- as.data.frame(colData(airway))
-cs_airway <- ThresholdedScatterplot_table(expr, meta, groupColumn="dex", sampleType="cell", dataType="count")
+cs_airway <- ThresholdedScatterplot_table(expr,
+                                          meta,
+                                          groupColumn="dex",
+                                          sampleType="cell",
+                                          dataType="count")
 createPlot(cs_airway, legend_title="Gene Regulation")
 ```
 
