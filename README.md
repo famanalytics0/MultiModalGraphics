@@ -498,22 +498,32 @@ data(airway)                 # load the airway MultiAssayExperiment
 expr_airway <- assay(airway, "counts")
 meta_airway <- as.data.frame(colData(airway))
 
-expr1 <- expr_airway[, 1:4]
-expr2 <- expr_airway[, 5:8]
-meta1 <- meta_airway[1:4, ]
-meta2 <- meta_airway[5:8, ]
+# Panel 1: samples 1–6; Panel 2: samples 3–8
+expr1 <- expr_airway[, 1:6]; meta1 <- meta_airway[1:6, ]
+expr2 <- expr_airway[, 3:8]; meta2 <- meta_airway[3:8, ]
+
+# Add a constant “all” sampleType so you don’t split by cell
+meta1$all <- "All"; meta2$all <- "All"
 
 csE <- ThresholdedScatterplot_list(
-  data_list    = list(BL = expr1, TR = expr2),
-  meta_list    = list(BL = meta1, TR = meta2),
+  data_list    = list(P1 = expr1, P2 = expr2),
+  meta_list    = list(P1 = meta1, P2 = meta2),
   input_type   = "expr",
-  groupColumn  = "dex",
-  sampleType   = "cell",
+  groupColumn  = "dex",        # requires ≥3 per level
+  sampleType   = "all",        # only one facet → no per‐cell split
+  dataType     = "count",      
+  var_quantile = 0,            # skip variance filtering so we have features to test
   facet_by     = ". ~ panel",
-  compute_args = list(dataType="count", var_quantile=0.75),
-  plot_args    = list(color1="firebrick", color3="steelblue", legend_title="DE")
+  plot_args    = list(
+    color1      = "firebrick",
+    color3      = "steelblue",
+    legend_title= "DE"
+  )
 )
+
 show(csE)
+
+
 
 # — MAE mode —
 mae0 <- curatedTCGAData("BRCA", assays="RNASeq2GeneNorm",
