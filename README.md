@@ -383,11 +383,12 @@ cs_airway <- ThresholdedScatterplot_table(expr,
 createPlot(cs_airway, legend_title="Gene Regulation")
 ```
 
-If you want to ignore sampleType (colum
-This is because both the groupColumn and sampleType are required. 
-But if you want to ignore one of them, so that you can have 4 samples per group
-let us say, you want to ignore sampleType (want to compare the two groups of the "dex" column -- groupColumn),
-then, take all the sample of the other required group, "cell" (sampleType)
+
+This error arise since both the groupColumn and sampleType are required (leading to 2 by 2 design matrix whereby each group will have only 2 sample per group out of a total of 8 samples in the airway count data). 
+
+But if you want to ignore one of two required columns, so that you can have 4 samples per group
+let us say, you want to ignore sampleType (and just interested in comparing the two groups of the "dex" column -- groupColumn),
+then, you need to take all the sample of the other required group, "cell" (sampleType) as shown next.
 
 ```r
 meta$cell <- "All"
