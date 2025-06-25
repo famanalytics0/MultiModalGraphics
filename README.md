@@ -363,8 +363,9 @@ show(cs)
 
 The following should return error since the sampleType = "cell", and 
 groupColumn = "dex" for the airway count data has a 2 by 2 sample size which is 
-less than the 3 sample per group required to do differential analysis using limma 
-(a condition imposed in the MultiModalGraphics package)
+less than the 3 sample per group required to do differential analysis using voom (for RNAseq) 
+(a condition imposed in the MultiModalGraphics package).
+
 Hence, you should get the following error messages
 
 *Error in .ThresholdedScatterplot_core(expr, meta2, groupColumn, sampleType,  : 
@@ -380,6 +381,34 @@ cs_airway <- ThresholdedScatterplot_table(expr,
                                           sampleType="cell",
                                           dataType="count")
 createPlot(cs_airway, legend_title="Gene Regulation")
+```
+
+If you want to ignore sampleType (colum
+This is because both the groupColumn and sampleType are required. 
+But if you want to ignore one of them, so that you can have 4 samples per group
+let us say, you want to ignore sampleType (want to compare the two groups of the "dex" column -- groupColumn),
+then, take all the sample of the other required group, "cell" (sampleType)
+
+```r
+meta$cell <- "All"
+cs_airway <- ThresholdedScatterplot_table(
+  expr,
+  meta,
+  groupColumn = "dex",
+  sampleType = "cell",
+  dataType = "count"
+)
+
+cs_airway_plot = createPlot(
+                  cs_airway,
+                  legend_title = "Gene Regulation",
+                  color1 = "firebrick",     # up (red family)
+                  color2 = "grey70",        # neutral
+                  color3 = "steelblue"      # down (blue family)
+                  )
+
+
+show(cs_airway_plot)
 ```
 
 ### 4.2 From MultiAssayExperiment
