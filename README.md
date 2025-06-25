@@ -483,6 +483,9 @@ show(cs_airway_plot)
 
 
 ### 4.2 From Lists (multi-cohort/time)
+This is handled by the ThresholdedScatterplot_list function, which takes multiple (expr, meta) pairs (or precomputed DE tables), computes the volcano/scatter plots for each, and returns a single composite plot with each scatterplot arranged in a grid—essentially a faceted or patchwork-style arrangement, not just a list of objects.
+
+This is a common and powerful pattern for comparing multiple conditions, timepoints, or datasets in one visualization.
 
 ```r
 expr_list <- list(T0=expr, T1=expr+rpois(100*20,5))
