@@ -361,6 +361,15 @@ show(cs)
 
 **Real Example: airway RNA-seq**
 
+The following should return error since the sampleType = "cell", and 
+groupColumn = "dex" for the airway count data has a 2 by 2 sample size which is 
+less than the 3 sample per group required to do differential analysis using limma 
+(a condition imposed in the MultiModalGraphics package)
+Hence, you should get the following error messages
+
+*Error in .ThresholdedScatterplot_core(expr, meta2, groupColumn, sampleType,  : 
+  No DE results to plot (all cells returned zero rows).*
+
 ```r
 library(airway)
 data(airway)
