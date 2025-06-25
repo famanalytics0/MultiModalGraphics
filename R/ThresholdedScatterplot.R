@@ -246,6 +246,10 @@ ThresholdedScatterplot_list <- function(
   timepoint     = NULL,
   dataType      = c("auto","continuous","count"),
   var_quantile  = 0.75,
+  var_quantile     = 0.75,
+  highLog2fc       = 0.585,
+  lowLog2fc        = -0.585,
+  negLog10pValue   = 1.301,
   compute_args  = list(),
   plot_args     = list(),
   facet_by      = ". ~ panel"
@@ -319,7 +323,13 @@ ThresholdedScatterplot_list <- function(
   all_de$panel <- factor(all_de$panel, levels = names(de_list))
 
   ## 4) initial S4 object + ggplot
-  cs      <- ThresholdedScatterplot(all_de)
+  cs      <- ThresholdedScatterplot(
+                                  all_de,
+                                  highLog2fc = highLog2fc,
+                                  lowLog2fc = lowLog2fc,
+                                  negLog10pValue = negLog10pValue
+                                  )
+           
   cs_full <- do.call(createPlot, c(list(cs), plot_args))
   p       <- cs_full@plot
 
