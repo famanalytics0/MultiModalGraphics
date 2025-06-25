@@ -488,10 +488,60 @@ This is handled by the ThresholdedScatterplot_list function, which takes multipl
 This is a common and powerful pattern for comparing multiple conditions, timepoints, or datasets in one visualization.
 
 ```r
-expr_list <- list(T0=expr, T1=expr+rpois(100*20,5))
-meta_list <- list(T0=meta, T1=meta)
-cs_list <- ThresholdedScatterplot(expr_list, meta_list, top_n=10)
-createPlot(cs_list)
+library(MultiModalGraphics)
+library(airway)              # for the example expression/metadata
+library(curatedTCGAData)
+
+# — Expr + Meta mode —
+data(airway)                 # load the airway MultiAssayExperiment
+expr_airway <- assay(airway, "counts")
+meta_airway <- as.data.frame(colData(airway))
+
+expr1 <- expr_airway[, 1:4]
+expr2 <- expr_airway[, 5:8]
+meta1 <- meta_airway[1:4, ]
+meta2 <- meta_airway[5:8, ]
+
+csE <- ThresholdedScatterplot_list(
+  data_list    = list(BL = expr1, TR = expr2),
+  meta_list    = list(BL = meta1, TR = meta2),
+  input_type   = "expr",
+  groupColumn  = "dex",
+  sampleType   = "cell",
+  facet_by     = ". ~ panel",
+  compute_args = list(dataType="count", var_quantile=0.75),
+  plot_args    = list(color1="firebrick", color3="steelblue", legend_title="DE")
+)
+show(csE)
+
+# — MAE mode —
+mae0 <- curatedTCGAData("BRCA", assays="RNASeq2GeneNorm",
+                        version="2.1.1", dry.run=FALSE)
+mae1 <- curatedTCGAData("BRCA", assays="miRNASeqGene",
+                        version="2.1.1", dry.run=FALSE)
+
+csM <- ThresholdedScatterplot_list(
+  data_list   = list(mRNA = mae0, miRNA = mae1),
+  input_type  = "mae",
+  groupColumn = "PAM50.mRNA",
+  sampleType  = "histological_type",
+  facet_by    = "panel ~ SampleType",
+  plot_args   = list(point_size = 2)
+)
+show(csM)
+
+# — Precomputed DE mode —
+# (here `de0` and `de1` are your own data.frames with
+#  columns log2fc, negLog10p, regulation, SampleType)
+de0 <- my_de_t0
+de1 <- my_de_t1
+
+csD <- ThresholdedScatterplot_list(
+  data_list  = list(D0 = de0, D7 = de1),
+  input_type = "de",
+  facet_by   = ". ~ panel"
+)
+show(csD)
 ```
 
 **Special: scNMT & curatedPCaData—see *Supplement* at the end for full examples.**
