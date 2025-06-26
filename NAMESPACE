@@ -37,10 +37,9 @@ exportMethods(AnnotatedHeatmap)
 #export(get_multifeature_grid_df)
 
 ## ---- Imports: base & stats ----
-import(methods)
+import(methods, callGeneric)
 importFrom(stats, model.matrix, quantile, as.formula)
 importFrom(S4Vectors, DataFrame)
-importFrom(methods, NextMethod)
 
 ## ---- Imports: data manipulation & piping ----
 importFrom(dplyr, filter, group_by, tally)
