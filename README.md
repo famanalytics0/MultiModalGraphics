@@ -690,17 +690,65 @@ print(volc@plot)
 ```r
 
 # — Precomputed DE mode —
-# (here `de0` and `de1` are your own data.frames with
-#  columns log2fc, negLog10p, regulation, SampleType)
-de0 <- my_de_t0
-de1 <- my_de_t1
+library(MultiModalGraphics)  # for ThresholdedScatterplot_list()
+library(dplyr)
 
-csD <- ThresholdedScatterplot_list(
-  data_list  = list(D0 = de0, D7 = de1),
-  input_type = "de",
-  facet_by   = ". ~ panel"
+# 1) Load the example CSV; this is a precomputed data located in MultiModalGraphics/data directory
+csvfile <- system.file("data","ThresholdedScatterplot.csv", package="MultiModalGraphics")
+df <- read.csv(csvfile, stringsAsFactors = FALSE)
+
+# 2) Rename & compute -log10(p)
+df2 <- df %>%
+  rename(
+    log2fc    = log2fc,
+    pvalue    = p,
+    SampleType= organ,
+    timepoint = timePoint
+  ) %>%
+  mutate(
+    negLog10p = -log10(pvalue)
+  )
+
+# 3) Define thresholds and compute all three categories
+high_fc <- 0.585      # ≈ 1.5× fold
+low_fc  <- -0.585
+p_cut   <- 1.301      # p < 0.05
+
+df3 <- df2 %>%
+  mutate(
+    category = case_when(
+      log2fc >  high_fc & negLog10p > p_cut ~ "up",
+      log2fc <  low_fc  & negLog10p > p_cut ~ "down",
+      TRUE                                  ~ "neutral"
+    ),
+    category = factor(category, levels = c("down","neutral","up"), ordered = TRUE)
+  )
+
+# 4) Split into two “datasets”/panels by tissue
+de_t1 <- df3 %>% filter(SampleType == "tissue1")
+de_t2 <- df3 %>% filter(SampleType == "tissue2")
+
+# 5) Build the ThresholdedScatterplot_list in “de”‐mode
+cs <- ThresholdedScatterplot_list(
+  data_list    = list(tissue1 = de_t1, tissue2 = de_t2),
+  input_type   = "de",
+  timepoint    = "timepoint",
+  highLog2fc     = high_fc,
+  lowLog2fc      = low_fc,
+  negLog10pValue = p_cut,
+  facet_by     = "timepoint ~ panel",
+  plot_args    = list(
+    color1      = "cornflowerblue",  # up
+    color2      = "grey",            # neutral
+    color3      = "indianred",       # down
+    point_alpha = 0.7,
+    point_size  = 1.75,
+    text_size   = 10
+  )
 )
-show(csD)
+
+# 6) Render
+show(cs)
 ```
 
 **Special: scNMT & curatedPCaData—see *Supplement* at the end for full examples.**
