@@ -40,6 +40,7 @@ exportMethods(AnnotatedHeatmap)
 import(methods)                           # brings in setClass, setMethod, callGeneric, NextMethod, etc.
 importFrom(stats, model.matrix, quantile, as.formula)
 importFrom(S4Vectors, DataFrame)
+importFrom(methods, getMethod)
 
 ## ---- Imports: data manipulation & piping ----
 importFrom(dplyr, filter, group_by, tally)
