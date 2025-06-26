@@ -584,13 +584,13 @@ volc <- ThresholdedScatterplot_list(
 print(volc@plot)
 
 # or override facet to free both axes
-volc_2x2@plot <- volc_2x2@plot +
+volc@plot <- volc@plot +
   ggplot2::facet_grid(
     SampleType ~ panel,
     space  = "free",
     scales = "free"
   )
-print(volc_2x2@plot)
+print(volc@plot)
 
 
 # When there is some difference the values of the corresponding columns between the two mae objects
