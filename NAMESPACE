@@ -29,6 +29,7 @@ exportMethods(show)
 exportMethods(plot_heatmap)
 exportMethods(getHeatmapObject)
 exportMethods(updateLayerFun)
+exportMethods(AnnotatedHeatmap)
 
 ## ---- Helper getters ----
 #export(get_clear_scatterplot_df)
@@ -51,6 +52,7 @@ importFrom(BiocParallel, bplapply, bpworkers)
 ## ---- Imports: MAE & SE workflows ----
 importFrom(MultiAssayExperiment, experiments, colData, sampleMap)
 importFrom(SummarizedExperiment, assay)
+importFrom(methods, setMethod, callGeneric)
 
 ## ---- Imports: limma DE analysis ----
 importFrom(limma, voom, lmFit, eBayes, topTable)
