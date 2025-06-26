@@ -25,3 +25,14 @@ add_clinical_to_all_assays <- function(mae, clinical_cols) {
   experiments(mae) <- exps
   mae
 }
+
+
+#' @rdname AnnotatedHeatmap
+#' @export
+setMethod(
+  "AnnotatedHeatmap",
+  signature = c(data = "matrix", meta = "data.frame", pval_list = "ANY"),
+  function(data, meta, pval_list = NULL, ...) {
+    NextMethod("AnnotatedHeatmap")
+  }
+)
