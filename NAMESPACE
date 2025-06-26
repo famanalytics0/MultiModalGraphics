@@ -39,6 +39,7 @@ exportMethods(AnnotatedHeatmap)
 ## ---- Imports: base & stats ----
 import(methods)
 importFrom(stats, model.matrix, quantile, as.formula)
+importFrom(S4Vectors, DataFrame)
 
 ## ---- Imports: data manipulation & piping ----
 importFrom(dplyr, filter, group_by, tally)
