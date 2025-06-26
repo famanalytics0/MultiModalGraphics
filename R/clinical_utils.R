@@ -33,9 +33,10 @@ setMethod(
   "AnnotatedHeatmap",
   signature = c(data = "matrix", meta = "data.frame", pval_list = "ANY"),
   function(data, meta, pval_list = NULL, ...) {
-    NextMethod("AnnotatedHeatmap")
+    NextMethod() 
   }
 )
+
 
 
 
