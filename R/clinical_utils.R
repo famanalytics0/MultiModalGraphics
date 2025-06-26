@@ -34,21 +34,19 @@ setMethod(
   "AnnotatedHeatmap",
   signature = c(data = "matrix", meta = "data.frame", pval_list = "ANY"),
   function(data, meta, pval_list = NULL, ...) {
-    ## primary dispatch: hands off to the built-in matrix,ANY,ANY method
+    # primary dispatch: call the existing matrix,ANY,ANY method
     methods::callGeneric(data = data, meta = meta, pval_list = pval_list, ...)
   }
 )
-
 
 #’ @rdname AnnotatedHeatmap
 #’ @export
 setMethod(
   "AnnotatedHeatmap",
   signature = c(data = "matrix", meta = "data.frame", pval_list = "missing"),
-  function(data, meta, pval_list, ...) {
-    ## when the user omits the pval_list argument,
-    ## delegate to the ANY method already registered
-    NextMethod()
+  function(data, meta, ...) {
+    # when pval_list is omitted, forward to the ANY method
+    methods::callGeneric(data = data, meta = meta, pval_list = NULL, ...)
   }
 )
 
