@@ -27,6 +27,7 @@ add_clinical_to_all_assays <- function(mae, clinical_cols) {
 }
 
 
+#' @importFrom methods NextMethod
 #' @rdname AnnotatedHeatmap
 #' @export
 setMethod(
@@ -36,3 +37,4 @@ setMethod(
     NextMethod("AnnotatedHeatmap")
   }
 )
+
