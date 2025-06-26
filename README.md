@@ -805,38 +805,54 @@ ComplexHeatmap::draw(ht1, heatmap_legend_side = "right")
 #### 5.2. From a Matrix + Metadata (DE‐Based Heatmap)
 
 ```r
-# (a) Reuse expr (100×20) and meta from Section 3.2
-# (b) Create AnnotatedHeatmap (performs DE per SampleType as columns)
-ih2 <- AnnotatedHeatmap(
-  data             = expr,
-  meta             = meta,
-  groupColumn      = "Group",
-  sampleType       = "SampleType",
-  timepoint        = NULL,
-  dataType         = "continuous",
-  var_quantile     = 0.5,
-  pvalue_cutoff    = 0.05,
-  trending_cutoff  = 0.1,
-  fc_cutoff        = 0.585,
-  min_samples      = 3,
-  max_features     = 30,
-  runClustering    = FALSE,
-  pch_val          = 16,
-  unit_val         = 3,
-  significant_color= "darkred",
-  trending_color   = "orange",
-  heatmap_scale    = "logFC",
-  col              = circlize::colorRamp2(c(-2,0,2), c("navy","white","firebrick")),
-  cluster_rows     = TRUE,
-  cluster_columns  = TRUE,
-  show_row_names   = FALSE,
-  show_column_names= TRUE,
-  name             = "log2FC"
+# 1. Load dependencies (ComplexHeatmap first, then MultiModalGraphics)
+
+# 2. Confirm your method is registered
+methods("AnnotatedHeatmap")
+getMethod("AnnotatedHeatmap", signature = c("matrix","data.frame"))
+
+# 3. Call your S4 method by fully qualifying it
+library(MultiModalGraphics)    # for AnnotatedHeatmap_table()
+library(ComplexHeatmap)
+library(circlize)
+
+# simulate a toy dataset
+set.seed(42)
+n_genes   <- 100
+conds     <- paste0("Cond", 1:4)
+logFC_mat <- matrix(rnorm(n_genes * length(conds), sd = 1),
+                    nrow = n_genes, ncol = length(conds),
+                    dimnames = list(paste0("Gene", 1:n_genes), conds))
+
+pval_mat  <- matrix(runif(n_genes * length(conds)),
+                    nrow = n_genes, ncol = length(conds),
+                    dimnames = dimnames(logFC_mat))
+# sprinkle in some “significant” p-values
+low_idx   <- sample(length(pval_mat), size = 0.2 * length(pval_mat))
+pval_mat[low_idx] <- rbeta(length(low_idx), 0.5, 10)
+
+# build the heatmap
+hm <- AnnotatedHeatmap_table(
+  fc_matrix         = logFC_mat,
+  pval_matrix       = pval_mat,
+  pvalue_cutoff     = 0.05,      # solid dot when p < 0.05
+  trending_cutoff   = 0.10,      # hollow dot when p < 0.10
+  pch_val           = 16,        # plotting character for DE dots
+  unit_val          = 3,         # size multiplier for pch
+  significant_color = "firebrick",
+  trending_color    = "orange",
+  col               = colorRamp2(c(-2, 0, 2), c("navy", "white", "firebrick")),
+  cluster_rows      = TRUE,
+  cluster_columns   = TRUE,
+  show_row_names    = TRUE,
+  show_column_names = TRUE,
+  name              = "log2FC"
 )
 
-# (c) Extract and draw
-ht2 <- getHeatmapObject(ih2)
-ComplexHeatmap::draw(ht2, heatmap_legend_side = "right")
+# draw it
+ht <- getHeatmapObject(hm)
+ComplexHeatmap::draw(ht, heatmap_legend_side = "right")
+
 ```
 
 > **Result:** DE is run per SampleType, the top 30 features by variance are displayed as log₂FC, and significant/trending points are overlaid.
