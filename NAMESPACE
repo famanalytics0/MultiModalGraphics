@@ -15,6 +15,7 @@ export(AnnotatedHeatmap_table)
 export(AnnotatedHeatmapFromMAE)
 export(CompositeFeatureHeatmap)
 export(MultiModalPlot)
+export(add_clinical_to_all_assays)
 
 ## ---- Generics ----
 export(createPlot)
