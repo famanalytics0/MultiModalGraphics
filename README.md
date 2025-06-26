@@ -738,9 +738,9 @@ cs <- ThresholdedScatterplot_list(
   negLog10pValue = p_cut,
   facet_by     = "timepoint ~ panel",
   plot_args    = list(
-    color1      = "cornflowerblue",  # up
+    color1      = "indianred",       # down
     color2      = "grey",            # neutral
-    color3      = "indianred",       # down
+    color3      = "cornflowerblue",  # up
     point_alpha = 0.7,
     point_size  = 1.75,
     text_size   = 10
