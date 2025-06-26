@@ -520,10 +520,10 @@ csE <- ThresholdedScatterplot_list(
   )
 )
 show(csE)
+```
 
 
-
-
+```r
 # — MAE mode —
 library(curatedTCGAData)      # for curatedTCGAData()
 library(MultiAssayExperiment) # for sampleMap(), experiments()
@@ -593,6 +593,101 @@ volc_2x2@plot <- volc_2x2@plot +
 print(volc_2x2@plot)
 
 
+# When there is some difference the values of the corresponding columns between the two mae objects
+# facet by histological variable
+library(curatedTCGAData)      # for curatedTCGAData()
+library(MultiAssayExperiment) # for sampleMap(), experiments()
+library(SummarizedExperiment) # for colData(), DataFrame()
+
+# 1. Download the two cohorts as full MAEs
+mae_brca <- curatedTCGAData("BRCA", "RNASeq2GeneNorm",
+                            version = "2.1.1", dry.run = FALSE)
+mae_coad <- curatedTCGAData("COAD", "RNASeq2GeneNorm",
+                            version = "2.1.1", dry.run = FALSE)
+
+stopifnot(inherits(mae_brca, "MultiAssayExperiment"),
+          inherits(mae_coad, "MultiAssayExperiment"))
+
+# 2. Fix any “.x” suffixes in the COAD global colData
+cd_coad <- as.data.frame(colData(mae_coad))
+for (nm in c("vital_status", "radiation_therapy", "histological_type")) {
+  sx <- paste0(nm, ".x")
+  if (sx %in% colnames(cd_coad)) {
+    cd_coad[[nm]] <- cd_coad[[sx]]
+  }
+}
+colData(mae_coad) <- DataFrame(cd_coad)
+
+# 3. Create a short‐name mapping and add as 'histology_short' to the *global* colData
+histo_short <- c(
+  "other, specify"                    = "Other",
+  "infiltrating ductal carcinoma"     = "Ductal",
+  "mixed histology (please specify)" = "Mixed",
+  "infiltrating lobular carcinoma"    = "Lobular",
+  "medullary carcinoma"               = "Medullary",
+  "mucinous carcinoma"                = "Mucinous",
+  "metaplastic carcinoma"             = "Metaplastic",
+  "infiltrating carcinoma nos"        = "NOS",
+  "colon adenocarcinoma"              = "Adeno",
+  "colon mucinous adenocarcinoma"     = "Mucinous"
+)
+
+# BRCA
+cd_brca <- as.data.frame(colData(mae_brca))
+cd_brca$histology_short <- histo_short[ as.character(cd_brca$histological_type) ]
+# COAD
+cd_coad$histology_short <- histo_short[ as.character(cd_coad$histological_type) ]
+
+colData(mae_brca) <- DataFrame(cd_brca)
+colData(mae_coad) <- DataFrame(cd_coad)
+
+# 4. Define which columns to propagate into each assay
+needed_cols <- c("vital_status", "radiation_therapy", "histology_short")
+
+# 5. Copy those clinical columns into *every* assay in each MAE
+#    (assumes add_clinical_to_all_assays() is already sourced)
+mae_brca <- add_clinical_to_all_assays(mae_brca, needed_cols)
+mae_coad <- add_clinical_to_all_assays(mae_coad, needed_cols)
+
+# 6. Harmonize the short‐histology factor levels across both cohorts
+all_hs <- sort(unique(c(
+  as.character(colData(mae_brca)$histology_short),
+  as.character(colData(mae_coad)$histology_short)
+)))
+for (mae in list(mae_brca, mae_coad)) {
+  cd <- as.data.frame(colData(mae))
+  cd$histology_short <- factor(cd$histology_short, levels = all_hs)
+  colData(mae) <- DataFrame(cd)
+}
+mae_brca <- mae_brca; mae_coad <- mae_coad  # re-assign to update
+
+# 7. Build a named list and run the faceted volcano‐plot
+mae_list <- list(BRCA = mae_brca, COAD = mae_coad)
+
+volc <- ThresholdedScatterplot_list(
+  data_list    = mae_list,
+  input_type   = "mae",
+  groupColumn  = "vital_status",
+  sampleType   = "radiation_therapy",
+  timepoint    = "histology_short",   # use your new short name column
+  dataType     = "auto",
+  var_quantile = 0.99,
+  plot_args    = list(
+    color1      = "indianred",      # up genes
+    color3      = "cornflowerblue", # down genes
+    point_alpha = 0.7,
+    point_size  = 1.8,
+    text_size   = 9
+  ),
+  facet_by     = "timePoint ~ panel"  # rows = histology_short, cols = cohort
+)
+
+# 8. Print the final faceted volcano grid
+print(volc@plot)
+```
+
+
+```r
 
 # — Precomputed DE mode —
 # (here `de0` and `de1` are your own data.frames with
