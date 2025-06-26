@@ -523,21 +523,76 @@ show(csE)
 
 
 
-# — MAE mode —
-mae0 <- curatedTCGAData("BRCA", assays="RNASeq2GeneNorm",
-                        version="2.1.1", dry.run=FALSE)
-mae1 <- curatedTCGAData("BRCA", assays="miRNASeqGene",
-                        version="2.1.1", dry.run=FALSE)
 
-csM <- ThresholdedScatterplot_list(
-  data_list   = list(mRNA = mae0, miRNA = mae1),
-  input_type  = "mae",
-  groupColumn = "PAM50.mRNA",
-  sampleType  = "histological_type",
-  facet_by    = "panel ~ SampleType",
-  plot_args   = list(point_size = 2)
+# — MAE mode —
+library(curatedTCGAData)      # for curatedTCGAData()
+library(MultiAssayExperiment) # for sampleMap(), experiments()
+library(SummarizedExperiment) # for colData(), DataFrame()
+
+# 1. Download the two cohorts as full MAEs
+mae_brca <- curatedTCGAData("BRCA", "RNASeq2GeneNorm",
+                            version = "2.1.1", dry.run = FALSE)
+mae_coad <- curatedTCGAData("COAD", "RNASeq2GeneNorm",
+                            version = "2.1.1", dry.run = FALSE)
+
+stopifnot(
+  inherits(mae_brca, "MultiAssayExperiment"),
+  inherits(mae_coad, "MultiAssayExperiment")
 )
-show(csM)
+
+# 2. Fix any stray “.x” suffixes in the *global* colData(mae_coad)
+cd_coad <- as.data.frame(colData(mae_coad))
+if ("vital_status.x" %in% names(cd_coad)) {
+  cd_coad$vital_status <- cd_coad$vital_status.x
+}
+if ("radiation_therapy.x" %in% names(cd_coad)) {
+  cd_coad$radiation_therapy <- cd_coad$radiation_therapy.x
+}
+# overwrite the MAE’s global colData
+colData(mae_coad) <- DataFrame(cd_coad)
+
+# 3. Define which columns to propagate into each assay
+needed_cols <- c("vital_status", "radiation_therapy")
+
+# 4. Now copy those two columns into *every* assay-level colData
+mae_brca <- add_clinical_to_all_assays(mae_brca, needed_cols)
+mae_coad <- add_clinical_to_all_assays(mae_coad, needed_cols)
+
+# 5. Build a named list and run your volcano‐plot method
+mae_list <- list(BRCA = mae_brca, COAD = mae_coad)
+
+# 6. Run your ThresholdedScatterplot_list, faceting radiation_therapy ~ panel
+volc <- ThresholdedScatterplot_list(
+  data_list   = mae_list,
+  input_type  = "mae",
+  groupColumn = "vital_status",
+  sampleType  = "radiation_therapy",
+  timepoint   = NULL,
+  dataType    = "auto",
+  var_quantile= 0.99,
+  plot_args   = list(
+    color1     = "indianred",
+    color3     = "cornflowerblue",
+    point_alpha= 0.7,
+    point_size = 1.8,
+    text_size  = 9
+  ),
+  # here we refer to the *internal* column name “SampleType”
+  facet_by    = "SampleType ~ panel" # panel here is the two mae object (BRCA or COAD)
+  # SampleType for radiation therapy has values either yes or no
+)
+print(volc@plot)
+
+# or override facet to free both axes
+volc_2x2@plot <- volc_2x2@plot +
+  ggplot2::facet_grid(
+    SampleType ~ panel,
+    space  = "free",
+    scales = "free"
+  )
+print(volc_2x2@plot)
+
+
 
 # — Precomputed DE mode —
 # (here `de0` and `de1` are your own data.frames with
