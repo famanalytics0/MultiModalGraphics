@@ -37,7 +37,7 @@ exportMethods(AnnotatedHeatmap)
 #export(get_multifeature_grid_df)
 
 ## ---- Imports: base & stats ----
-import(methods, callGeneric)
+import(methods)                           # brings in setClass, setMethod, callGeneric, NextMethod, etc.
 importFrom(stats, model.matrix, quantile, as.formula)
 importFrom(S4Vectors, DataFrame)
 
@@ -53,7 +53,6 @@ importFrom(BiocParallel, bplapply, bpworkers)
 ## ---- Imports: MAE & SE workflows ----
 importFrom(MultiAssayExperiment, experiments, colData, sampleMap)
 importFrom(SummarizedExperiment, assay)
-importFrom(methods, setMethod, callGeneric)
 
 ## ---- Imports: limma DE analysis ----
 importFrom(limma, voom, lmFit, eBayes, topTable)
@@ -71,16 +70,13 @@ importFrom(ggplot2,
 ## ---- Imports: ComplexHeatmap & layering ----
 importFrom(ComplexHeatmap, Heatmap, restore_matrix)
 importFrom(circlize, colorRamp2)
-import(patchwork)                 # so that `+` works for combining ggplots
+import(patchwork)                         # for combining ggplots with '+'
 importFrom(grid, unit, gpar, grid.points)
 
 ## ---- Imports: palettes & scales ----
 importFrom(RColorBrewer, brewer.pal)
 importFrom(scales, comma_format)
 importFrom(grDevices, colorRampPalette)
-
-
-
 
 
 
