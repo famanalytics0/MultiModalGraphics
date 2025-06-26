@@ -27,14 +27,14 @@ add_clinical_to_all_assays <- function(mae, clinical_cols) {
 }
 
 
-#' @importFrom methods NextMethod
-#' @rdname AnnotatedHeatmap
-#' @export
+#’ @rdname AnnotatedHeatmap
+#’ @export
 setMethod(
   "AnnotatedHeatmap",
   signature = c(data = "matrix", meta = "data.frame", pval_list = "ANY"),
   function(data, meta, pval_list = NULL, ...) {
-    NextMethod("AnnotatedHeatmap")
+    callGeneric(data = data, meta = meta, pval_list = pval_list, ...)
   }
 )
+
 
