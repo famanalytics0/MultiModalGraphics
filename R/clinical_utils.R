@@ -33,9 +33,11 @@ setMethod(
   "AnnotatedHeatmap",
   signature = c(data = "matrix", meta = "data.frame", pval_list = "missing"),
   function(data, meta, pval_list, ...) {
-    NextMethod()   # dispatches to the existing matrix,ANY,ANY implementation
+    ## re-dispatch into your existing matrix,ANY,ANY method
+    methods::callGeneric(data = data, meta = meta, pval_list = NULL, ...)
   }
 )
+
 
 
 
