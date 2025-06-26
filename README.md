@@ -724,7 +724,7 @@ df3 <- df2 %>%
     category = factor(category, levels = c("down","neutral","up"), ordered = TRUE)
   )
 
-# 4) Split into two “datasets”/panels by tissue
+# 4) Split into two “datasets”/panels by tissue (assuming these data sets came from two different tissues or cohorts)
 de_t1 <- df3 %>% filter(SampleType == "tissue1")
 de_t2 <- df3 %>% filter(SampleType == "tissue2")
 
