@@ -31,20 +31,9 @@ add_clinical_to_all_assays <- function(mae, clinical_cols) {
 #’ @export
 setMethod(
   "AnnotatedHeatmap",
-  signature = c(data = "matrix", meta = "data.frame", pval_list = "ANY"),
-  function(data, meta, pval_list = NULL, ...) {
-    methods::callGeneric(data = data, meta = meta, pval_list = pval_list, ...)
-  }
-)
-
-#’ @rdname AnnotatedHeatmap
-#’ @export
-setMethod(
-  "AnnotatedHeatmap",
   signature = c(data = "matrix", meta = "data.frame", pval_list = "missing"),
-  function(data, meta, ...) {
-    # when the user omits pval_list entirely
-    methods::callGeneric(data = data, meta = meta, pval_list = NULL, ...)
+  function(data, meta, pval_list, ...) {
+    NextMethod()   # dispatches to the existing matrix,ANY,ANY implementation
   }
 )
 
