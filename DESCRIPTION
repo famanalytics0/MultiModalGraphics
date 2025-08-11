@@ -24,14 +24,11 @@ Description: The MultimodalGraphics R package provides rich functionalities for 
             a comprehensible presentation of multimodal and multidimensional datasets.
             We demonstrate the utility of MultimodalGraphics to easily reveal patterns and correlations 
             among multiple sources of information with three different sets of actual multimodal datasets.
-            
-
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
 LazyData: true
-
 Imports:
     methods,
     ggplot2 (>= 3.0.0),
@@ -49,7 +46,6 @@ Imports:
     circlize (>= 0.4.0),
     rlang,
     grid
-    
 Suggests:
     knitr,
     testthat,
@@ -65,7 +61,6 @@ Suggests:
     curatedTCGAData,
     curatedTCGADataData,
     shiny
-
 VignetteBuilder: knitr
 biocViews: 
     DifferentialExpression,
@@ -73,7 +68,6 @@ biocViews:
     Visualization,
     MultiAssayExperiment,
     Software
-
 URL: https://github.com/famanalytics0/MultiModalGraphics
 BugReports: https://github.com/famanalytics0/MultiModalGraphics/issues
 
