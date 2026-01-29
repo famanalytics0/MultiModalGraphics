@@ -36,7 +36,7 @@ Imports:
     magrittr (>= 1.5),
     matrixStats (>= 0.56.0),
     BiocParallel (>= 1.30.0),
-    MultiAssayExperiment (>= 2.8.0),
+    MultiAssayExperiment (>= 1.36.1),
     SummarizedExperiment (>= 1.18.0),
     limma (>= 3.48.0),
     stats,
